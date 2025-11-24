@@ -51,7 +51,8 @@ class HadithsTable
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(hidden: true),
+                    ->toggleable()
+                    ->hidden(),
             ])
             ->filters([
                 //

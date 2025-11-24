@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Narrators\Schemas;
 
-use Filament\Schemas\Components\ColorPicker;
-use Filament\Schemas\Components\Textarea;
-use Filament\Schemas\Components\TextInput;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
 class NarratorForm

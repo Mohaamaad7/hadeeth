@@ -20,13 +20,30 @@ class HadithResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $recordTitleAttribute = 'content';
-
     protected static ?string $navigationLabel = 'الأحاديث';
 
     protected static ?string $modelLabel = 'حديث';
 
     protected static ?string $pluralModelLabel = 'الأحاديث';
+
+    public static function getRecordTitle(?\Illuminate\Database\Eloquent\Model $record): ?string
+    {
+        if (!$record) {
+            return null;
+        }
+
+        $title = 'الحديث';
+        
+        if ($record->number_in_book) {
+            $title .= ' رقم ' . $record->number_in_book;
+        }
+        
+        if ($record->book) {
+            $title .= ' - ' . $record->book->name;
+        }
+        
+        return $title;
+    }
 
     public static function form(Schema $schema): Schema
     {

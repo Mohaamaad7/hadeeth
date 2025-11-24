@@ -18,16 +18,28 @@ class BooksTable
                     ->searchable()
                     ->sortable()
                     ->label('اسم الكتاب'),
+                
+                TextColumn::make('parent.name')
+                    ->searchable()
+                    ->sortable()
+                    ->label('الكتاب الرئيسي')
+                    ->placeholder('—')
+                    ->badge()
+                    ->color('success'),
+                
                 TextColumn::make('sort_order')
                     ->sortable()
                     ->label('الترتيب'),
+                
                 TextColumn::make('hadiths_count')
                     ->counts('hadiths')
                     ->label('عدد الأحاديث'),
+                
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(hidden: true),
+                    ->toggleable()
+                    ->hidden(),
             ])
             ->filters([
                 //
