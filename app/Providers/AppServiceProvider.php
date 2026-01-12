@@ -5,7 +5,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Models\Hadith;
+use App\Models\Narrator;
 use App\Observers\HadithObserver;
+use App\Observers\NarratorObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,5 +25,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Hadith::observe(HadithObserver::class);
+        Narrator::observe(NarratorObserver::class);
     }
 }

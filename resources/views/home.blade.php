@@ -12,7 +12,7 @@
                 </p>
 
                 <!-- Search Bar -->
-                <form action="/search" method="GET" class="relative">
+                <form action="{{ route('search') }}" method="GET" class="relative">
                     <div class="flex items-center bg-white rounded-full shadow-2xl overflow-hidden">
                         <input 
                             type="text" 
@@ -20,6 +20,7 @@
                             placeholder="ابحث في الأحاديث..." 
                             class="flex-1 px-8 py-5 text-lg text-[--color-primary] focus:outline-none font-[family-name:--font-arabic]"
                             required
+                            minlength="2"
                         >
                         <button 
                             type="submit" 

@@ -7,25 +7,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Traits\HasDiacriticStripper;
-use Laravel\Scout\Searchable;
 
 
 class Hadith extends Model
 {
-    use HasDiacriticStripper, Searchable;
-    /**
-     * Get the data array for full-text search.
-     */
-    public function toSearchableArray(): array
-    {
-        return [
-            'content_searchable' => $this->content_searchable,
-            'grade' => $this->grade,
-            'narrator_name' => $this->narrator?->name,
-            'book_name' => $this->book?->name,
-        ];
-    }
+    use HasDiacriticStripper;
 
     protected $fillable = [
         'content',
@@ -35,6 +23,15 @@ class Hadith extends Model
         'grade',
         'book_id',
         'narrator_id',
+        'sharh_context',
+        'sharh_obstacles',
+        'sharh_commands',
+        'sharh_conclusion',
+    ];
+
+    protected $casts = [
+        'sharh_obstacles' => 'array',
+        'sharh_commands' => 'array',
     ];
 
     /**
@@ -59,5 +56,13 @@ class Hadith extends Model
     public function sources(): BelongsToMany
     {
         return $this->belongsToMany(Source::class, 'hadith_source');
+    }
+
+    /**
+     * Get the chains (سلاسل الإسناد) for this hadith.
+     */
+    public function chains(): HasMany
+    {
+        return $this->hasMany(HadithChain::class);
     }
 }

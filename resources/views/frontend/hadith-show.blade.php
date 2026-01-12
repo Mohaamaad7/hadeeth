@@ -1,0 +1,378 @@
+@extends('layouts.frontend')
+
+@section('title', 'حديث رقم ' . $hadith->number_in_book . ' - موسوعة الحديث الصحيح')
+
+@section('content')
+    <!-- Header / Navbar -->
+    <nav class="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
+                <a href="{{ route('home') }}" class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-100 transform rotate-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 -rotate-3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                        </svg>
+                    </div>
+                    <span class="text-lg font-black text-emerald-950 tracking-tight hidden md:block">موسوعة الحديث الصحيح</span>
+                </a>
+
+                <!-- Search Bar -->
+                <div class="flex-grow max-w-xl mx-4 hidden md:block">
+                    <form action="{{ route('search') }}" method="GET" class="relative">
+                        <input type="text" name="q"
+                            class="w-full py-2.5 pr-10 pl-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                            placeholder="بحث جديد...">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-gray-400 text-sm"></i>
+                    </form>
+                </div>
+
+                <!-- Auth & Mobile Menu -->
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('hadith.random') }}" class="hidden md:flex items-center gap-2 text-gray-600 font-bold px-4 py-2 hover:text-emerald-600 transition-colors">
+                        <i class="fa-solid fa-shuffle"></i> عشوائي
+                    </a>
+                    <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-emerald-600 text-xl">
+                        <i class="fa-solid fa-bars-staggered"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 transform translate-x-full transition-transform duration-300 flex flex-col items-center justify-center md:hidden">
+        <button id="close-menu" class="absolute top-6 left-6 text-3xl text-gray-500 hover:text-red-500">
+            <i class="fa-solid fa-times"></i>
+        </button>
+        <nav class="flex flex-col items-center gap-6 text-xl font-bold text-gray-700">
+            <a href="{{ route('home') }}" class="hover:text-emerald-600">الرئيسية</a>
+            <a href="#" class="hover:text-emerald-600">الكتب</a>
+            <a href="#" class="hover:text-emerald-600">الرواة</a>
+            <a href="{{ route('hadith.random') }}" class="hover:text-emerald-600">حديث عشوائي</a>
+        </nav>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+
+        <!-- Breadcrumb -->
+        <div class="flex items-center gap-2 text-sm text-gray-500 mb-6 font-medium animate-up">
+            <a href="{{ route('home') }}" class="hover:text-emerald-600 transition-colors">الرئيسية</a>
+            <i class="fa-solid fa-chevron-left text-xs text-emerald-300"></i>
+            @if($hadith->book)
+                <a href="{{ route('search') }}?book_id={{ $hadith->book_id }}"
+                    class="hover:text-emerald-600 transition-colors">{{ $hadith->book->name }}</a>
+                <i class="fa-solid fa-chevron-left text-xs text-emerald-300"></i>
+            @endif
+            <span class="text-emerald-700 font-bold">حديث رقم {{ $hadith->number_in_book }}</span>
+        </div>
+
+        <!-- Main Hadith Card -->
+        <section class="bg-white rounded-3xl shadow-xl overflow-hidden mb-8 animate-up border border-gray-100 relative">
+            <!-- Header Stripe -->
+            <div class="h-2 bg-gradient-to-r from-emerald-400 via-emerald-600 to-blue-500"></div>
+
+            <div class="p-8 md:p-12 relative">
+                <!-- Decorative Corner -->
+                <div class="absolute top-4 left-4 opacity-10">
+                    <i class="fa-solid fa-mosque text-6xl text-emerald-500"></i>
+                </div>
+
+                <!-- Metadata Badges -->
+                <div class="flex flex-wrap gap-3 mb-6 relative z-10">
+                    <span class="bg-emerald-50 text-emerald-800 px-4 py-1.5 rounded-full text-sm font-bold border border-emerald-200">
+                        <i class="fa-solid fa-hashtag ml-1 text-emerald-500"></i> حديث رقم: {{ $hadith->number_in_book }}
+                    </span>
+                    @php
+                        $gradeColor = match($hadith->grade) {
+                            'صحيح' => 'green',
+                            'حسن' => 'blue',
+                            default => 'yellow'
+                        };
+                    @endphp
+                    <span class="bg-{{ $gradeColor }}-50 text-{{ $gradeColor }}-700 px-4 py-1.5 rounded-full text-sm font-bold border border-{{ $gradeColor }}-200">
+                        <i class="fa-solid fa-check-circle ml-1"></i> {{ $hadith->grade }}
+                    </span>
+                    @if($hadith->narrator)
+                        <span class="bg-gray-50 text-gray-600 px-4 py-1.5 rounded-full text-sm font-bold border border-gray-200">
+                            <i class="fa-solid fa-user ml-1 text-gray-400"></i> الصحابي: {{ $hadith->narrator->name }}
+                        </span>
+                    @endif
+                    @if($hadith->book)
+                        <span class="bg-purple-50 text-purple-600 px-4 py-1.5 rounded-full text-sm font-bold border border-purple-200">
+                            <i class="fa-solid fa-book ml-1"></i> {{ $hadith->book->name }}
+                        </span>
+                    @endif
+                </div>
+
+                <!-- The Hadith Text -->
+                <div class="hadith-frame bg-emerald-50/30 p-8 md:p-10 rounded-2xl text-center my-6">
+                    <div class="ornament-corner top-left"></div>
+                    <div class="ornament-corner top-right"></div>
+                    <div class="ornament-corner bottom-left"></div>
+                    <div class="ornament-corner bottom-right"></div>
+
+                    <p class="font-scheherazade text-2xl md:text-3xl leading-[2.5] text-gray-800 text-justify md:text-center relative z-10">
+                        « {{ $hadith->content }} »
+                    </p>
+                </div>
+
+                <!-- Takhrij / Sources -->
+                @if($hadith->sources->count() > 0)
+                    <div class="mt-8 pt-6 border-t border-dashed border-gray-200 text-sm text-gray-600 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <i class="fa-solid fa-book-bookmark text-emerald-500 text-lg"></i>
+                            <span class="font-bold">التخريج:</span>
+                            @foreach($hadith->sources as $source)
+                                <span class="bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold">{{ $source->name }} ({{ $source->code }})</span>
+                            @endforeach
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="copyHadith()" class="text-gray-400 hover:text-emerald-600 transition-colors" title="نسخ الحديث">
+                                <i class="fa-regular fa-copy text-xl"></i>
+                            </button>
+                            <button onclick="shareHadith()" class="text-gray-400 hover:text-emerald-600 transition-colors" title="مشاركة">
+                                <i class="fa-solid fa-share-nodes text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </section>
+
+        <!-- Sanad Chains (سلاسل الإسناد) - Dynamic -->
+        @if($hadith->chains->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-up" style="animation-delay: 0.1s;">
+                @foreach($hadith->chains as $index => $chain)
+                    <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-200 transition-colors">
+                        <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
+                            <span class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-sm">{{ $index + 1 }}</span>
+                            <h3 class="font-tajawal font-bold text-lg text-gray-800">طريق {{ $chain->source->name }}</h3>
+                        </div>
+                        <div class="pr-2">
+                            @foreach($chain->narrators as $narrator)
+                                <div class="timeline-node {{ $loop->last ? '' : 'pb-4' }}">
+                                    @if($narrator->pivot->role)
+                                        <span class="text-sm text-gray-500 block mb-1">{{ $narrator->pivot->role }}</span>
+                                    @endif
+                                    @if($loop->last)
+                                        <span class="font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg">{{ $narrator->name }}</span>
+                                    @else
+                                        <a href="{{ route('narrator.show', $narrator->id) }}" target="_blank"
+                                            class="font-scheherazade text-lg text-emerald-700 hover:text-emerald-500 hover:underline transition-colors">
+                                            {{ $narrator->name }}
+                                        </a>
+                                    @endif
+                                    @if(!$loop->first && !$loop->last)
+                                        @php
+                                            $appearsInOtherChains = false;
+                                            foreach ($hadith->chains as $otherChain) {
+                                                if ($otherChain->id !== $chain->id) {
+                                                    if ($otherChain->narrators->contains('id', $narrator->id)) {
+                                                        $appearsInOtherChains = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        @endphp
+                                        @if($appearsInOtherChains)
+                                            <span class="text-xs text-gray-400 mr-2 bg-gray-50 px-2 py-0.5 rounded">(ملتقى الطريقين)</span>
+                                        @endif
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
+                @endforeach
+            </div>
+        @endif
+
+        <!-- Sharh (Structured Explanation) -->
+        @if($hadith->sharh_context || $hadith->sharh_obstacles || $hadith->sharh_commands || $hadith->sharh_conclusion)
+            <section class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden animate-up mb-8"
+                style="animation-delay: 0.2s;">
+                <div class="bg-emerald-50/50 p-5 border-b border-emerald-100 flex items-center gap-3">
+                    <i class="fa-solid fa-layer-group text-emerald-600 text-xl"></i>
+                    <h2 class="font-tajawal font-bold text-xl text-gray-800">شرح الحديث وفوائده</h2>
+                </div>
+
+                <div class="p-6 md:p-8 space-y-10">
+
+                    <!-- Section 1: Context -->
+                    @if($hadith->sharh_context)
+                        <div>
+                            <h3 class="flex items-center gap-2 text-lg font-bold text-gray-800 mb-3 font-tajawal">
+                                <span class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                    <i class="fa-solid fa-mosque"></i>
+                                </span>
+                                سياق الحديث وموضوعه
+                            </h3>
+                            <p class="text-gray-600 leading-relaxed pr-12 text-justify">
+                                {{ $hadith->sharh_context }}
+                            </p>
+                        </div>
+                    @endif
+
+                    <!-- Section 2: Obstacles (Table) -->
+                    @if($hadith->sharh_obstacles && count($hadith->sharh_obstacles) > 0)
+                        <div>
+                            <h3 class="flex items-center gap-2 text-lg font-bold text-red-800 mb-4 font-tajawal">
+                                <span class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+                                    <i class="fa-solid fa-ban"></i>
+                                </span>
+                                الموانع والمشاكل المذكورة
+                            </h3>
+                            <div class="overflow-x-auto rounded-2xl border border-gray-200">
+                                <table class="min-w-full text-right">
+                                    <thead class="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                        <tr>
+                                            <th class="px-6 py-4 font-tajawal w-1/4">المانع</th>
+                                            <th class="px-6 py-4 font-tajawal">الوصف والتفصيل</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-100">
+                                        @foreach($hadith->sharh_obstacles as $obstacle)
+                                            <tr class="hover:bg-emerald-50/30 transition">
+                                                <td class="px-6 py-4 font-bold text-gray-800">{{ $obstacle['title'] }}</td>
+                                                <td class="px-6 py-4 text-gray-600">{{ $obstacle['description'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Section 3: Commands (Grid) -->
+                    @if($hadith->sharh_commands && count($hadith->sharh_commands) > 0)
+                        <div>
+                            <h3 class="flex items-center gap-2 text-lg font-bold text-green-800 mb-4 font-tajawal">
+                                <span class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
+                                    <i class="fa-solid fa-list-check"></i>
+                                </span>
+                                الأوامر والحلول
+                            </h3>
+                            <div class="grid md:grid-cols-3 gap-4">
+                                @foreach($hadith->sharh_commands as $index => $command)
+                                    <div class="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-md transition duration-300 border-t-4 border-t-emerald-500">
+                                        <h4 class="font-bold text-gray-800 mb-2 border-b pb-2 font-tajawal">{{ $index + 1 }}. {{ $command['title'] }}</h4>
+                                        <p class="text-sm text-gray-600 mb-2"><span class="font-bold text-emerald-600">الحكم:</span> "{{ $command['ruling'] }}"</p>
+                                        <p class="text-xs text-gray-500 leading-relaxed">{{ $command['explanation'] }}</p>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Section 4: Conclusion -->
+                    @if($hadith->sharh_conclusion)
+                        <div class="bg-gradient-to-br from-gray-50 to-emerald-50 p-6 rounded-2xl border border-emerald-200">
+                            <h3 class="flex items-center gap-2 text-lg font-bold text-gray-800 mb-3 font-tajawal">
+                                <i class="fa-solid fa-lightbulb text-emerald-500"></i> الخلاصة والأحكام المستنبطة
+                            </h3>
+                            <div class="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
+                                {{ $hadith->sharh_conclusion }}
+                            </div>
+                        </div>
+                    @endif
+
+                </div>
+            </section>
+        @endif
+
+        <!-- Narrator Bio (if available) -->
+        @if($hadith->narrator && $hadith->narrator->bio)
+            <section class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 mb-8 animate-up"
+                style="animation-delay: 0.1s;">
+                <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
+                    <i class="fa-solid fa-user-tie text-emerald-500 text-xl"></i>
+                    <h3 class="font-tajawal font-bold text-xl text-gray-800">نبذة عن الصحابي</h3>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 text-2xl">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-lg text-gray-800 mb-2">{{ $hadith->narrator->name }}</h4>
+                        @if($hadith->narrator->grade_status)
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold mb-3"
+                                style="background-color: {{ $hadith->narrator->color_code }}20; color: {{ $hadith->narrator->color_code }}; border: 1px solid {{ $hadith->narrator->color_code }};">
+                                {{ $hadith->narrator->grade_status }}
+                            </span>
+                        @endif
+                        <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">{{ $hadith->narrator->bio }}</p>
+                    </div>
+                </div>
+            </section>
+        @endif
+
+        <!-- Related Hadiths -->
+        @if($relatedHadiths->count() > 0)
+            <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 animate-up"
+                style="animation-delay: 0.2s;">
+                <h3 class="font-tajawal font-bold text-xl text-gray-800 mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-emerald-500"></i>
+                    أحاديث ذات صلة
+                </h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    @foreach($relatedHadiths as $related)
+                        <a href="{{ route('hadith.show', $related->id) }}"
+                            class="block p-5 border border-gray-100 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all group">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold">#{{ $related->number_in_book }}</span>
+                                <span class="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full font-bold">{{ $related->grade }}</span>
+                            </div>
+                            <p class="font-scheherazade text-sm text-gray-700 line-clamp-2 group-hover:text-gray-900">
+                                {{ Str::limit($related->content, 100) }}
+                            </p>
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-100 py-10 mt-10">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                </div>
+                <h4 class="text-lg font-black text-gray-900">موسوعة الحديث الصحيح</h4>
+            </div>
+            <p class="text-gray-400 text-sm">© {{ date('Y') }} جميع الحقوق محفوظة</p>
+        </div>
+    </footer>
+@endsection
+
+@push('scripts')
+    <script>
+        function copyHadith() {
+            const hadithText = `{{ $hadith->content }}`;
+            navigator.clipboard.writeText(hadithText).then(() => {
+                // Show a nice toast instead of alert
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-lg z-50 font-bold';
+                toast.textContent = 'تم نسخ الحديث ✓';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+            });
+        }
+
+        function shareHadith() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'حديث رقم {{ $hadith->number_in_book }}',
+                    text: '{{ Str::limit($hadith->content, 100) }}',
+                    url: window.location.href
+                });
+            } else {
+                copyHadith();
+            }
+        }
+    </script>
+@endpush
