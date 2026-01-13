@@ -16,25 +16,25 @@ class HadithParser
         'ت' => 'سنن الترمذي',
         'ن' => 'سنن النسائي',
         'هـ' => 'سنن ابن ماجه',
-        
+
         // المسانيد
         'حم' => 'مسند أحمد',
         'عم' => 'زوائد عبد الله بن أحمد',
         'ع' => 'مسند أبي يعلى',
-        
+
         // الحاكم
         'ك' => 'المستدرك للحاكم',
-        
+
         // البخاري (كتب أخرى)
         'خد' => 'الأدب المفرد للبخاري',
         'تخ' => 'التاريخ الكبير للبخاري',
-        
+
         // ابن حبان والطبراني
         'حب' => 'صحيح ابن حبان',
         'طب' => 'المعجم الكبير للطبراني',
         'طس' => 'المعجم الأوسط للطبراني',
         'طص' => 'المعجم الصغير للطبراني',
-        
+
         // السنن والمصنفات
         'ص' => 'سنن سعيد بن منصور',
         'ش' => 'مصنف ابن أبي شيبة',
@@ -42,11 +42,11 @@ class HadithParser
         'قط' => 'سنن الدارقطني',
         'هق' => 'السنن الكبرى للبيهقي',
         'هب' => 'شعب الإيمان للبيهقي',
-        
+
         // كتب الرجال
         'عد' => 'الكامل لابن عدي',
         'عق' => 'الضعفاء للعقيلي',
-        
+
         // كتب متنوعة
         'فر' => 'مسند الفردوس للديلمي',
         'حل' => 'حلية الأولياء لأبي نعيم',
@@ -117,9 +117,30 @@ class HadithParser
     {
         // Find the last occurrence of "عن" followed by text
         if (preg_match('/عن\s+([^\[\(]+?)(?:\s*\[|\s*\(|$)/u', $text, $matches)) {
-            return trim($matches[1]);
+            return $this->normalizeNarrator(trim($matches[1]));
         }
         return null;
+    }
+
+    /**
+     * Normalize narrator name (handle Arabic grammar: Abi/Aba -> Abu).
+     */
+    private function normalizeNarrator(string $name): string
+    {
+        $name = trim($name);
+
+        // قاعدة ذكية: تحويل "أبي" إلى "أبو" إلا إذا تبعتها "بن" (مثل: أبي بن كعب)
+        // لأن "أبي بن ..." تعني غالباً الاسم "أُبيّ" وليس الكنية
+        if (preg_match('/^أبي\s+(?!بن)/u', $name)) {
+            $name = preg_replace('/^أبي\s+/u', 'أبو ', $name);
+        }
+
+        // تحويل "أبا" إلى "أبو" (حالة النصب)
+        if (preg_match('/^أبا\s+/u', $name)) {
+            $name = preg_replace('/^أبا\s+/u', 'أبو ', $name);
+        }
+
+        return $name;
     }
 
     /**
@@ -128,7 +149,7 @@ class HadithParser
     private function extractSourceCodes(string $text): array
     {
         $codes = [];
-        
+
         // Match parentheses containing source codes (letters/symbols, not grade words)
         if (preg_match_all('/\(([^\)]+)\)/u', $text, $matches)) {
             foreach ($matches[1] as $match) {
@@ -136,22 +157,23 @@ class HadithParser
                 if (preg_match('/^(صحيح|حسن|ضعيف|موضوع)$/u', trim($match))) {
                     continue;
                 }
-                
+
                 // Extract individual codes (space-separated or continuous)
                 $match = trim($match);
-                
+
                 // Check for group codes first
                 if (isset($this->groupExpansion[$match])) {
                     $codes = array_merge($codes, $this->groupExpansion[$match]);
                     continue;
                 }
-                
+
                 // Split by spaces or extract individual Arabic/Latin letters
                 $parts = preg_split('/\s+/u', $match);
                 foreach ($parts as $part) {
                     $part = trim($part);
-                    if (empty($part)) continue;
-                    
+                    if (empty($part))
+                        continue;
+
                     // Check if it's a group code
                     if (isset($this->groupExpansion[$part])) {
                         $codes = array_merge($codes, $this->groupExpansion[$part]);
@@ -176,7 +198,7 @@ class HadithParser
                 }
             }
         }
-        
+
         return array_unique($codes);
     }
 
@@ -201,19 +223,19 @@ class HadithParser
     {
         // Remove number [123]
         $text = preg_replace('/\[\d+\]/u', '', $text);
-        
+
         // Remove grade (صحيح), (حسن), etc.
         $text = preg_replace('/\((صحيح|حسن|ضعيف|موضوع)\)/u', '', $text);
-        
+
         // Remove source codes in parentheses (but keep other parentheses)
         $text = preg_replace('/\([^\)]*[a-zأ-ي]+[^\)]*\)/u', '', $text);
-        
+
         // Remove narrator prefix "عن ..." from the end
         $text = preg_replace('/عن\s+[^\[\(]+$/u', '', $text);
-        
+
         // Clean up extra spaces
         $text = preg_replace('/\s+/u', ' ', $text);
-        
+
         return trim($text);
     }
 }
