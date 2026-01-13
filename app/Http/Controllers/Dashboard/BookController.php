@@ -36,9 +36,22 @@ class BookController extends Controller
             $query->whereNotNull('parent_id');
         }
 
-        $books = $query->orderBy('sort_order')->paginate(20);
+        // Filter by parent book
+        if ($parentId = $request->get('parent_id')) {
+            $query->where('parent_id', $parentId);
+        }
 
-        return view('dashboard.books.index', compact('books'));
+        // Per page (default 20, max 500)
+        $perPage = min((int) $request->get('per_page', 20), 500);
+        if ($perPage <= 0)
+            $perPage = 20;
+
+        // Get main books for filter dropdown
+        $mainBooks = Book::whereNull('parent_id')->orderBy('sort_order')->get();
+
+        $books = $query->orderBy('sort_order')->paginate($perPage)->withQueryString();
+
+        return view('dashboard.books.index', compact('books', 'mainBooks', 'perPage'));
     }
 
     /**
@@ -47,7 +60,7 @@ class BookController extends Controller
     public function create(): View
     {
         $mainBooks = Book::whereNull('parent_id')->orderBy('sort_order')->get();
-        
+
         return view('dashboard.books.create', compact('mainBooks'));
     }
 
@@ -80,11 +93,15 @@ class BookController extends Controller
      */
     public function show(Book $book): View
     {
-        $book->load(['parent', 'children' => function($query) {
-            $query->withCount('hadiths')->orderBy('sort_order');
-        }, 'hadiths' => function($query) {
-            $query->with(['narrator', 'sources'])->orderBy('number_in_book')->take(10);
-        }]);
+        $book->load([
+            'parent',
+            'children' => function ($query) {
+                $query->withCount('hadiths')->orderBy('sort_order');
+            },
+            'hadiths' => function ($query) {
+                $query->with(['narrator', 'sources'])->orderBy('number_in_book')->take(10);
+            }
+        ]);
 
         return view('dashboard.books.show', compact('book'));
     }

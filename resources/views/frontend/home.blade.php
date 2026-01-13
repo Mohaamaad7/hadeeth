@@ -31,7 +31,8 @@
                         class="text-emerald-700 font-bold hover:text-emerald-500 transition-colors">الرئيسية</a>
                     <a href="#" class="text-gray-500 font-semibold hover:text-emerald-600 transition-colors">الكتب</a>
                     <a href="#" class="text-gray-500 font-semibold hover:text-emerald-600 transition-colors">الرواة</a>
-                    <a href="#" class="text-gray-500 font-semibold hover:text-emerald-600 transition-colors">عن المشروع</a>
+                    <a href="{{ route('about') }}"
+                        class="text-gray-500 font-semibold hover:text-emerald-600 transition-colors">عن المشروع</a>
                 </div>
 
                 <!-- Auth & Mobile Menu -->
@@ -59,7 +60,7 @@
             <a href="{{ route('home') }}" class="hover:text-emerald-600">الرئيسية</a>
             <a href="#" class="hover:text-emerald-600">الكتب</a>
             <a href="#" class="hover:text-emerald-600">الرواة</a>
-            <a href="#" class="hover:text-emerald-600">عن المشروع</a>
+            <a href="{{ route('about') }}" class="hover:text-emerald-600">عن المشروع</a>
             <a href="{{ route('hadith.random') }}" class="hover:text-emerald-600">حديث عشوائي</a>
         </nav>
     </div>
@@ -117,19 +118,22 @@
             <div class="flex flex-wrap justify-center gap-12 text-center">
                 <div class="group cursor-pointer">
                     <div class="text-4xl font-black text-emerald-600 group-hover:text-emerald-700 transition-colors">
-                        {{ number_format($totalHadiths) }}</div>
+                        {{ number_format($totalHadiths) }}
+                    </div>
                     <div class="text-sm text-gray-500 mt-1 font-semibold">حديث</div>
                 </div>
                 <div class="w-px h-16 bg-gray-200"></div>
                 <div class="group cursor-pointer">
                     <div class="text-4xl font-black text-emerald-600 group-hover:text-emerald-700 transition-colors">
-                        {{ number_format($totalBooks) }}</div>
+                        {{ number_format($totalBooks) }}
+                    </div>
                     <div class="text-sm text-gray-500 mt-1 font-semibold">كتاب</div>
                 </div>
                 <div class="w-px h-16 bg-gray-200"></div>
                 <div class="group cursor-pointer">
                     <div class="text-4xl font-black text-emerald-600 group-hover:text-emerald-700 transition-colors">
-                        {{ number_format($totalSources) }}</div>
+                        {{ number_format($totalSources) }}
+                    </div>
                     <div class="text-sm text-gray-500 mt-1 font-semibold">مصدر</div>
                 </div>
             </div>

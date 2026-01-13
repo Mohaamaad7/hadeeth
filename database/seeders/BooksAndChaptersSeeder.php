@@ -566,21 +566,19 @@ class BooksAndChaptersSeeder extends Seeder
         $sortOrder = 1;
 
         foreach ($booksData as $bookData) {
-            // Create main book
-            $book = Book::create([
-                'name' => $bookData['name'],
-                'sort_order' => $sortOrder++,
-                'parent_id' => null,
-            ]);
+            // Create or update main book (won't delete existing, won't duplicate)
+            $book = Book::updateOrCreate(
+                ['name' => $bookData['name'], 'parent_id' => null],
+                ['sort_order' => $sortOrder++]
+            );
 
-            // Create chapters
+            // Create or update chapters
             $chapterOrder = 1;
             foreach ($bookData['chapters'] as $chapterName) {
-                Book::create([
-                    'name' => $chapterName,
-                    'sort_order' => $chapterOrder++,
-                    'parent_id' => $book->id,
-                ]);
+                Book::updateOrCreate(
+                    ['name' => $chapterName, 'parent_id' => $book->id],
+                    ['sort_order' => $chapterOrder++]
+                );
             }
         }
     }

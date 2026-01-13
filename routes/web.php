@@ -21,8 +21,17 @@ Route::get('/search', [FrontendHadithController::class, 'search'])->name('search
 Route::get('/hadith/{id}', [FrontendHadithController::class, 'show'])->name('hadith.show');
 Route::get('/random-hadith', [FrontendHadithController::class, 'random'])->name('hadith.random');
 Route::get('/narrator/{id}', [FrontendNarratorController::class, 'show'])->name('narrator.show');
+Route::get('/about', function () {
+    return view('frontend.about');
+})->name('about');
 
-Auth::routes();
+// Custom Auth Routes with hidden login URL for security
+Auth::routes(['login' => false, 'register' => false]);
+
+// Hidden login route - /reyada instead of /login
+Route::get('/reyada', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/reyada', [App\Http\Controllers\Auth\LoginController::class, 'login']);
+Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
