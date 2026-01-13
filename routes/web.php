@@ -5,6 +5,7 @@ use App\Http\Controllers\Dashboard\HadithController as DashboardHadithController
 use App\Http\Controllers\Dashboard\BookController;
 use App\Http\Controllers\Dashboard\NarratorController;
 use App\Http\Controllers\Dashboard\SourceController;
+use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\HadithController as FrontendHadithController;
 use App\Http\Controllers\Frontend\NarratorController as FrontendNarratorController;
