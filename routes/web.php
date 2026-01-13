@@ -8,7 +8,12 @@ use App\Http\Controllers\Dashboard\SourceController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\HadithController as FrontendHadithController;
 use App\Http\Controllers\Frontend\NarratorController as FrontendNarratorController;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
+
+// SEO Routes
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
 
 // Frontend Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -21,21 +26,21 @@ Auth::routes();
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // Dashboard CRUD Routes
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
         // Books CRUD
         Route::resource('books', BookController::class);
-        
+
         // Narrators CRUD
         Route::resource('narrators', NarratorController::class);
-        
+
         // Sources CRUD
         Route::resource('sources', SourceController::class);
-        
+
         // Users CRUD
         Route::resource('users', UserController::class);
-        
+
         // Hadiths CRUD
         Route::resource('hadiths', DashboardHadithController::class);
         Route::post('hadiths/parse', [DashboardHadithController::class, 'parseRawText'])->name('hadiths.parse');

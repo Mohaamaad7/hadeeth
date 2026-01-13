@@ -4,20 +4,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'موسوعة الحديث الصحيح - محرك بحث الأحاديث النبوية')</title>
 
-    <!-- Tailwind CSS -->
+    {{-- Primary Meta Tags --}}
+    <title>@yield('title', 'موسوعة الحديث الصحيح - محرك بحث الأحاديث النبوية الشريفة')</title>
+    <meta name="title" content="@yield('title', 'موسوعة الحديث الصحيح - محرك بحث الأحاديث النبوية الشريفة')">
+    <meta name="description"
+        content="@yield('meta_description', 'موسوعة شاملة للأحاديث النبوية الصحيحة مع التخريج والشرح وسلاسل الإسناد. ابحث في آلاف الأحاديث من صحيح البخاري ومسلم والسنن.')">
+    <meta name="keywords"
+        content="@yield('meta_keywords', 'حديث, أحاديث, الحديث النبوي, صحيح البخاري, صحيح مسلم, السنة النبوية, الأحاديث الصحيحة, موسوعة الحديث')">
+    <meta name="author" content="موسوعة الحديث الصحيح">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ url()->current() }}">
+    <meta name="language" content="Arabic">
+    <meta name="revisit-after" content="1 days">
+
+    {{-- Hreflang for Arabic --}}
+    <link rel="alternate" hreflang="ar" href="{{ url()->current() }}">
+    <link rel="alternate" hreflang="x-default" href="{{ url()->current() }}">
+
+    {{-- Open Graph / Facebook --}}
+    <meta property="og:type" content="@yield('og_type', 'website')">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="@yield('og_title', 'موسوعة الحديث الصحيح')">
+    <meta property="og:description"
+        content="@yield('og_description', 'موسوعة شاملة للأحاديث النبوية الصحيحة مع التخريج والشرح')">
+    <meta property="og:image" content="@yield('og_image', asset('images/og-default.png'))">
+    <meta property="og:locale" content="ar_AR">
+    <meta property="og:site_name" content="موسوعة الحديث الصحيح">
+
+    {{-- Twitter Card --}}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ url()->current() }}">
+    <meta name="twitter:title" content="@yield('twitter_title', 'موسوعة الحديث الصحيح')">
+    <meta name="twitter:description" content="@yield('twitter_description', 'موسوعة شاملة للأحاديث النبوية الصحيحة')">
+    <meta name="twitter:image" content="@yield('twitter_image', asset('images/og-default.png'))">
+
+    {{-- Favicon --}}
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+
+    {{-- Google Analytics 4 --}}
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8PD0HL5BVE"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8PD0HL5BVE');
+    </script>
+
+    {{-- Structured Data Stack --}}
+    @stack('structured_data')
+
+    {{-- Tailwind CSS --}}
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Google Fonts -->
+    {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Scheherazade+New:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
 
-    <!-- Font Awesome -->
+    {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script>

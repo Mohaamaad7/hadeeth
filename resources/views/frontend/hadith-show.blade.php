@@ -1,6 +1,88 @@
 @extends('layouts.frontend')
 
-@section('title', 'حديث رقم ' . $hadith->number_in_book . ' - موسوعة الحديث الصحيح')
+@php
+    $pageTitle = 'حديث رقم ' . $hadith->number_in_book . ' - ' . ($hadith->narrator?->name ?? 'موسوعة الحديث الصحيح');
+    $metaDescription = Str::limit($hadith->content, 160) . ' - حديث ' . $hadith->grade . ' من رواية ' . ($hadith->narrator?->name ?? 'غير محدد');
+    $ogImage = asset('images/og-hadith.png'); // Default OG image
+@endphp
+
+@section('title', $pageTitle)
+
+@section('meta_description', $metaDescription)
+
+@section('meta_keywords', 'حديث رقم ' . $hadith->number_in_book . ', ' . ($hadith->narrator?->name ?? '') . ', ' . ($hadith->book?->name ?? '') . ', حديث ' . $hadith->grade . ', الأحاديث النبوية')
+
+@section('og_type', 'article')
+@section('og_title', $pageTitle)
+@section('og_description', $metaDescription)
+@section('og_image', $ogImage)
+
+@section('twitter_title', $pageTitle)
+@section('twitter_description', $metaDescription)
+@section('twitter_image', $ogImage)
+
+@push('structured_data')
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "حديث رقم {{ $hadith->number_in_book }}",
+    "description": "{{ Str::limit($hadith->content, 200) }}",
+    "author": {
+        "@type": "Person",
+        "name": "{{ $hadith->narrator?->name ?? 'غير محدد' }}"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "موسوعة الحديث الصحيح",
+        "url": "{{ url('/') }}"
+    },
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "{{ url()->current() }}"
+    },
+    "datePublished": "{{ $hadith->created_at?->toIso8601String() ?? now()->toIso8601String() }}",
+    "dateModified": "{{ $hadith->updated_at?->toIso8601String() ?? now()->toIso8601String() }}",
+    "articleBody": "{{ $hadith->content }}",
+    "keywords": ["حديث", "{{ $hadith->grade }}", "{{ $hadith->narrator?->name ?? '' }}", "{{ $hadith->book?->name ?? '' }}"]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "الرئيسية",
+            "item": "{{ url('/') }}"
+        },
+        @if($hadith->book)
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "{{ $hadith->book->name }}",
+            "item": "{{ url('/') }}"
+        },
+        {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "حديث رقم {{ $hadith->number_in_book }}",
+            "item": "{{ url()->current() }}"
+        }
+        @else
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "حديث رقم {{ $hadith->number_in_book }}",
+            "item": "{{ url()->current() }}"
+        }
+        @endif
+    ]
+}
+</script>
+@endpush
 
 @section('content')
     <!-- Header / Navbar -->
@@ -112,7 +194,7 @@
                     <div class="ornament-corner bottom-left"></div>
                     <div class="ornament-corner bottom-right"></div>
 
-                    <p class="font-scheherazade text-2xl md:text-3xl leading-[2.5] text-gray-800 text-justify md:text-center relative z-10">
+                    <p class="font-scheherazade text-2xl md:text-3xl leading-[3.5] text-gray-800 text-justify md:text-center relative z-10">
                         « {{ $hadith->content }} »
                     </p>
                 </div>
@@ -131,7 +213,7 @@
                             <button onclick="copyHadith()" class="text-gray-400 hover:text-emerald-600 transition-colors" title="نسخ الحديث">
                                 <i class="fa-regular fa-copy text-xl"></i>
                             </button>
-                            <button onclick="shareHadith()" class="text-gray-400 hover:text-emerald-600 transition-colors" title="مشاركة">
+                            <button onclick="openShareModal()" class="text-gray-400 hover:text-emerald-600 transition-colors" title="مشاركة">
                                 <i class="fa-solid fa-share-nodes text-xl"></i>
                             </button>
                         </div>
@@ -347,32 +429,221 @@
             <p class="text-gray-400 text-sm">© {{ date('Y') }} جميع الحقوق محفوظة</p>
         </div>
     </footer>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeShareModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-md mx-4 transform scale-95 opacity-0 transition-all duration-300" id="shareModalContent">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-black text-gray-900">
+                    <i class="fa-solid fa-share-nodes text-emerald-500 ml-2"></i>
+                    مشاركة الحديث
+                </h3>
+                <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Share Buttons Grid -->
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <!-- WhatsApp -->
+                <button onclick="shareToWhatsApp()" class="flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#20bd5a] text-white py-4 px-4 rounded-2xl font-bold transition-all hover:scale-105 shadow-lg shadow-green-200">
+                    <i class="fa-brands fa-whatsapp text-2xl"></i>
+                    <span>واتساب</span>
+                </button>
+                
+                <!-- Twitter/X -->
+                <button onclick="shareToTwitter()" class="flex items-center justify-center gap-3 bg-black hover:bg-gray-800 text-white py-4 px-4 rounded-2xl font-bold transition-all hover:scale-105 shadow-lg">
+                    <i class="fa-brands fa-x-twitter text-2xl"></i>
+                    <span>تويتر</span>
+                </button>
+                
+                <!-- Telegram -->
+                <button onclick="shareToTelegram()" class="flex items-center justify-center gap-3 bg-[#0088cc] hover:bg-[#0077b5] text-white py-4 px-4 rounded-2xl font-bold transition-all hover:scale-105 shadow-lg shadow-blue-200">
+                    <i class="fa-brands fa-telegram text-2xl"></i>
+                    <span>تيليجرام</span>
+                </button>
+                
+                <!-- Facebook -->
+                <button onclick="shareToFacebook()" class="flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#166fe5] text-white py-4 px-4 rounded-2xl font-bold transition-all hover:scale-105 shadow-lg shadow-blue-200">
+                    <i class="fa-brands fa-facebook-f text-2xl"></i>
+                    <span>فيسبوك</span>
+                </button>
+            </div>
+            
+            <!-- Divider -->
+            <div class="flex items-center gap-3 mb-4">
+                <div class="flex-grow h-px bg-gray-200"></div>
+                <span class="text-gray-400 text-sm">أو</span>
+                <div class="flex-grow h-px bg-gray-200"></div>
+            </div>
+            
+            <!-- Copy Link -->
+            <button onclick="copyLinkOnly()" class="w-full flex items-center justify-center gap-3 bg-gray-100 hover:bg-gray-200 text-gray-700 py-4 px-4 rounded-2xl font-bold transition-all">
+                <i class="fa-solid fa-link text-xl text-emerald-500"></i>
+                <span>نسخ الرابط فقط</span>
+            </button>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
     <script>
-        function copyHadith() {
-            const hadithText = `{{ $hadith->content }}`;
-            navigator.clipboard.writeText(hadithText).then(() => {
-                // Show a nice toast instead of alert
-                const toast = document.createElement('div');
-                toast.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-lg z-50 font-bold';
-                toast.textContent = 'تم نسخ الحديث ✓';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
+        // Helper function to copy text with fallback for HTTP
+        function copyToClipboard(text) {
+            return new Promise((resolve, reject) => {
+                // Try modern clipboard API first (requires HTTPS)
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text)
+                        .then(resolve)
+                        .catch(() => fallbackCopy(text, resolve, reject));
+                } else {
+                    // Fallback for HTTP or older browsers
+                    fallbackCopy(text, resolve, reject);
+                }
             });
         }
 
-        function shareHadith() {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'حديث رقم {{ $hadith->number_in_book }}',
-                    text: '{{ Str::limit($hadith->content, 100) }}',
-                    url: window.location.href
-                });
-            } else {
-                copyHadith();
+        function fallbackCopy(text, resolve, reject) {
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                textarea.style.top = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                if (successful) {
+                    resolve();
+                } else {
+                    reject(new Error('Copy failed'));
+                }
+            } catch (err) {
+                reject(err);
             }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 left-1/2 transform -translate-x-1/2 ${isError ? 'bg-red-600' : 'bg-emerald-600'} text-white px-6 py-3 rounded-xl shadow-lg z-50 font-bold flex items-center gap-2`;
+            toast.innerHTML = `<i class="fa-solid ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        function copyHadith() {
+            // Build formatted hadith text
+            const hadithContent = `{{ $hadith->content }}`;
+            const narrator = `{{ $hadith->narrator?->name ?? 'غير محدد' }}`;
+            const grade = `{{ $hadith->grade }}`;
+            const book = `{{ $hadith->book?->name ?? '' }}`;
+            const hadithNumber = `{{ $hadith->number_in_book }}`;
+            const sources = `{{ $hadith->sources->pluck('name')->join('، ') }}`;
+            const url = window.location.href;
+            
+            // Format: Hadith first, then source, link, then metadata
+            let formattedText = `« ${hadithContent} »\n\n`;
+            formattedText += `📚 المصدر: موسوعة الحديث الصحيح\n`;
+            formattedText += `🔗 الرابط: ${url}\n\n`;
+            formattedText += `📜 الراوي: ${narrator}\n`;
+            formattedText += `✅ الدرجة: ${grade}\n`;
+            if (book) {
+                formattedText += `📖 الكتاب: ${book}\n`;
+            }
+            formattedText += `🔢 رقم الحديث: ${hadithNumber}\n`;
+            if (sources) {
+                formattedText += `📑 التخريج: ${sources}\n`;
+            }
+            
+            copyToClipboard(formattedText)
+                .then(() => showToast('تم نسخ الحديث مع المعلومات'))
+                .catch(() => showToast('فشل النسخ - جرب التحديد اليدوي', true));
+        }
+
+        // Share Modal Functions
+        function openShareModal() {
+            const modal = document.getElementById('shareModal');
+            const content = document.getElementById('shareModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('shareModal');
+            const content = document.getElementById('shareModalContent');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // Share Text - Same format as copy but without emojis (URL encoding issues)
+        const shareUrl = window.location.href;
+        const narrator = `{{ $hadith->narrator?->name ?? 'غير محدد' }}`;
+        const grade = `{{ $hadith->grade }}`;
+        const book = `{{ $hadith->book?->name ?? '' }}`;
+        const hadithNumber = `{{ $hadith->number_in_book }}`;
+        const sources = `{{ $hadith->sources->pluck('name')->join('، ') }}`;
+        
+        let shareTextRaw = `« {{ $hadith->content }} »\n\n`;
+        shareTextRaw += `المصدر: موسوعة الحديث الصحيح\n`;
+        shareTextRaw += `الرابط: ${shareUrl}\n\n`;
+        shareTextRaw += `الراوي: ${narrator}\n`;
+        shareTextRaw += `الدرجة: ${grade}\n`;
+        if (book) {
+            shareTextRaw += `الكتاب: ${book}\n`;
+        }
+        shareTextRaw += `رقم الحديث: ${hadithNumber}\n`;
+        if (sources) {
+            shareTextRaw += `التخريج: ${sources}\n`;
+        }
+        
+        const shareText = encodeURIComponent(shareTextRaw);
+
+        function shareToWhatsApp() {
+            window.open(`https://wa.me/?text=${shareText}`, '_blank');
+            closeShareModal();
+        }
+
+        function shareToTwitter() {
+            // Twitter has character limit, so use shorter version
+            const twitterText = encodeURIComponent(`« {{ Str::limit($hadith->content, 200) }} »\n\n• {{ $hadith->narrator?->name ?? '' }} | {{ $hadith->grade }}\n\nموسوعة الحديث الصحيح`);
+            window.open(`https://twitter.com/intent/tweet?text=${twitterText}&url=${encodeURIComponent(shareUrl)}`, '_blank');
+            closeShareModal();
+        }
+
+        function shareToTelegram() {
+            window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${shareText}`, '_blank');
+            closeShareModal();
+        }
+
+        function shareToFacebook() {
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+            closeShareModal();
+        }
+
+        function copyLinkOnly() {
+            copyToClipboard(window.location.href)
+                .then(() => {
+                    closeShareModal();
+                    showToast('تم نسخ الرابط');
+                })
+                .catch(() => showToast('فشل النسخ', true));
         }
     </script>
 @endpush
