@@ -184,4 +184,13 @@ class BookController extends Controller
 
         return back()->with('success', 'تم إعادة ترتيب الكتب بنجاح!');
     }
+
+    /**
+     * Get chapters (children) of a book (JSON).
+     */
+    public function getChapters(Book $book)
+    {
+        $chapters = $book->children()->orderBy('sort_order')->get(['id', 'name']);
+        return response()->json($chapters);
+    }
 }

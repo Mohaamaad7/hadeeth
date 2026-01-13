@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     // Dashboard CRUD Routes
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
         // Books CRUD
+        Route::get('books/{book}/chapters', [BookController::class, 'getChapters'])->name('books.chapters');
         Route::resource('books', BookController::class);
 
         // Narrators CRUD

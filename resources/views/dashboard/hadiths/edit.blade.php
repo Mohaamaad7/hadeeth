@@ -85,19 +85,43 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>الكتاب <span class="text-danger">*</span></label>
-                            <select name="book_id" class="form-control" required>
-                                @foreach($books as $book)
-                                    <option value="{{ $book->id }}" 
-                                            {{ old('book_id', $hadith->book_id) == $book->id ? 'selected' : '' }}>
-                                        {{ $book->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                        <div class="col-md-6">
+                            @php
+                                $currentBookId = old('book_id', $hadith->book_id);
+                                $currentBook = \App\Models\Book::find($currentBookId);
+                                $isSub = $currentBook && $currentBook->parent_id;
+                                $initialMainBookId = $isSub ? $currentBook->parent_id : $currentBookId;
+                                $initialSubBookId = $isSub ? $currentBookId : null;
+                            @endphp
+
+                            <div class="form-group">
+                                <label>الكتاب الرئيسي <span class="text-danger">*</span></label>
+                                <select id="mainBookSelect" class="form-control select2" style="width: 100%;">
+                                    <option value="">-- اختر الكتاب الرئيسي --</option>
+                                    @foreach($mainBooks as $book)
+                                        <option value="{{ $book->id }}" {{ $book->id == $initialMainBookId ? 'selected' : '' }}>
+                                            {{ $book->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" id="chapterGroup" style="{{ $initialSubBookId ? '' : 'display: none;' }}">
+                                <label>الباب الفرعي</label>
+                                <select id="chapterSelect" class="form-control select2" style="width: 100%;">
+                                    <option value="">-- الحديث تابع للكتاب الرئيسي مباشرة --</option>
+                                    <!-- سيتم تعبئته بواسطة JS، لكن يمكننا وضع القيمة الحالية إذا وجدت -->
+                                    @if($isSub)
+                                        <option value="{{ $initialSubBookId }}" selected>{{ $currentBook->name }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            <!-- الحقل الفعلي -->
+                            <input type="hidden" name="book_id" id="bookId" value="{{ $currentBookId }}" required>
+                            
+                            <!-- تخزين مبدأي للبيانات المشحونة -->
+                            <input type="hidden" id="initialSubBookId" value="{{ $initialSubBookId }}">
                         </div>
-                    </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label>الصحابي</label>
@@ -274,13 +298,90 @@
     </form>
 @stop
 
+@section('css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+<style>
+    /* Select2 RTL fixes */
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+        right: auto !important;
+        left: 10px !important;
+    }
+</style>
+@stop
+
 @section('js')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 // بيانات الرواة والصحابة
 const companions = @json($companions->map(fn($c) => ['id' => $c->id, 'name' => $c->name]));
 const regularNarrators = @json($narrators->where('is_companion', false)->values()->map(fn($n) => ['id' => $n->id, 'name' => $n->name]));
 
 $(document).ready(function() {
+    // تفعيل Select2
+    $('.select2').select2({
+        theme: 'bootstrap4',
+        language: "ar",
+        dir: "rtl"
+    });
+
+    // إدارة الكتب والأبواب
+    const mainBookSelect = $('#mainBookSelect');
+    const chapterSelect = $('#chapterSelect');
+    const chapterGroup = $('#chapterGroup');
+    const bookIdInput = $('#bookId');
+    const initialSubId = $('#initialSubBookId').val();
+
+    // دالة تحميل الفروع
+    function loadChapters(mainId, selectedChapterId = null) {
+        if (!mainId) {
+            chapterGroup.slideUp();
+            return;
+        }
+
+        $.ajax({
+            url: '/dashboard/books/' + mainId + '/chapters',
+            method: 'GET',
+            success: function(chapters) {
+                chapterSelect.empty().append('<option value="">-- الحديث تابع للكتاب الرئيسي مباشرة --</option>');
+                
+                if (chapters.length > 0) {
+                    chapters.forEach(function(chapter) {
+                        const isSelected = selectedChapterId && selectedChapterId == chapter.id;
+                        chapterSelect.append(new Option(chapter.name, chapter.id, isSelected, isSelected));
+                    });
+                    chapterGroup.slideDown();
+                } else {
+                    chapterGroup.slideUp();
+                }
+            }
+        });
+    }
+
+    // التحميل الأولي (إذا كان هناك كتاب فرعي مختار مسبقاً)
+    if (mainBookSelect.val()) {
+        // إذا كان هناك initialSubId سنقوم بتحميل القائمة وتحديده
+        // لكننا قمنا بالفعل بوضعه يدوياً في الـ Blade كحل مؤقت، 
+        // الأفضل إعادة تحميل القائمة لضمان وجود باقي الخيارات
+        loadChapters(mainBookSelect.val(), initialSubId);
+    }
+
+    mainBookSelect.on('change', function() {
+        const mainId = $(this).val();
+        bookIdInput.val(mainId); // الافتراضي
+        loadChapters(mainId);
+    });
+
+    chapterSelect.on('change', function() {
+        const chapterId = $(this).val();
+        if (chapterId) {
+            bookIdInput.val(chapterId);
+        } else {
+            bookIdInput.val(mainBookSelect.val());
+        }
+    });
+
+    // --- بقية الكود القديم ---
     // عند تغيير نوع الراوي (صحابي / رجل الحديث)
     $(document).on('change', '.role-selector', function() {
         const roleType = $(this).val();

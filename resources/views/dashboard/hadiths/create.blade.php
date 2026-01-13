@@ -127,17 +127,22 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>الكتاب <span class="text-danger">*</span></label>
-                                    <select name="book_id" class="form-control" required>
-                                        <option value="">-- اختر الكتاب --</option>
-                                        @foreach($books as $book)
-                                            <option value="{{ $book->id }}" 
-                                                    {{ old('book_id') == $book->id ? 'selected' : '' }}>
-                                                {{ $book->name }}
-                                            </option>
+                                    <label>الكتاب الرئيسي <span class="text-danger">*</span></label>
+                                    <select id="mainBookSelect" class="form-control select2" style="width: 100%;">
+                                        <option value="">-- اختر الكتاب الرئيسي --</option>
+                                        @foreach($mainBooks as $book)
+                                            <option value="{{ $book->id }}">{{ $book->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="form-group" id="chapterGroup" style="display: none;">
+                                    <label>الباب الفرعي</label>
+                                    <select id="chapterSelect" class="form-control select2" style="width: 100%;">
+                                        <option value="">-- الحديث تابع للكتاب الرئيسي مباشرة --</option>
+                                    </select>
+                                </div>
+                                <!-- الحقل الفعلي الذي سيتم إرساله -->
+                                <input type="hidden" name="book_id" id="bookId" required>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -211,6 +216,8 @@
 @stop
 
 @section('css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css" rel="stylesheet" />
 <style>
     .custom-control-label {
         cursor: pointer;
@@ -219,12 +226,69 @@
         font-size: 14px;
         line-height: 1.8;
     }
+    /* Select2 RTL fixes */
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+        right: auto !important;
+        left: 10px !important;
+    }
 </style>
 @stop
 
 @section('js')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
+    // تفعيل Select2
+    $('.select2').select2({
+        theme: 'bootstrap4',
+        language: "ar",
+        dir: "rtl"
+    });
+
+    // إدارة الكتب والأبواب
+    const mainBookSelect = $('#mainBookSelect');
+    const chapterSelect = $('#chapterSelect');
+    const chapterGroup = $('#chapterGroup');
+    const bookIdInput = $('#bookId');
+
+    mainBookSelect.on('change', function() {
+        const mainId = $(this).val();
+        
+        // إعادة تعيين الفرعي
+        chapterSelect.empty().append('<option value="">-- الحديث تابع للكتاب الرئيسي مباشرة --</option>');
+        bookIdInput.val(mainId); // مبدئياً القيمة هي الكتاب الرئيسي
+
+        if (mainId) {
+            // جلب الأبواب
+            $.ajax({
+                url: '/dashboard/books/' + mainId + '/chapters',
+                method: 'GET',
+                success: function(chapters) {
+                    if (chapters.length > 0) {
+                        chapters.forEach(function(chapter) {
+                            chapterSelect.append(new Option(chapter.name, chapter.id));
+                        });
+                        chapterGroup.slideDown();
+                    } else {
+                        chapterGroup.slideUp();
+                    }
+                }
+            });
+        } else {
+            chapterGroup.slideUp();
+            bookIdInput.val('');
+        }
+    });
+
+    chapterSelect.on('change', function() {
+        const chapterId = $(this).val();
+        if (chapterId) {
+            bookIdInput.val(chapterId); // إذا اختار فرعاً، نأخذ الـ ID الخاص به
+        } else {
+            bookIdInput.val(mainBookSelect.val()); // العودة للكتاب الرئيسي
+        }
+    });
+
     // الـ Parser الذكي
     $('#parseBtn').click(function() {
         const rawText = $('#rawText').val().trim();

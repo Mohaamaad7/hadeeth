@@ -63,12 +63,12 @@ class HadithController extends Controller
      */
     public function create(): View
     {
-        $books = Book::orderBy('name')->get();
+        $mainBooks = Book::whereNull('parent_id')->orderBy('sort_order')->get();
         $companions = Narrator::companions()->orderBy('name')->get(); // الصحابة فقط
         $narrators = Narrator::orderBy('name')->get(); // جميع الرواة
         $sources = Source::orderBy('name')->get();
 
-        return view('dashboard.hadiths.create', compact('books', 'companions', 'narrators', 'sources'));
+        return view('dashboard.hadiths.create', compact('mainBooks', 'companions', 'narrators', 'sources'));
     }
 
     /**
@@ -152,13 +152,13 @@ class HadithController extends Controller
      */
     public function edit(Hadith $hadith): View
     {
-        $hadith->load(['sources', 'chains.source', 'chains.narrators']);
-        $books = Book::orderBy('name')->get();
+        $hadith->load(['sources', 'chains.source', 'chains.narrators', 'book.parent']);
+        $mainBooks = Book::whereNull('parent_id')->orderBy('sort_order')->get();
         $companions = Narrator::companions()->orderBy('name')->get(); // الصحابة فقط
         $narrators = Narrator::orderBy('name')->get(); // جميع الرواة
         $sources = Source::orderBy('name')->get();
 
-        return view('dashboard.hadiths.edit', compact('hadith', 'books', 'companions', 'narrators', 'sources'));
+        return view('dashboard.hadiths.edit', compact('hadith', 'mainBooks', 'companions', 'narrators', 'sources'));
     }
 
     /**
