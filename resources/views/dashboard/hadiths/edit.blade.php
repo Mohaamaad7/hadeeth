@@ -443,24 +443,12 @@
         right: auto !important;
         left: 10px !important;
     }
-    
-    /* CKEditor 4 RTL fixes */
-    .cke_rtl .cke_editable {
-        direction: rtl;
-        text-align: right;
-    }
-    .cke_editable {
-        font-family: 'Cairo', sans-serif;
-        font-size: 16px;
-        line-height: 1.8;
-        padding: 15px;
-    }
 </style>
 @stop
 
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.ckeditor.com/4.25.1/full/ckeditor.js"></script>
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
     // بيانات الرواة والصحابة
     const companions = @json($companions->map(fn($c) => ['id' => $c->id, 'name' => $c->name]));
@@ -474,30 +462,35 @@
             dir: "rtl"
         });
 
-        // تهيئة CKEditor 4 للشرح
-        if (document.querySelector('#explanation-editor')) {
-            CKEDITOR.replace('explanation-editor', {
-                language: 'ar',
-                contentsLangDirection: 'rtl',
-                height: 300,
-                removeButtons: 'Save,NewPage,Preview,Print,Templates,PasteFromWord',
-                toolbar: [
-                    { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', '-', 'Undo', 'Redo'] },
-                    { name: 'editing', items: ['Find', 'Replace', '-', 'SelectAll'] },
-                    '/',
-                    { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat'] },
-                    { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
-                    '/',
-                    { name: 'styles', items: ['Styles', 'Format', 'Font', 'FontSize'] },
-                    { name: 'colors', items: ['TextColor', 'BGColor'] },
-                    { name: 'tools', items: ['Maximize'] }
-                ],
-                contentsCss: ['https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap'],
-                font_names: 'Cairo;Arial;Times New Roman;Verdana',
-                font_defaultLabel: 'Cairo',
-                fontSize_defaultLabel: '16px'
-            });
-        }
+        // تهيئة TinyMCE للشرح
+        tinymce.init({
+            selector: '#explanation-editor',
+            language: 'ar',
+            directionality: 'rtl',
+            height: 350,
+            menubar: false,
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'table', 'wordcount', 'directionality'
+            ],
+            toolbar: 'undo redo | blocks | ' +
+                'bold italic underline strikethrough | forecolor backcolor | ' +
+                'alignleft aligncenter alignright alignjustify | ' +
+                'bullist numlist outdent indent | ' +
+                'ltr rtl | removeformat | fullscreen',
+            content_style: `
+                body {
+                    font-family: 'Cairo', Arial, sans-serif;
+                    font-size: 16px;
+                    line-height: 1.8;
+                    direction: rtl;
+                    text-align: right;
+                }
+            `,
+            branding: false,
+            promotion: false
+        });
 
         // إدارة الكتب والأبواب
         const mainBookSelect = $('#mainBookSelect');
