@@ -278,9 +278,9 @@
                     <h2 class="font-tajawal font-bold text-xl text-gray-800">الشرح والتفسير</h2>
                 </div>
                 <div class="p-6 md:p-8">
-                    <p class="text-gray-700 leading-loose text-justify whitespace-pre-line font-scheherazade text-lg">
-                        {{ $hadith->explanation }}
-                    </p>
+                    <div class="text-gray-700 leading-loose text-justify prose prose-lg max-w-none font-scheherazade">
+                        {!! $hadith->explanation !!}
+                    </div>
                 </div>
             </section>
         @endif

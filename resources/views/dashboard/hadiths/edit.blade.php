@@ -48,11 +48,13 @@
                     required>{{ old('content', $hadith->content) }}</textarea>
             </div>
 
+
             <div class="form-group">
-                <label>الشرح والتفسير</label>
-                <textarea name="explanation" class="form-control"
-                    rows="3">{{ old('explanation', $hadith->explanation) }}</textarea>
+                <label><i class="fas fa-book-open text-info"></i> الشرح والتفسير</label>
+                <textarea name="explanation" id="explanation-editor" class="form-control"
+                    rows="6">{{ old('explanation', $hadith->explanation) }}</textarea>
             </div>
+
 
             <div class="row">
                 <div class="col-md-6">
@@ -441,11 +443,30 @@
         right: auto !important;
         left: 10px !important;
     }
+    
+    /* CKEditor RTL fixes */
+    .ck-editor__editable {
+        direction: rtl;
+        text-align: right;
+        min-height: 200px;
+    }
+    .ck.ck-editor {
+        width: 100%;
+    }
+    .ck.ck-toolbar {
+        direction: ltr;
+    }
+    .ck-content {
+        font-family: 'Cairo', sans-serif;
+        font-size: 16px;
+        line-height: 1.8;
+    }
 </style>
 @stop
 
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
 <script>
     // بيانات الرواة والصحابة
     const companions = @json($companions->map(fn($c) => ['id' => $c->id, 'name' => $c->name]));
@@ -458,6 +479,28 @@
             language: "ar",
             dir: "rtl"
         });
+
+        // تهيئة CKEditor 5 للشرح
+        if (document.querySelector('#explanation-editor')) {
+            ClassicEditor
+                .create(document.querySelector('#explanation-editor'), {
+                    language: 'ar',
+                    toolbar: ['heading', '|', 'bold', 'italic', 'underline', '|', 'bulletedList', 'numberedList', '|', 'blockQuote', '|', 'undo', 'redo'],
+                    heading: {
+                        options: [
+                            { model: 'paragraph', title: 'فقرة', class: 'ck-heading_paragraph' },
+                            { model: 'heading2', view: 'h2', title: 'عنوان رئيسي', class: 'ck-heading_heading2' },
+                            { model: 'heading3', view: 'h3', title: 'عنوان فرعي', class: 'ck-heading_heading3' }
+                        ]
+                    }
+                })
+                .then(editor => {
+                    window.explanationEditor = editor;
+                })
+                .catch(error => {
+                    console.error('CKEditor Error:', error);
+                });
+        }
 
         // إدارة الكتب والأبواب
         const mainBookSelect = $('#mainBookSelect');
