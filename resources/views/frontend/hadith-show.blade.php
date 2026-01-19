@@ -1,9 +1,15 @@
 @extends('layouts.frontend')
 
 @php
-    $pageTitle = 'حديث رقم ' . $hadith->number_in_book . ' - ' . ($hadith->narrator?->name ?? 'موسوعة الحديث الصحيح');
-    $metaDescription = Str::limit($hadith->content, 160) . ' - حديث ' . $hadith->grade . ' من رواية ' . ($hadith->narrator?->name ?? 'غير محدد');
-    $ogImage = asset('images/og-hadith.png'); // Default OG image
+    // استخراج أول 60 حرف من الحديث للعنوان
+    $hadithSnippet = Str::limit(strip_tags($hadith->content), 60, '...');
+    $appName = config('app.name', 'موسوعة الحديث الصحيح');
+    $pageTitle = $appName . ' | ' . $hadithSnippet;
+    
+    // Meta Description أطول للوصف
+    $metaDescription = Str::limit(strip_tags($hadith->content), 155) . ' - حديث ' . $hadith->grade . ' من رواية ' . ($hadith->narrator?->name ?? 'غير محدد') . ' في ' . ($hadith->book?->name ?? 'كتب الحديث');
+    
+    $ogImage = asset('images/og-hadith.png');
 @endphp
 
 @section('title', $pageTitle)
