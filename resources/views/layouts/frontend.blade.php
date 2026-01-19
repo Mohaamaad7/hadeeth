@@ -64,7 +64,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Scheherazade+New:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800;900&family=Scheherazade+New:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
 
     {{-- Font Awesome --}}
@@ -104,6 +104,7 @@
                         tajawal: ['Tajawal', 'sans-serif'],
                         scheherazade: ['Scheherazade New', 'serif'],
                         ibm: ['IBM Plex Sans Arabic', 'sans-serif'],
+                        cairo: ['Cairo', 'sans-serif'],
                     },
                 }
             }
