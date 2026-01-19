@@ -51,7 +51,7 @@
 
             <div class="form-group">
                 <label><i class="fas fa-book-open text-info"></i> الشرح والتفسير</label>
-                <textarea name="explanation" id="explanation-editor" class="form-control"
+                <textarea name="explanation" id="explanation-editor" class="form-control summernote"
                     rows="6">{{ old('explanation', $hadith->explanation) }}</textarea>
             </div>
 
@@ -434,9 +434,10 @@
 @stop
 
 @section('css')
+{{-- Select2 --}}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css"
-    rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+
 <style>
     /* Select2 RTL fixes */
     .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
@@ -448,7 +449,7 @@
 
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+{{-- Summernote is now loaded via AdminLTE plugins --}}
 <script>
     // بيانات الرواة والصحابة
     const companions = @json($companions->map(fn($c) => ['id' => $c->id, 'name' => $c->name]));
@@ -462,35 +463,7 @@
             dir: "rtl"
         });
 
-        // تهيئة TinyMCE للشرح
-        tinymce.init({
-            selector: '#explanation-editor',
-            language: 'ar',
-            directionality: 'rtl',
-            height: 350,
-            menubar: false,
-            plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'table', 'wordcount', 'directionality'
-            ],
-            toolbar: 'undo redo | blocks | ' +
-                'bold italic underline strikethrough | forecolor backcolor | ' +
-                'alignleft aligncenter alignright alignjustify | ' +
-                'bullist numlist outdent indent | ' +
-                'ltr rtl | removeformat | fullscreen',
-            content_style: `
-                body {
-                    font-family: 'Cairo', Arial, sans-serif;
-                    font-size: 16px;
-                    line-height: 1.8;
-                    direction: rtl;
-                    text-align: right;
-                }
-            `,
-            branding: false,
-            promotion: false
-        });
+
 
         // إدارة الكتب والأبواب
         const mainBookSelect = $('#mainBookSelect');

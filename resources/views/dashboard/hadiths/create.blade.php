@@ -92,8 +92,9 @@
                         <div class="form-group">
                             <label>الشرح والتفسير</label>
                             <textarea name="explanation" 
-                                      class="form-control" 
+                                      class="form-control summernote" 
                                       rows="3"
+                                      placeholder="أضف شرحاً أو تفسيراً للحديث..."
                             >{{ old('explanation') }}</textarea>
                         </div>
 

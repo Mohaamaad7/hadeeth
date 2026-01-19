@@ -321,4 +321,4 @@
     <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
 
-</html><?php /**PATH C:\server\www\hadeth\resources\views/layouts/frontend.blade.php ENDPATH**/ ?>
+</html><?php /**PATH C:\server\www\hadeeth\resources\views/layouts/frontend.blade.php ENDPATH**/ ?>

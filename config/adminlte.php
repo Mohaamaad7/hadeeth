@@ -465,6 +465,47 @@ return [
                 ],
             ],
         ],
+        'Summernote' => [
+            'active' => true,
+            'files' => [
+                // Google Fonts - خطوط عربية متنوعة
+                [
+                    'type' => 'css',
+                    'asset' => false,
+                    'location' => 'https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@200..1000&family=Noto+Naskh+Arabic:wght@400..700&family=Tajawal:wght@200;300;400;500;700;800;900&family=Almarai:wght@300;400;700;800&family=Scheherazade+New:wght@400;500;600;700&display=swap',
+                ],
+                // Summernote CSS
+                [
+                    'type' => 'css',
+                    'asset' => false,
+                    'location' => 'https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs4.min.css',
+                ],
+                // Summernote JS
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => 'https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs4.min.js',
+                ],
+                // Summernote Arabic Language
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => 'https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-ar-AR.min.js',
+                ],
+                // Custom Summernote Initializer
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'js/summernote-init.js',
+                ],
+                // Custom Summernote Styles
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'css/summernote-custom.css',
+                ],
+            ],
+        ],
     ],
 
     /*

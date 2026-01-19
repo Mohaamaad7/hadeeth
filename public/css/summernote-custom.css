@@ -1,0 +1,256 @@
+/**
+ * Summernote Custom Styles
+ * تنسيقات مخصصة لمحرر Summernote مع دعم RTL والعربية
+ */
+
+/* ====================
+   RTL & Arabic Support
+   ==================== */
+
+.note-editor {
+    direction: rtl;
+}
+
+.note-editor.note-frame {
+    border-radius: 4px;
+    border-color: #ced4da;
+}
+
+.note-editor.note-frame:focus-within {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* شريط الأدوات */
+.note-editor .note-toolbar {
+    direction: ltr;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 8px;
+    border-radius: 4px 4px 0 0;
+}
+
+.note-editor .note-toolbar .note-btn-group {
+    margin-left: 0;
+    margin-right: 5px;
+}
+
+/* منطقة التحرير */
+.note-editor .note-editing-area {
+    background: #fff;
+}
+
+.note-editor .note-editing-area .note-editable {
+    direction: rtl;
+    text-align: right;
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    font-size: 16px;
+    line-height: 1.9;
+    padding: 20px;
+    min-height: 200px;
+    color: #333;
+}
+
+.note-editor .note-editing-area .note-editable:focus {
+    outline: none;
+}
+
+/* placeholder */
+.note-editor .note-placeholder {
+    padding: 20px;
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    color: #aaa;
+    direction: rtl;
+    text-align: right;
+}
+
+/* شريط الحالة */
+.note-editor .note-statusbar {
+    direction: ltr;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 4px 4px;
+}
+
+/* ====================
+   Dropdowns
+   ==================== */
+
+.note-dropdown-menu {
+    max-height: 300px;
+    overflow-y: auto;
+    direction: ltr;
+}
+
+.note-dropdown-menu .note-dropdown-item {
+    padding: 5px 15px;
+}
+
+/* قائمة الخطوط */
+.note-fontname .note-dropdown-menu {
+    min-width: 180px;
+}
+
+.note-fontname .note-dropdown-item[data-value="Cairo"] {
+    font-family: 'Cairo', sans-serif;
+}
+
+.note-fontname .note-dropdown-item[data-value="Tajawal"] {
+    font-family: 'Tajawal', sans-serif;
+}
+
+.note-fontname .note-dropdown-item[data-value="Amiri"] {
+    font-family: 'Amiri', serif;
+}
+
+.note-fontname .note-dropdown-item[data-value="Almarai"] {
+    font-family: 'Almarai', sans-serif;
+}
+
+.note-fontname .note-dropdown-item[data-value="Noto Naskh Arabic"] {
+    font-family: 'Noto Naskh Arabic', serif;
+}
+
+.note-fontname .note-dropdown-item[data-value="Scheherazade New"] {
+    font-family: 'Scheherazade New', serif;
+}
+
+/* ====================
+   Buttons
+   ==================== */
+
+.note-editor .note-btn {
+    background-color: #fff;
+    border-color: #ddd;
+    color: #333;
+}
+
+.note-editor .note-btn:hover {
+    background-color: #e9ecef;
+}
+
+.note-editor .note-btn.active {
+    background-color: #e9ecef;
+    border-color: #ccc;
+}
+
+/* ====================
+   Color Picker
+   ==================== */
+
+.note-color .note-palette {
+    direction: ltr;
+}
+
+/* ====================
+   Table
+   ==================== */
+
+.note-editable table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+}
+
+.note-editable table td,
+.note-editable table th {
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+    text-align: right;
+}
+
+.note-editable table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+/* ====================
+   Blockquote
+   ==================== */
+
+.note-editable blockquote {
+    border-right: 4px solid #007bff;
+    border-left: none;
+    padding: 10px 20px;
+    margin: 15px 0;
+    background-color: #f8f9fa;
+    font-style: italic;
+}
+
+/* ====================
+   Lists
+   ==================== */
+
+.note-editable ul,
+.note-editable ol {
+    padding-right: 30px;
+    padding-left: 0;
+}
+
+.note-editable li {
+    margin-bottom: 5px;
+}
+
+/* ====================
+   Fullscreen Mode
+   ==================== */
+
+.note-editor.note-fullscreen {
+    z-index: 1050;
+}
+
+.note-editor.note-fullscreen .note-editable {
+    background: #fff;
+}
+
+/* ====================
+   Code View
+   ==================== */
+
+.note-editor .note-codable {
+    direction: ltr;
+    text-align: left;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    background: #263238;
+    color: #aed581;
+    padding: 15px;
+}
+
+/* ====================
+   Modal Dialogs
+   ==================== */
+
+.note-modal {
+    direction: ltr;
+}
+
+.note-modal .modal-title {
+    font-family: 'Cairo', sans-serif;
+}
+
+.note-modal .form-control {
+    direction: rtl;
+}
+
+/* ====================
+   Responsive
+   ==================== */
+
+@media (max-width: 768px) {
+    .note-editor .note-toolbar {
+        padding: 5px;
+    }
+    
+    .note-editor .note-toolbar .note-btn-group {
+        margin-bottom: 5px;
+    }
+    
+    .note-editor .note-editing-area .note-editable {
+        padding: 15px;
+        font-size: 15px;
+    }
+}
