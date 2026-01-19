@@ -149,6 +149,7 @@ class HadithParser
 
     /**
      * Extract source codes from parentheses (حم د ت).
+     * Intelligently skips explanatory parentheses like (يعني الوحي).
      */
     private function extractSourceCodes(string $text): array
     {
@@ -157,15 +158,19 @@ class HadithParser
         // Match parentheses containing source codes (letters/symbols, not grade words)
         if (preg_match_all('/\(([^\)]+)\)/u', $text, $matches)) {
             foreach ($matches[1] as $match) {
+                $match = trim($match);
+
                 // Skip if it's a grade word
-                if (preg_match('/^(صحيح|حسن|ضعيف|موضوع)$/u', trim($match))) {
+                if (preg_match('/^(صحيح|حسن|ضعيف|موضوع)$/u', $match)) {
                     continue;
                 }
 
-                // Extract individual codes (space-separated or continuous)
-                $match = trim($match);
+                // Skip explanatory parentheses (contain long words > 4 chars that aren't source codes)
+                if ($this->isExplanatoryParenthesis($match)) {
+                    continue;
+                }
 
-                // Check for group codes first
+                // Check for group codes first (entire content)
                 if (isset($this->groupExpansion[$match])) {
                     $codes = array_merge($codes, $this->groupExpansion[$match]);
                     continue;
@@ -181,20 +186,19 @@ class HadithParser
                     // Check if it's a group code
                     if (isset($this->groupExpansion[$part])) {
                         $codes = array_merge($codes, $this->groupExpansion[$part]);
+                    } elseif (isset($this->sourceMap[$part])) {
+                        // Check for multi-char codes (مالك, حم, حب, etc.)
+                        $codes[] = $part;
                     } else {
-                        // Check for multi-char codes (hm, hk, etc.)
-                        if (mb_strlen($part, 'UTF-8') > 1 && isset($this->sourceMap[$part])) {
-                            $codes[] = $part;
-                        } else {
-                            // Split into individual characters for single-letter codes
+                        // Only split single-char codes if the part is short enough (max 3 chars)
+                        // This prevents splitting words like "يعني" into individual chars
+                        if (mb_strlen($part, 'UTF-8') <= 3) {
                             preg_match_all('/./u', $part, $chars);
                             foreach ($chars[0] as $char) {
-                                if (isset($this->sourceMap[$char]) || isset($this->groupExpansion[$char])) {
-                                    if (isset($this->groupExpansion[$char])) {
-                                        $codes = array_merge($codes, $this->groupExpansion[$char]);
-                                    } else {
-                                        $codes[] = $char;
-                                    }
+                                if (isset($this->groupExpansion[$char])) {
+                                    $codes = array_merge($codes, $this->groupExpansion[$char]);
+                                } elseif (isset($this->sourceMap[$char])) {
+                                    $codes[] = $char;
                                 }
                             }
                         }
@@ -205,6 +209,41 @@ class HadithParser
 
         return array_unique($codes);
     }
+
+    /**
+     * Check if parenthesis content is explanatory text (not source codes).
+     * Examples: (يعني الوحي), (أي الملائكة), etc.
+     */
+    private function isExplanatoryParenthesis(string $content): bool
+    {
+        // Common explanatory words that indicate this is not source codes
+        $explanatoryPatterns = [
+            '/يعني/u',
+            '/أي\s/u',
+            '/أى\s/u',
+            '/يريد/u',
+            '/قال/u',
+            '/قوله/u',
+        ];
+
+        foreach ($explanatoryPatterns as $pattern) {
+            if (preg_match($pattern, $content)) {
+                return true;
+            }
+        }
+
+        // If content has words longer than 4 characters that aren't in our source map
+        $parts = preg_split('/\s+/u', $content);
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if (mb_strlen($part, 'UTF-8') > 4 && !isset($this->sourceMap[$part])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
     /**
      * Decode source codes to source names.
