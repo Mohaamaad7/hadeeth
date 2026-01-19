@@ -444,29 +444,23 @@
         left: 10px !important;
     }
     
-    /* CKEditor RTL fixes */
-    .ck-editor__editable {
+    /* CKEditor 4 RTL fixes */
+    .cke_rtl .cke_editable {
         direction: rtl;
         text-align: right;
-        min-height: 200px;
     }
-    .ck.ck-editor {
-        width: 100%;
-    }
-    .ck.ck-toolbar {
-        direction: ltr;
-    }
-    .ck-content {
+    .cke_editable {
         font-family: 'Cairo', sans-serif;
         font-size: 16px;
         line-height: 1.8;
+        padding: 15px;
     }
 </style>
 @stop
 
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
 <script>
     // بيانات الرواة والصحابة
     const companions = @json($companions->map(fn($c) => ['id' => $c->id, 'name' => $c->name]));
@@ -480,26 +474,29 @@
             dir: "rtl"
         });
 
-        // تهيئة CKEditor 5 للشرح
+        // تهيئة CKEditor 4 للشرح
         if (document.querySelector('#explanation-editor')) {
-            ClassicEditor
-                .create(document.querySelector('#explanation-editor'), {
-                    language: 'ar',
-                    toolbar: ['heading', '|', 'bold', 'italic', 'underline', '|', 'bulletedList', 'numberedList', '|', 'blockQuote', '|', 'undo', 'redo'],
-                    heading: {
-                        options: [
-                            { model: 'paragraph', title: 'فقرة', class: 'ck-heading_paragraph' },
-                            { model: 'heading2', view: 'h2', title: 'عنوان رئيسي', class: 'ck-heading_heading2' },
-                            { model: 'heading3', view: 'h3', title: 'عنوان فرعي', class: 'ck-heading_heading3' }
-                        ]
-                    }
-                })
-                .then(editor => {
-                    window.explanationEditor = editor;
-                })
-                .catch(error => {
-                    console.error('CKEditor Error:', error);
-                });
+            CKEDITOR.replace('explanation-editor', {
+                language: 'ar',
+                contentsLangDirection: 'rtl',
+                height: 300,
+                removeButtons: 'Save,NewPage,Preview,Print,Templates,PasteFromWord',
+                toolbar: [
+                    { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', '-', 'Undo', 'Redo'] },
+                    { name: 'editing', items: ['Find', 'Replace', '-', 'SelectAll'] },
+                    '/',
+                    { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat'] },
+                    { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
+                    '/',
+                    { name: 'styles', items: ['Styles', 'Format', 'Font', 'FontSize'] },
+                    { name: 'colors', items: ['TextColor', 'BGColor'] },
+                    { name: 'tools', items: ['Maximize'] }
+                ],
+                contentsCss: ['https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap'],
+                font_names: 'Cairo;Arial;Times New Roman;Verdana',
+                font_defaultLabel: 'Cairo',
+                fontSize_defaultLabel: '16px'
+            });
         }
 
         // إدارة الكتب والأبواب
