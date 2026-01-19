@@ -269,6 +269,22 @@
             </div>
         @endif
 
+        <!-- Simple Explanation (الشرح البسيط) -->
+        @if($hadith->explanation)
+            <section class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden animate-up mb-8"
+                style="animation-delay: 0.15s;">
+                <div class="bg-emerald-50/50 p-5 border-b border-emerald-100 flex items-center gap-3">
+                    <i class="fa-solid fa-lightbulb text-emerald-600 text-xl"></i>
+                    <h2 class="font-tajawal font-bold text-xl text-gray-800">الشرح والتفسير</h2>
+                </div>
+                <div class="p-6 md:p-8">
+                    <p class="text-gray-700 leading-loose text-justify whitespace-pre-line font-scheherazade text-lg">
+                        {{ $hadith->explanation }}
+                    </p>
+                </div>
+            </section>
+        @endif
+
         <!-- Sharh (Structured Explanation) -->
         @if($hadith->sharh_context || $hadith->sharh_obstacles || $hadith->sharh_commands || $hadith->sharh_conclusion)
             <section class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden animate-up mb-8"

@@ -180,6 +180,17 @@ class HadithController extends Controller
             'narrator_id' => 'nullable|exists:narrators,id',
             'source_ids' => 'nullable|array',
             'source_ids.*' => 'exists:sources,id',
+            // الشرح المنظم
+            'has_structured_sharh' => 'nullable|boolean',
+            'sharh_context' => 'nullable|string',
+            'sharh_obstacles' => 'nullable|array',
+            'sharh_obstacles.*.title' => 'nullable|string',
+            'sharh_obstacles.*.description' => 'nullable|string',
+            'sharh_commands' => 'nullable|array',
+            'sharh_commands.*.title' => 'nullable|string',
+            'sharh_commands.*.ruling' => 'nullable|string',
+            'sharh_commands.*.explanation' => 'nullable|string',
+            'sharh_conclusion' => 'nullable|string',
             // السلاسل
             'chains' => 'nullable|array',
             'chains.*.source_id' => 'nullable|exists:sources,id',
@@ -189,14 +200,45 @@ class HadithController extends Controller
             'chains.*.narrators.*.role' => 'nullable|string',
         ]);
 
-        $hadith->update([
+        // تجهيز بيانات الشرح المنظم
+        $sharhData = [];
+        if ($request->has_structured_sharh) {
+            // تصفية الموانع الفارغة
+            $obstacles = collect($validated['sharh_obstacles'] ?? [])
+                ->filter(fn($o) => !empty($o['title']) && !empty($o['description']))
+                ->values()
+                ->toArray();
+
+            // تصفية الأوامر الفارغة
+            $commands = collect($validated['sharh_commands'] ?? [])
+                ->filter(fn($c) => !empty($c['title']))
+                ->values()
+                ->toArray();
+
+            $sharhData = [
+                'sharh_context' => $validated['sharh_context'] ?? null,
+                'sharh_obstacles' => !empty($obstacles) ? $obstacles : null,
+                'sharh_commands' => !empty($commands) ? $commands : null,
+                'sharh_conclusion' => $validated['sharh_conclusion'] ?? null,
+            ];
+        } else {
+            // إذا لم يتم تفعيل الشرح المنظم، نفرغ الحقول
+            $sharhData = [
+                'sharh_context' => null,
+                'sharh_obstacles' => null,
+                'sharh_commands' => null,
+                'sharh_conclusion' => null,
+            ];
+        }
+
+        $hadith->update(array_merge([
             'content' => $validated['content'],
             'explanation' => $validated['explanation'] ?? null,
             'number_in_book' => $validated['number_in_book'],
             'grade' => $validated['grade'],
             'book_id' => $validated['book_id'],
             'narrator_id' => $validated['narrator_id'] ?? null,
-        ]);
+        ], $sharhData));
 
         // Sync sources
         if (isset($validated['source_ids'])) {
