@@ -460,7 +460,7 @@
 
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/4.25.1/full/ckeditor.js"></script>
 <script>
     // بيانات الرواة والصحابة
     const companions = @json($companions->map(fn($c) => ['id' => $c->id, 'name' => $c->name]));
