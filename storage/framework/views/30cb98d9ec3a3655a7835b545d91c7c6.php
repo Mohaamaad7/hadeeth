@@ -1,40 +1,38 @@
-@extends('adminlte::page')
+<?php $__env->startSection('title', 'إضافة حديث جديد'); ?>
 
-@section('title', 'إضافة حديث جديد')
-
-@section('content_header')
+<?php $__env->startSection('content_header'); ?>
     <div class="row">
         <div class="col-sm-6">
             <h1>إضافة حديث جديد</h1>
         </div>
         <div class="col-sm-6">
             <div class="float-left">
-                <a href="{{ route('dashboard.hadiths.index') }}" class="btn btn-secondary">
+                <a href="<?php echo e(route('dashboard.hadiths.index')); ?>" class="btn btn-secondary">
                     <i class="fas fa-arrow-right"></i> رجوع للقائمة
                 </a>
             </div>
         </div>
     </div>
-@stop
+<?php $__env->stopSection(); ?>
 
-@section('content')
-    @if ($errors->any())
+<?php $__env->startSection('content'); ?>
+    <?php if($errors->any()): ?>
         <div class="alert alert-danger alert-dismissible">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             <h5><i class="icon fas fa-ban"></i> يوجد أخطاء في النموذج!</h5>
             <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($error); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
 
     <div class="row">
         <!-- النموذج الرئيسي -->
         <div class="col-md-8">
-            <form action="{{ route('dashboard.hadiths.store') }}" method="POST" id="hadithForm">
-                @csrf
+            <form action="<?php echo e(route('dashboard.hadiths.store')); ?>" method="POST" id="hadithForm">
+                <?php echo csrf_field(); ?>
                 
                 <div class="card card-primary">
                     <div class="card-header">
@@ -57,7 +55,7 @@
                                       class="form-control" 
                                       rows="4" 
                                       placeholder="مثال: [436] (صحيح) (د ت ن) عن أبي هريرة: قال رسول الله ﷺ..."
-                            >{{ old('raw_text') }}</textarea>
+                            ><?php echo e(old('raw_text')); ?></textarea>
                         </div>
                         
                         <button type="button" 
@@ -72,8 +70,8 @@
                             </div>
                         </div>
 
-                        {{-- حفظ النص الأصلي كما ورد (الأمانة العلمية) --}}
-                        <input type="hidden" name="raw_text" id="rawTextHidden" value="{{ old('raw_text') }}">
+                        
+                        <input type="hidden" name="raw_text" id="rawTextHidden" value="<?php echo e(old('raw_text')); ?>">
                     </div>
                 </div>
 
@@ -89,7 +87,7 @@
                                       class="form-control" 
                                       rows="6" 
                                       required
-                            >{{ old('content') }}</textarea>
+                            ><?php echo e(old('content')); ?></textarea>
                         </div>
 
                         <div class="form-group">
@@ -98,7 +96,7 @@
                                       class="form-control summernote" 
                                       rows="3"
                                       placeholder="أضف شرحاً أو تفسيراً للحديث..."
-                            >{{ old('explanation') }}</textarea>
+                            ><?php echo e(old('explanation')); ?></textarea>
                         </div>
 
                         <div class="row">
@@ -109,7 +107,7 @@
                                            name="number_in_book" 
                                            id="numberInBook"
                                            class="form-control" 
-                                           value="{{ old('number_in_book') }}" 
+                                           value="<?php echo e(old('number_in_book')); ?>" 
                                            required 
                                            min="1">
                                 </div>
@@ -119,10 +117,10 @@
                                     <label>درجة الحديث <span class="text-danger">*</span></label>
                                     <select name="grade" id="grade" class="form-control" required>
                                         <option value="">-- اختر الدرجة --</option>
-                                        <option value="صحيح" {{ old('grade') == 'صحيح' ? 'selected' : '' }}>صحيح</option>
-                                        <option value="حسن" {{ old('grade') == 'حسن' ? 'selected' : '' }}>حسن</option>
-                                        <option value="ضعيف" {{ old('grade') == 'ضعيف' ? 'selected' : '' }}>ضعيف</option>
-                                        <option value="موضوع" {{ old('grade') == 'موضوع' ? 'selected' : '' }}>موضوع</option>
+                                        <option value="صحيح" <?php echo e(old('grade') == 'صحيح' ? 'selected' : ''); ?>>صحيح</option>
+                                        <option value="حسن" <?php echo e(old('grade') == 'حسن' ? 'selected' : ''); ?>>حسن</option>
+                                        <option value="ضعيف" <?php echo e(old('grade') == 'ضعيف' ? 'selected' : ''); ?>>ضعيف</option>
+                                        <option value="موضوع" <?php echo e(old('grade') == 'موضوع' ? 'selected' : ''); ?>>موضوع</option>
                                     </select>
                                 </div>
                             </div>
@@ -134,9 +132,9 @@
                                     <label>الكتاب الرئيسي <span class="text-danger">*</span></label>
                                     <select id="mainBookSelect" class="form-control select2" style="width: 100%;">
                                         <option value="">-- اختر الكتاب الرئيسي --</option>
-                                        @foreach($mainBooks as $book)
-                                            <option value="{{ $book->id }}">{{ $book->name }}</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $mainBooks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $book): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($book->id); ?>"><?php echo e($book->name); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
                                 <div class="form-group" id="chapterGroup" style="display: none;">
@@ -153,12 +151,13 @@
                                     <label>الصحابي</label>
                                     <select name="narrator_id" id="narratorId" class="form-control">
                                         <option value="">-- اختر الصحابي --</option>
-                                        @foreach($companions as $companion)
-                                            <option value="{{ $companion->id }}" 
-                                                    {{ old('narrator_id') == $companion->id ? 'selected' : '' }}>
-                                                {{ $companion->name }}
+                                        <?php $__currentLoopData = $companions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $companion): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($companion->id); ?>" 
+                                                    <?php echo e(old('narrator_id') == $companion->id ? 'selected' : ''); ?>>
+                                                <?php echo e($companion->name); ?>
+
                                             </option>
-                                        @endforeach
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
                             </div>
@@ -167,22 +166,23 @@
                         <div class="form-group">
                             <label>المصادر</label>
                             <div class="row">
-                                @foreach($sources as $source)
+                                <?php $__currentLoopData = $sources; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $source): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="col-md-4">
                                         <div class="custom-control custom-checkbox">
                                             <input type="checkbox" 
                                                    class="custom-control-input source-checkbox" 
-                                                   id="source_{{ $source->id }}" 
+                                                   id="source_<?php echo e($source->id); ?>" 
                                                    name="source_ids[]" 
-                                                   value="{{ $source->id }}"
-                                                   {{ is_array(old('source_ids')) && in_array($source->id, old('source_ids')) ? 'checked' : '' }}>
-                                            <label class="custom-control-label" for="source_{{ $source->id }}">
-                                                {{ $source->name }}
-                                                <small class="text-muted">({{ $source->code }})</small>
+                                                   value="<?php echo e($source->id); ?>"
+                                                   <?php echo e(is_array(old('source_ids')) && in_array($source->id, old('source_ids')) ? 'checked' : ''); ?>>
+                                            <label class="custom-control-label" for="source_<?php echo e($source->id); ?>">
+                                                <?php echo e($source->name); ?>
+
+                                                <small class="text-muted">(<?php echo e($source->code); ?>)</small>
                                             </label>
                                         </div>
                                     </div>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
@@ -190,7 +190,7 @@
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-save"></i> حفظ الحديث
                         </button>
-                        <a href="{{ route('dashboard.hadiths.index') }}" class="btn btn-secondary">
+                        <a href="<?php echo e(route('dashboard.hadiths.index')); ?>" class="btn btn-secondary">
                             <i class="fas fa-times"></i> إلغاء
                         </a>
                     </div>
@@ -217,9 +217,9 @@
             </div>
         </div>
     </div>
-@stop
+<?php $__env->stopSection(); ?>
 
-@section('css')
+<?php $__env->startSection('css'); ?>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css" rel="stylesheet" />
 <style>
@@ -236,9 +236,9 @@
         left: 10px !important;
     }
 </style>
-@stop
+<?php $__env->stopSection(); ?>
 
-@section('js')
+<?php $__env->startSection('js'); ?>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
@@ -332,10 +332,10 @@ $(document).ready(function() {
         $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> جاري التحليل...');
         
         $.ajax({
-            url: '{{ route("dashboard.hadiths.parse") }}',
+            url: '<?php echo e(route("dashboard.hadiths.parse")); ?>',
             method: 'POST',
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: '<?php echo e(csrf_token()); ?>',
                 raw_text: rawText
             },
             success: function(response) {
@@ -427,4 +427,6 @@ $(document).ready(function() {
     $('#content, #grade, #numberInBook').on('input change', updatePreview);
 });
 </script>
-@stop
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('adminlte::page', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\hadeeth\resources\views/dashboard/hadiths/create.blade.php ENDPATH**/ ?>

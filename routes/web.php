@@ -9,6 +9,7 @@ use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\HadithController as FrontendHadithController;
 use App\Http\Controllers\Frontend\NarratorController as FrontendNarratorController;
+use App\Http\Controllers\Frontend\BookController as FrontendBookController;
 use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,9 @@ Route::get('/search', [FrontendHadithController::class, 'search'])->name('search
 Route::get('/hadith/{id}', [FrontendHadithController::class, 'show'])->name('hadith.show');
 Route::get('/random-hadith', [FrontendHadithController::class, 'random'])->name('hadith.random');
 Route::get('/narrator/{id}', [FrontendNarratorController::class, 'show'])->name('narrator.show');
+Route::get('/books', [FrontendBookController::class, 'index'])->name('books.index');
+Route::get('/books/{book}', [FrontendBookController::class, 'show'])->name('books.show');
+Route::get('/books/{book}/pdf', [FrontendBookController::class, 'exportPdf'])->name('books.pdf');
 Route::get('/about', function () {
     return view('frontend.about');
 })->name('about');
@@ -55,5 +59,8 @@ Route::middleware('auth')->group(function () {
         // Hadiths CRUD
         Route::resource('hadiths', DashboardHadithController::class);
         Route::post('hadiths/parse', [DashboardHadithController::class, 'parseRawText'])->name('hadiths.parse');
+        Route::get('hadiths-bulk', [DashboardHadithController::class, 'bulkCreate'])->name('hadiths.bulk.create');
+        Route::post('hadiths-bulk/preview', [DashboardHadithController::class, 'bulkPreview'])->name('hadiths.bulk.preview');
+        Route::post('hadiths-bulk/store', [DashboardHadithController::class, 'bulkStore'])->name('hadiths.bulk.store');
     });
 });

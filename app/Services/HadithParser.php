@@ -67,6 +67,12 @@ class HadithParser
     ];
 
     /**
+     * Keywords that indicate source-specific additions (زيادات).
+     * Example: عن عائشة زاد (طب) في آخره: وهو أهونه علي.
+     */
+    private array $additionKeywords = ['زاد', 'وزاد', 'ولفظ', 'ورواه', 'وعند', 'وفي رواية'];
+
+    /**
      * Parse hadith text and extract metadata.
      *
      * @param string $text
@@ -76,6 +82,7 @@ class HadithParser
     {
         $number = $this->extractNumber($text);
         $grade = $this->extractGrade($text);
+        $additions = $this->extractAdditions($text);
         $narrator = $this->extractNarrator($text);
         $sourceCodes = $this->extractSourceCodes($text);
         $sources = $this->decodeSources($sourceCodes);
@@ -87,8 +94,51 @@ class HadithParser
             'narrator' => $narrator,
             'source_codes' => $sourceCodes,
             'sources' => $sources,
+            'additions' => $additions,
             'clean_text' => $cleanText,
         ];
+    }
+
+    /**
+     * Parse multiple hadiths from a block of text.
+     * Each hadith starts with a sequence number followed by a dash: "3- ..."
+     *
+     * @param string $bulkText
+     * @return array<int, array{raw: string, parsed: array}>
+     */
+    public function parseMultiple(string $bulkText): array
+    {
+        $results = [];
+
+        // Normalize line endings
+        $bulkText = str_replace(["\r\n", "\r"], "\n", $bulkText);
+
+        // Split by the pattern: number followed by dash at the start of a line
+        // Pattern: start-of-line, optional whitespace, digits, dash, space
+        $segments = preg_split('/(?=^\s*\d+\s*[-–]\s)/um', $bulkText, -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($segments as $segment) {
+            $segment = trim($segment);
+            if (empty($segment))
+                continue;
+
+            // Remove the leading sequence number (e.g., "3- " or "3 - ")
+            $rawHadith = preg_replace('/^\d+\s*[-–]\s*/u', '', $segment);
+            $rawHadith = trim($rawHadith);
+
+            if (empty($rawHadith))
+                continue;
+
+            // Parse each individual hadith
+            $parsed = $this->parse($rawHadith);
+
+            $results[] = [
+                'raw' => $rawHadith,
+                'parsed' => $parsed,
+            ];
+        }
+
+        return $results;
     }
 
     /**
@@ -115,12 +165,19 @@ class HadithParser
     }
 
     /**
-     * Extract narrator - text after the last occurrence of "عن".
+     * Extract narrator - text after "عن" in the metadata section.
+     * Stops at addition keywords like زاد, ولفظ, etc.
      */
     private function extractNarrator(string $text): ?string
     {
-        // Find the last occurrence of "عن" followed by text
-        if (preg_match('/عن\s+([^\[\(]+?)(?:\s*\[|\s*\(|$)/u', $text, $matches)) {
+        // Build a regex-safe alternation of addition keywords
+        $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
+
+        // Look for عن after source codes section: (codes) عن NAME
+        // Stop at: [ or ( or addition keywords or end-of-string or period/dot
+        $pattern = '/عن\s+([^\[\(]+?)(?:\s*\[|\s*\(|\s+(?:' . $additionPattern . ')\s|\s*\.\s*$|$)/u';
+
+        if (preg_match($pattern, $text, $matches)) {
             return $this->normalizeNarrator(trim($matches[1]));
         }
         return null;
@@ -133,8 +190,10 @@ class HadithParser
     {
         $name = trim($name);
 
+        // إزالة النقطة من آخر الاسم إذا وجدت
+        $name = rtrim($name, '.');
+
         // قاعدة ذكية: تحويل "أبي" إلى "أبو" إلا إذا تبعتها "بن" (مثل: أبي بن كعب)
-        // لأن "أبي بن ..." تعني غالباً الاسم "أُبيّ" وليس الكنية
         if (preg_match('/^أبي\s+(?!بن)/u', $name)) {
             $name = preg_replace('/^أبي\s+/u', 'أبو ', $name);
         }
@@ -144,7 +203,56 @@ class HadithParser
             $name = preg_replace('/^أبا\s+/u', 'أبو ', $name);
         }
 
-        return $name;
+        return trim($name);
+    }
+
+    /**
+     * Extract source-specific additions (زيادات).
+     * Pattern: زاد (source_code) في آخره: text
+     * Pattern: زاد (source_code): text
+     * Pattern: ولفظ (source_code): text
+     *
+     * @return array<array{source_code: string, source_name: string, text: string}>
+     */
+    private function extractAdditions(string $text): array
+    {
+        $additions = [];
+
+        // Build keyword alternation
+        $keywords = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
+
+        // Pattern: keyword (source_code) optional-context: addition_text
+        // Examples:
+        //   زاد (طب) في آخره: وهو أهونه علي.
+        //   زاد (حم): بالمعروف.
+        //   ولفظ (م): كذا وكذا.
+        $pattern = '/(?:' . $keywords . ')\s*\(([^\)]+)\)\s*(?:[^:]*:\s*)?(.+?)(?=\s*(?:' . $keywords . ')\s*\(|\s*$)/u';
+
+        if (preg_match_all($pattern, $text, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $codeRaw = trim($match[1]);
+                $additionText = trim($match[2]);
+
+                // Remove trailing period
+                $additionText = rtrim($additionText, '.');
+
+                if (empty($additionText)) {
+                    continue;
+                }
+
+                // Decode the source code
+                $sourceCodes = $this->decodeParenthesisContent($codeRaw);
+                $sourceNames = $this->decodeSources($sourceCodes);
+
+                $additions[] = [
+                    'source_code' => $codeRaw,
+                    'source_name' => !empty($sourceNames) ? implode('، ', $sourceNames) : $codeRaw,
+                    'text' => $additionText,
+                ];
+            }
+        }
+
+        return $additions;
     }
 
     /**
@@ -260,7 +368,49 @@ class HadithParser
     }
 
     /**
-     * Clean text by removing metadata (number, grade, codes, narrator prefix).
+     * Decode content inside parentheses into source codes.
+     * Shared helper used by both extractSourceCodes and extractAdditions.
+     */
+    private function decodeParenthesisContent(string $content): array
+    {
+        $codes = [];
+        $content = trim($content);
+
+        // Check for group codes first (entire content)
+        if (isset($this->groupExpansion[$content])) {
+            return $this->groupExpansion[$content];
+        }
+
+        // Split by spaces
+        $parts = preg_split('/\s+/u', $content);
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if (empty($part))
+                continue;
+
+            if (isset($this->groupExpansion[$part])) {
+                $codes = array_merge($codes, $this->groupExpansion[$part]);
+            } elseif (isset($this->sourceMap[$part])) {
+                $codes[] = $part;
+            } else {
+                if (mb_strlen($part, 'UTF-8') <= 3) {
+                    preg_match_all('/./u', $part, $chars);
+                    foreach ($chars[0] as $char) {
+                        if (isset($this->groupExpansion[$char])) {
+                            $codes = array_merge($codes, $this->groupExpansion[$char]);
+                        } elseif (isset($this->sourceMap[$char])) {
+                            $codes[] = $char;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $codes;
+    }
+
+    /**
+     * Clean text by removing metadata (number, grade, codes, narrator, additions).
      */
     private function cleanText(string $text): string
     {
@@ -270,11 +420,28 @@ class HadithParser
         // Remove grade (صحيح), (حسن), etc.
         $text = preg_replace('/\((صحيح|حسن|ضعيف|موضوع)\)/u', '', $text);
 
-        // Remove source codes in parentheses (but keep other parentheses)
-        $text = preg_replace('/\([^\)]*[a-zأ-ي]+[^\)]*\)/u', '', $text);
+        // Remove source codes in parentheses (but keep explanatory ones)
+        $text = preg_replace_callback('/\([^\)]+\)/u', function ($match) {
+            $content = trim($match[0], '()');
+            // Keep explanatory parentheses like (يعني الوحي)
+            if ($this->isExplanatoryParenthesis($content)) {
+                return $match[0];
+            }
+            // Remove grade words
+            if (preg_match('/^(صحيح|حسن|ضعيف|موضوع)$/u', $content)) {
+                return '';
+            }
+            return '';
+        }, $text);
 
-        // Remove narrator prefix "عن ..." from the end
-        $text = preg_replace('/عن\s+[^\[\(]+$/u', '', $text);
+        // Build addition keywords alternation
+        $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
+
+        // Remove the additions section entirely: زاد (طب) في آخره: text
+        $text = preg_replace('/\s*(?:' . $additionPattern . ')\s*\([^\)]+\).*$/u', '', $text);
+
+        // Remove narrator prefix "عن ..." from the end (after source codes)
+        $text = preg_replace('/\s*عن\s+[^\[\(]+$/u', '', $text);
 
         // Clean up extra spaces
         $text = preg_replace('/\s+/u', ' ', $text);

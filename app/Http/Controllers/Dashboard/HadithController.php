@@ -52,7 +52,7 @@ class HadithController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $books = Book::orderBy('name')->get();
+        $books = Book::orderBy('sort_order')->get();
         $grades = ['صحيح', 'حسن', 'ضعيف'];
 
         return view('dashboard.hadiths.index', compact('hadiths', 'books', 'grades'));
@@ -88,6 +88,9 @@ class HadithController extends Controller
             'source_ids.*' => 'exists:sources,id',
         ]);
 
+        // حفظ النص الأصلي كما ورد (الأمانة العلمية)
+        $rawText = $request->input('raw_text');
+
         // إذا تم إدخال نص خام، استخدم الـ Parser
         if ($request->filled('raw_text')) {
             $parsed = $this->parser->parse($request->raw_text);
@@ -116,15 +119,20 @@ class HadithController extends Controller
                 }
                 $validated['source_ids'] = $sourceIds;
             }
+
+            // حفظ الزيادات (additions)
+            $validated['additions'] = !empty($parsed['additions']) ? $parsed['additions'] : null;
         }
 
         $hadith = Hadith::create([
             'content' => $validated['content'],
+            'raw_text' => $rawText,
             'explanation' => $validated['explanation'] ?? null,
             'number_in_book' => $validated['number_in_book'],
             'grade' => $validated['grade'],
             'book_id' => $validated['book_id'],
             'narrator_id' => $validated['narrator_id'] ?? null,
+            'additions' => $validated['additions'] ?? null,
         ]);
 
         // Attach sources
@@ -166,13 +174,10 @@ class HadithController extends Controller
      */
     public function update(Request $request, Hadith $hadith): RedirectResponse
     {
-        // Logging للتحقق من البيانات المرسلة
-        \Log::info('=== Hadith Update Request ===');
-        \Log::info('Request All:', $request->all());
-        \Log::info('Chains Data:', $request->input('chains'));
 
         $validated = $request->validate([
             'content' => 'required|string',
+            'raw_text' => 'nullable|string',
             'explanation' => 'nullable|string',
             'number_in_book' => 'required|integer|min:1',
             'grade' => 'required|string|in:صحيح,حسن,ضعيف,موضوع',
@@ -233,6 +238,7 @@ class HadithController extends Controller
 
         $hadith->update(array_merge([
             'content' => $validated['content'],
+            'raw_text' => $validated['raw_text'] ?? $hadith->raw_text,
             'explanation' => $validated['explanation'] ?? null,
             'number_in_book' => $validated['number_in_book'],
             'grade' => $validated['grade'],
@@ -323,5 +329,100 @@ class HadithController extends Controller
             'success' => true,
             'data' => $parsed,
         ]);
+    }
+
+    /**
+     * Show bulk import form.
+     */
+    public function bulkCreate(): View
+    {
+        $mainBooks = Book::mainBooks()->orderBy('sort_order')->get();
+
+        return view('dashboard.hadiths.bulk-create', compact('mainBooks'));
+    }
+
+    /**
+     * Preview parsed hadiths from bulk text (AJAX).
+     */
+    public function bulkPreview(Request $request)
+    {
+        $request->validate([
+            'bulk_text' => 'required|string',
+        ]);
+
+        $results = $this->parser->parseMultiple($request->bulk_text);
+
+        return response()->json([
+            'success' => true,
+            'count' => count($results),
+            'hadiths' => $results,
+        ]);
+    }
+
+    /**
+     * Store multiple hadiths from bulk import.
+     */
+    public function bulkStore(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'book_id' => 'required|exists:books,id',
+            'hadiths' => 'required|array|min:1',
+            'hadiths.*.raw_text' => 'required|string',
+            'hadiths.*.clean_text' => 'required|string',
+            'hadiths.*.number' => 'nullable|integer',
+            'hadiths.*.grade' => 'nullable|string',
+            'hadiths.*.narrator' => 'nullable|string',
+            'hadiths.*.sources' => 'nullable|string', // JSON encoded
+            'hadiths.*.additions' => 'nullable|string', // JSON encoded
+        ]);
+
+        $bookId = $request->book_id;
+        $savedCount = 0;
+
+        foreach ($request->hadiths as $hadithData) {
+            // Handle narrator
+            $narratorId = null;
+            if (!empty($hadithData['narrator'])) {
+                $narrator = Narrator::firstOrCreate(
+                    ['name' => $hadithData['narrator']],
+                    ['color_code' => 'default']
+                );
+                $narratorId = $narrator->id;
+            }
+
+            // Create hadith
+            $hadith = Hadith::create([
+                'content' => $hadithData['clean_text'],
+                'raw_text' => $hadithData['raw_text'],
+                'number_in_book' => $hadithData['number'] ?? null,
+                'grade' => $hadithData['grade'] ?? 'صحيح',
+                'book_id' => $bookId,
+                'narrator_id' => $narratorId,
+                'additions' => !empty($hadithData['additions']) ? json_decode($hadithData['additions'], true) : null,
+            ]);
+
+            // Attach sources
+            if (!empty($hadithData['sources'])) {
+                $sourceNames = json_decode($hadithData['sources'], true);
+                if (is_array($sourceNames)) {
+                    $sourceIds = [];
+                    foreach ($sourceNames as $sourceName) {
+                        $source = Source::where('name', 'LIKE', "%{$sourceName}%")->first();
+                        if ($source) {
+                            $sourceIds[] = $source->id;
+                        }
+                    }
+                    if (!empty($sourceIds)) {
+                        $hadith->sources()->attach($sourceIds);
+                    }
+                }
+            }
+
+            $savedCount++;
+        }
+
+        return redirect()
+            ->route('dashboard.hadiths.index')
+            ->with('success', "تم إدخال {$savedCount} حديث بنجاح! 🎉");
     }
 }

@@ -1,32 +1,31 @@
-@extends('adminlte::page')
+<?php $__env->startSection('title', 'إدارة الأحاديث'); ?>
 
-@section('title', 'إدارة الأحاديث')
-
-@section('content_header')
+<?php $__env->startSection('content_header'); ?>
 <div class="row">
     <div class="col-sm-6">
         <h1>إدارة الأحاديث</h1>
     </div>
     <div class="col-sm-6">
         <div class="float-left">
-            <a href="{{ route('dashboard.hadiths.bulk.create') }}" class="btn btn-primary ml-2">
+            <a href="<?php echo e(route('dashboard.hadiths.bulk.create')); ?>" class="btn btn-primary ml-2">
                 <i class="fas fa-layer-group"></i> إدخال جماعي
             </a>
-            <a href="{{ route('dashboard.hadiths.create') }}" class="btn btn-success">
+            <a href="<?php echo e(route('dashboard.hadiths.create')); ?>" class="btn btn-success">
                 <i class="fas fa-plus"></i> إضافة حديث جديد
             </a>
         </div>
     </div>
 </div>
-@stop
+<?php $__env->stopSection(); ?>
 
-@section('content')
-@if(session('success'))
+<?php $__env->startSection('content'); ?>
+<?php if(session('success')): ?>
     <div class="alert alert-success alert-dismissible fade show">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
-        {{ session('success') }}
+        <?php echo e(session('success')); ?>
+
     </div>
-@endif
+<?php endif; ?>
 
 <!-- فلاتر البحث -->
 <div class="card card-primary card-outline">
@@ -34,12 +33,12 @@
         <h3 class="card-title">بحث وفلترة</h3>
     </div>
     <div class="card-body">
-        <form method="GET" action="{{ route('dashboard.hadiths.index') }}">
+        <form method="GET" action="<?php echo e(route('dashboard.hadiths.index')); ?>">
             <div class="row">
                 <div class="col-md-4">
                     <div class="form-group">
                         <label>بحث في النص</label>
-                        <input type="text" name="search" class="form-control" value="{{ request('search') }}"
+                        <input type="text" name="search" class="form-control" value="<?php echo e(request('search')); ?>"
                             placeholder="ابحث في نص الحديث أو الرقم">
                     </div>
                 </div>
@@ -48,11 +47,12 @@
                         <label>الكتاب</label>
                         <select name="book_id" class="form-control">
                             <option value="">جميع الكتب</option>
-                            @foreach($books as $book)
-                                <option value="{{ $book->id }}" {{ request('book_id') == $book->id ? 'selected' : '' }}>
-                                    {{ $book->name }}
+                            <?php $__currentLoopData = $books; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $book): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($book->id); ?>" <?php echo e(request('book_id') == $book->id ? 'selected' : ''); ?>>
+                                    <?php echo e($book->name); ?>
+
                                 </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
                 </div>
@@ -61,11 +61,12 @@
                         <label>الدرجة</label>
                         <select name="grade" class="form-control">
                             <option value="">جميع الدرجات</option>
-                            @foreach($grades as $grade)
-                                <option value="{{ $grade }}" {{ request('grade') == $grade ? 'selected' : '' }}>
-                                    {{ $grade }}
+                            <?php $__currentLoopData = $grades; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $grade): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($grade); ?>" <?php echo e(request('grade') == $grade ? 'selected' : ''); ?>>
+                                    <?php echo e($grade); ?>
+
                                 </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
                 </div>
@@ -87,7 +88,7 @@
     <div class="card-header">
         <h3 class="card-title">
             <i class="fas fa-list"></i> قائمة الأحاديث
-            <span class="badge badge-info">{{ $hadiths->total() }}</span>
+            <span class="badge badge-info"><?php echo e($hadiths->total()); ?></span>
         </h3>
     </div>
     <div class="card-body p-0">
@@ -104,91 +105,94 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($hadiths as $hadith)
+                <?php $__empty_1 = true; $__currentLoopData = $hadiths; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $hadith): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                             <tr>
                                 <td>
-                                    <strong>{{ $hadith->number_in_book }}</strong>
+                                    <strong><?php echo e($hadith->number_in_book); ?></strong>
                                 </td>
                                 <td>
                                     <div style="max-height: 60px; overflow: hidden;">
-                                        {{ Str::limit($hadith->content, 120) }}
+                                        <?php echo e(Str::limit($hadith->content, 120)); ?>
+
                                     </div>
                                 </td>
                                 <td>
                                     <span class="badge badge-secondary">
-                                        {{ $hadith->narrator?->name ?? 'غير محدد' }}
+                                        <?php echo e($hadith->narrator?->name ?? 'غير محدد'); ?>
+
                                     </span>
                                 </td>
                                 <td>
-                                    <small>{{ $hadith->book?->name ?? 'غير محدد' }}</small>
+                                    <small><?php echo e($hadith->book?->name ?? 'غير محدد'); ?></small>
                                 </td>
                                 <td>
-                                    <span class="badge badge-{{ 
-                                                            $hadith->grade === 'صحيح' ? 'success' :
+                                    <span class="badge badge-<?php echo e($hadith->grade === 'صحيح' ? 'success' :
                     ($hadith->grade === 'حسن' ? 'info' :
-                        ($hadith->grade === 'ضعيف' ? 'warning' : 'danger')) 
-                                                        }}">
-                                        {{ $hadith->grade }}
+                        ($hadith->grade === 'ضعيف' ? 'warning' : 'danger'))); ?>">
+                                        <?php echo e($hadith->grade); ?>
+
                                     </span>
                                 </td>
                                 <td>
                                     <span class="badge badge-light">
-                                        {{ $hadith->sources->count() }}
+                                        <?php echo e($hadith->sources->count()); ?>
+
                                     </span>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{{ route('dashboard.hadiths.show', $hadith) }}" class="btn btn-info" title="عرض">
+                                        <a href="<?php echo e(route('dashboard.hadiths.show', $hadith)); ?>" class="btn btn-info" title="عرض">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('dashboard.hadiths.edit', $hadith) }}" class="btn btn-warning"
+                                        <a href="<?php echo e(route('dashboard.hadiths.edit', $hadith)); ?>" class="btn btn-warning"
                                             title="تعديل">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <button type="button" class="btn btn-danger" onclick="confirmDelete({{ $hadith->id }})"
+                                        <button type="button" class="btn btn-danger" onclick="confirmDelete(<?php echo e($hadith->id); ?>)"
                                             title="حذف">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
 
-                                    <form id="delete-form-{{ $hadith->id }}"
-                                        action="{{ route('dashboard.hadiths.destroy', $hadith) }}" method="POST"
+                                    <form id="delete-form-<?php echo e($hadith->id); ?>"
+                                        action="<?php echo e(route('dashboard.hadiths.destroy', $hadith)); ?>" method="POST"
                                         style="display: none;">
-                                        @csrf
-                                        @method('DELETE')
+                                        <?php echo csrf_field(); ?>
+                                        <?php echo method_field('DELETE'); ?>
                                     </form>
                                 </td>
                             </tr>
-                @empty
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <tr>
                         <td colspan="7" class="text-center py-4">
                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                             <p class="text-muted">لا توجد أحاديث مضافة بعد</p>
-                            <a href="{{ route('dashboard.hadiths.create') }}" class="btn btn-primary">
+                            <a href="<?php echo e(route('dashboard.hadiths.create')); ?>" class="btn btn-primary">
                                 <i class="fas fa-plus"></i> إضافة أول حديث
                             </a>
                         </td>
                     </tr>
-                @endforelse
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
-    @if($hadiths->hasPages())
+    <?php if($hadiths->hasPages()): ?>
         <div class="card-footer clearfix">
             <div class="float-left">
                 <small class="text-muted">
-                    عرض {{ $hadiths->firstItem() }} - {{ $hadiths->lastItem() }} من {{ $hadiths->total() }} نتيجة
+                    عرض <?php echo e($hadiths->firstItem()); ?> - <?php echo e($hadiths->lastItem()); ?> من <?php echo e($hadiths->total()); ?> نتيجة
                 </small>
             </div>
             <div class="float-right">
-                {{ $hadiths->links('pagination::bootstrap-5') }}
+                <?php echo e($hadiths->links('pagination::bootstrap-5')); ?>
+
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 </div>
-@stop
+<?php $__env->stopSection(); ?>
 
-@section('js')
+<?php $__env->startSection('js'); ?>
 <script>
     function confirmDelete(id) {
         if (confirm('هل أنت متأكد من حذف هذا الحديث؟ لا يمكن التراجع عن هذا الإجراء.')) {
@@ -196,4 +200,5 @@
         }
     }
 </script>
-@stop
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('adminlte::page', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\hadeeth\resources\views/dashboard/hadiths/index.blade.php ENDPATH**/ ?>

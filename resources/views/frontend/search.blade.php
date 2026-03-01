@@ -47,7 +47,7 @@
         </button>
         <nav class="flex flex-col items-center gap-6 text-xl font-bold text-gray-700">
             <a href="{{ route('home') }}" class="hover:text-emerald-600">الرئيسية</a>
-            <a href="#" class="hover:text-emerald-600">الكتب</a>
+            <a href="{{ route('books.index') }}" class="hover:text-emerald-600">الكتب</a>
             <a href="#" class="hover:text-emerald-600">الرواة</a>
             <a href="{{ route('hadith.random') }}" class="hover:text-emerald-600">حديث عشوائي</a>
         </nav>
@@ -147,7 +147,7 @@
                                 <i class="fa-solid fa-book-bookmark text-emerald-500"></i>
                                 <span class="font-bold">المصادر:</span>
                                 @foreach($hadith->sources->take(3) as $source)
-                                    <span class="bg-gray-100 px-2 py-0.5 rounded-lg font-bold">{{ $source->code }}</span>
+                                    <span class="bg-gray-100 px-2 py-0.5 rounded-lg font-bold">{{ $source->name }}</span>
                                 @endforeach
                                 @if($hadith->sources->count() > 3)
                                     <span class="text-emerald-600 font-bold">+{{ $hadith->sources->count() - 3 }}</span>

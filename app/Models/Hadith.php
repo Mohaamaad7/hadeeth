@@ -17,12 +17,14 @@ class Hadith extends Model
 
     protected $fillable = [
         'content',
+        'raw_text',
         'content_searchable',
         'explanation',
         'number_in_book',
         'grade',
         'book_id',
         'narrator_id',
+        'additions',
         'sharh_context',
         'sharh_obstacles',
         'sharh_commands',
@@ -30,6 +32,7 @@ class Hadith extends Model
     ];
 
     protected $casts = [
+        'additions' => 'array',
         'sharh_obstacles' => 'array',
         'sharh_commands' => 'array',
     ];

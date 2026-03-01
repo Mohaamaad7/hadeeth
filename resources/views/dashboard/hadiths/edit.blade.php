@@ -48,6 +48,18 @@
                     required>{{ old('content', $hadith->content) }}</textarea>
             </div>
 
+            {{-- النص الأصلي كما ورد في المصدر --}}
+            @if($hadith->raw_text)
+            <div class="form-group">
+                <label><i class="fas fa-scroll text-warning"></i> النص الأصلي كما ورد في المصدر</label>
+                <textarea name="raw_text" class="form-control" rows="3" 
+                    style="background-color: #fffdf5; font-family: 'Scheherazade New', serif; font-size: 1.1rem; line-height: 2;"
+                >{{ old('raw_text', $hadith->raw_text) }}</textarea>
+                <small class="text-muted"><i class="fas fa-info-circle"></i> هذا النص الأصلي كما أُدخل أول مرة. يمكنك تعديله إذا لزم الأمر.</small>
+            </div>
+            @else
+            <input type="hidden" name="raw_text" value="">
+            @endif
 
             <div class="form-group">
                 <label><i class="fas fa-book-open text-info"></i> الشرح والتفسير</label>
@@ -319,11 +331,35 @@
     const regularNarrators = @json($narrators->where('is_companion', false)->values()->map(fn($n) => ['id' => $n->id, 'name' => $n->name]));
 
     $(document).ready(function () {
-        // تفعيل Select2
+        // ========== Arabic Text Normalization ==========
+        function normalizeArabic(str) {
+            if (!str) return '';
+            return str
+                .replace(/[أإآٱٲٳ]/g, 'ا')
+                .replace(/ة/g, 'ه')
+                .replace(/ى/g, 'ي')
+                .replace(/[\u064B-\u065F\u0670]/g, '')
+                .replace(/ؤ/g, 'و')
+                .replace(/ئ/g, 'ي')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function arabicMatcher(params, data) {
+            if ($.trim(params.term) === '') return data;
+            if (typeof data.text === 'undefined') return null;
+            const normalizedTerm = normalizeArabic(params.term);
+            const normalizedText = normalizeArabic(data.text);
+            if (normalizedText.indexOf(normalizedTerm) > -1) return data;
+            return null;
+        }
+
+        // تفعيل Select2 مع البحث العربي المحسّن
         $('.select2').select2({
             theme: 'bootstrap4',
             language: "ar",
-            dir: "rtl"
+            dir: "rtl",
+            matcher: arabicMatcher
         });
 
 

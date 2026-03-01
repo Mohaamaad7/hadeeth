@@ -1,14 +1,12 @@
-@extends('layouts.frontend')
+<?php $__env->startSection('title', 'موسوعة الحديث الصحيح | الرئيسية'); ?>
 
-@section('title', 'موسوعة الحديث الصحيح | الرئيسية')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <!-- Header / Navbar -->
     <nav class="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-20 items-center">
                 <!-- Logo -->
-                <a href="{{ route('home') }}" class="flex items-center gap-4">
+                <a href="<?php echo e(route('home')); ?>" class="flex items-center gap-4">
                     <div
                         class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-100 transform rotate-3">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
@@ -27,18 +25,18 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden md:flex items-center space-x-reverse space-x-10">
-                    <a href="{{ route('home') }}"
+                    <a href="<?php echo e(route('home')); ?>"
                         class="text-emerald-700 font-bold hover:text-emerald-500 transition-colors">الرئيسية</a>
-                    <a href="{{ route('books.index') }}"
+                    <a href="<?php echo e(route('books.index')); ?>"
                         class="text-gray-500 font-semibold hover:text-emerald-600 transition-colors">الكتب</a>
                     <a href="#" class="text-gray-500 font-semibold hover:text-emerald-600 transition-colors">الرواة</a>
-                    <a href="{{ route('about') }}"
+                    <a href="<?php echo e(route('about')); ?>"
                         class="text-gray-500 font-semibold hover:text-emerald-600 transition-colors">عن المشروع</a>
                 </div>
 
                 <!-- Auth & Mobile Menu -->
                 <div class="flex items-center gap-3">
-                    <a href="{{ route('hadith.random') }}"
+                    <a href="<?php echo e(route('hadith.random')); ?>"
                         class="hidden md:block text-gray-600 font-bold px-4 py-2 hover:text-emerald-600 transition-colors">
                         <i class="fa-solid fa-shuffle ml-1"></i> حديث عشوائي
                     </a>
@@ -58,11 +56,11 @@
             <i class="fa-solid fa-times"></i>
         </button>
         <nav class="flex flex-col items-center gap-6 text-xl font-bold text-gray-700">
-            <a href="{{ route('home') }}" class="hover:text-emerald-600">الرئيسية</a>
-            <a href="{{ route('books.index') }}" class="hover:text-emerald-600">الكتب</a>
+            <a href="<?php echo e(route('home')); ?>" class="hover:text-emerald-600">الرئيسية</a>
+            <a href="<?php echo e(route('books.index')); ?>" class="hover:text-emerald-600">الكتب</a>
             <a href="#" class="hover:text-emerald-600">الرواة</a>
-            <a href="{{ route('about') }}" class="hover:text-emerald-600">عن المشروع</a>
-            <a href="{{ route('hadith.random') }}" class="hover:text-emerald-600">حديث عشوائي</a>
+            <a href="<?php echo e(route('about')); ?>" class="hover:text-emerald-600">عن المشروع</a>
+            <a href="<?php echo e(route('hadith.random')); ?>" class="hover:text-emerald-600">حديث عشوائي</a>
         </nav>
     </div>
 
@@ -78,7 +76,7 @@
             </p>
 
             <!-- Search Bar -->
-            <form action="{{ route('search') }}" method="GET" class="max-w-3xl mx-auto">
+            <form action="<?php echo e(route('search')); ?>" method="GET" class="max-w-3xl mx-auto">
                 <div
                     class="search-container flex items-center p-2 rounded-2xl shadow-2xl transition-all focus-within:ring-4 focus-within:ring-emerald-500/20 border border-white/20">
                     <div class="flex-grow flex items-center px-4">
@@ -89,7 +87,7 @@
                         </svg>
                         <input type="text" name="q" placeholder="ابحث عن حديث، راوٍ، أو كتاب..."
                             class="w-full py-4 px-4 text-lg lg:text-xl text-gray-900 focus:outline-none bg-transparent font-medium"
-                            value="{{ request('q') }}" required>
+                            value="<?php echo e(request('q')); ?>" required>
                     </div>
                     <button type="submit"
                         class="bg-emerald-600 text-white px-8 lg:px-10 py-4 rounded-xl font-black text-lg hover:bg-emerald-500 transition-all shadow-lg active:scale-95">
@@ -99,13 +97,13 @@
 
                 <div class="mt-8 flex flex-wrap justify-center gap-3">
                     <span class="text-emerald-100/60 font-medium">الأكثر بحثاً:</span>
-                    <a href="{{ route('search') }}?q=حديث+جبريل"
+                    <a href="<?php echo e(route('search')); ?>?q=حديث+جبريل"
                         class="px-4 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition-all text-sm">حديث
                         جبريل</a>
-                    <a href="{{ route('search') }}?q=فضل+الصيام"
+                    <a href="<?php echo e(route('search')); ?>?q=فضل+الصيام"
                         class="px-4 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition-all text-sm">فضل
                         الصيام</a>
-                    <a href="{{ route('search') }}?q=أركان+الإسلام"
+                    <a href="<?php echo e(route('search')); ?>?q=أركان+الإسلام"
                         class="px-4 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition-all text-sm">أركان
                         الإسلام</a>
                 </div>
@@ -119,21 +117,24 @@
             <div class="flex flex-wrap justify-center gap-12 text-center">
                 <div class="group cursor-pointer">
                     <div class="text-4xl font-black text-emerald-600 group-hover:text-emerald-700 transition-colors">
-                        {{ number_format($totalHadiths) }}
+                        <?php echo e(number_format($totalHadiths)); ?>
+
                     </div>
                     <div class="text-sm text-gray-500 mt-1 font-semibold">حديث</div>
                 </div>
                 <div class="w-px h-16 bg-gray-200"></div>
                 <div class="group cursor-pointer">
                     <div class="text-4xl font-black text-emerald-600 group-hover:text-emerald-700 transition-colors">
-                        {{ number_format($totalBooks) }}
+                        <?php echo e(number_format($totalBooks)); ?>
+
                     </div>
                     <div class="text-sm text-gray-500 mt-1 font-semibold">كتاب</div>
                 </div>
                 <div class="w-px h-16 bg-gray-200"></div>
                 <div class="group cursor-pointer">
                     <div class="text-4xl font-black text-emerald-600 group-hover:text-emerald-700 transition-colors">
-                        {{ number_format($totalSources) }}
+                        <?php echo e(number_format($totalSources)); ?>
+
                     </div>
                     <div class="text-sm text-gray-500 mt-1 font-semibold">مصدر</div>
                 </div>
@@ -157,7 +158,7 @@
                 <p class="text-gray-500 leading-relaxed font-medium">تصفح الكتب السبعة ومسانيد الأئمة مع شروح مفصلة لكل باب
                     فقهي وموضوع.</p>
                 <div class="mt-8 pt-8 border-t border-gray-50">
-                    <a href="{{ route('search') }}?source=خ" class="text-blue-600 font-black cursor-pointer group">استعرض
+                    <a href="<?php echo e(route('search')); ?>?source=خ" class="text-blue-600 font-black cursor-pointer group">استعرض
                         الكتب <span class="group-hover:mr-2 transition-all">←</span></a>
                 </div>
             </div>
@@ -205,17 +206,17 @@
         <div class="max-w-4xl mx-auto px-4">
             <h3 class="text-center text-xl font-bold text-gray-800 mb-8">تصفح حسب المصدر</h3>
             <div class="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
-                <a href="{{ route('search') }}?source=خ"
+                <a href="<?php echo e(route('search')); ?>?source=خ"
                     class="flex items-center gap-2 hover:text-emerald-600 transition-colors group bg-white px-5 py-3 rounded-xl shadow-sm border border-gray-100">
                     <i class="fa-solid fa-book-open text-emerald-400 group-hover:text-emerald-600"></i>
                     <span class="font-bold">صحيح البخاري</span>
                 </a>
-                <a href="{{ route('search') }}?source=م"
+                <a href="<?php echo e(route('search')); ?>?source=م"
                     class="flex items-center gap-2 hover:text-emerald-600 transition-colors group bg-white px-5 py-3 rounded-xl shadow-sm border border-gray-100">
                     <i class="fa-solid fa-book-open text-emerald-400 group-hover:text-emerald-600"></i>
                     <span class="font-bold">صحيح مسلم</span>
                 </a>
-                <a href="{{ route('search') }}?source=ت"
+                <a href="<?php echo e(route('search')); ?>?source=ت"
                     class="flex items-center gap-2 hover:text-emerald-600 transition-colors group bg-white px-5 py-3 rounded-xl shadow-sm border border-gray-100">
                     <i class="fa-solid fa-book-open text-emerald-400 group-hover:text-emerald-600"></i>
                     <span class="font-bold">سنن الترمذي</span>
@@ -225,40 +226,44 @@
     </section>
 
     <!-- Latest Hadiths -->
-    @if($latestHadiths->count() > 0)
+    <?php if($latestHadiths->count() > 0): ?>
         <section class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-black text-gray-800 mb-10 text-center">
                 <i class="fa-solid fa-star text-emerald-500 ml-2"></i>
                 أحاديث مميزة
             </h2>
             <div class="grid md:grid-cols-3 gap-6">
-                @foreach($latestHadiths as $hadith)
-                    <a href="{{ route('hadith.show', $hadith->id) }}"
+                <?php $__currentLoopData = $latestHadiths; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $hadith): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <a href="<?php echo e(route('hadith.show', $hadith->id)); ?>"
                         class="floating-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm group">
                         <div class="flex items-center gap-2 mb-4">
                             <span class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold">
-                                #{{ $hadith->number_in_book }}
+                                #<?php echo e($hadith->number_in_book); ?>
+
                             </span>
                             <span class="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full font-bold">
-                                {{ $hadith->grade }}
+                                <?php echo e($hadith->grade); ?>
+
                             </span>
                         </div>
                         <p class="font-scheherazade text-lg text-gray-700 leading-relaxed line-clamp-3 group-hover:text-gray-900">
-                            {{ Str::limit($hadith->content, 120) }}
+                            <?php echo e(Str::limit($hadith->content, 120)); ?>
+
                         </p>
                         <div class="mt-4 pt-4 border-t border-gray-50 text-sm text-gray-500 flex items-center justify-between">
                             <span>
-                                <i class="fa-solid fa-user ml-1 text-emerald-400"></i> {{ $hadith->narrator?->name ?? 'غير محدد' }}
+                                <i class="fa-solid fa-user ml-1 text-emerald-400"></i> <?php echo e($hadith->narrator?->name ?? 'غير محدد'); ?>
+
                             </span>
                             <span class="text-emerald-600 font-bold group-hover:translate-x-[-4px] transition-transform">
                                 اقرأ المزيد ←
                             </span>
                         </div>
                     </a>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         </section>
-    @endif
+    <?php endif; ?>
 
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-100 py-16">
@@ -279,7 +284,8 @@
                 <a href="#" class="hover:text-emerald-600 transition-colors">المنهجية العلمية</a>
                 <a href="#" class="hover:text-emerald-600 transition-colors">اتصل بنا</a>
             </div>
-            <p class="text-gray-300 text-[12px]">© {{ date('Y') }} جميع الحقوق محفوظة لفريق عمل الموسوعة</p>
+            <p class="text-gray-300 text-[12px]">© <?php echo e(date('Y')); ?> جميع الحقوق محفوظة لفريق عمل الموسوعة</p>
         </div>
     </footer>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.frontend', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\hadeeth\resources\views/frontend/home.blade.php ENDPATH**/ ?>
