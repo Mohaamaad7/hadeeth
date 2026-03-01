@@ -297,7 +297,6 @@
             </div>
         </section>
 
-        /* Removed as it was moved inside the main card above */
         <!-- Sanad Chains (سلاسل الإسناد) - Dynamic -->
         @if($hadith->chains->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-up" style="animation-delay: 0.1s;">
