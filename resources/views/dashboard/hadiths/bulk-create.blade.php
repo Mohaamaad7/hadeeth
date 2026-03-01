@@ -284,7 +284,49 @@
                     }
                 },
                 error: function (xhr) {
-                    alert('حدث خطأ أثناء التحليل: ' + (xhr.responseJSON?.message || 'خطأ غير معروف'));
+                    if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                        // Build detailed error message
+                        const data = xhr.responseJSON;
+                        let errorHtml = `<div style="text-align:right; direction:rtl; max-height:400px; overflow-y:auto;">`;
+                        errorHtml += `<p style="font-weight:bold; color:#dc3545; margin-bottom:15px;">⛔ ${data.message}</p>`;
+                        errorHtml += `<table style="width:100%; border-collapse:collapse; font-size:14px;">`;
+
+                        data.errors.forEach(function (err) {
+                            errorHtml += `<tr style="border-bottom:1px solid #eee; padding:8px;">`;
+                            errorHtml += `<td style="padding:8px; font-weight:bold; color:#007bff; white-space:nowrap; vertical-align:top;">حديث #${err.index}</td>`;
+                            errorHtml += `<td style="padding:8px;">`;
+                            errorHtml += `<div style="color:#666; font-size:12px; margin-bottom:5px;">${err.snippet}</div>`;
+                            err.errors.forEach(function (e) {
+                                errorHtml += `<div style="color:#dc3545;">❌ ${e}</div>`;
+                            });
+                            errorHtml += `</td></tr>`;
+                        });
+
+                        errorHtml += `</table></div>`;
+
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'مشاكل في التحليل',
+                                html: errorHtml,
+                                width: '700px',
+                                confirmButtonText: 'فهمت، سأصلح النصوص',
+                            });
+                        } else {
+                            // Fallback if SweetAlert not available
+                            let plainErrors = data.message + '\n\n';
+                            data.errors.forEach(function (err) {
+                                plainErrors += `حديث #${err.index}:\n`;
+                                err.errors.forEach(function (e) {
+                                    plainErrors += `  ❌ ${e}\n`;
+                                });
+                                plainErrors += '\n';
+                            });
+                            alert(plainErrors);
+                        }
+                    } else {
+                        alert('حدث خطأ أثناء التحليل: ' + (xhr.responseJSON?.message || 'خطأ غير معروف'));
+                    }
                 },
                 complete: function () {
                     btn.prop('disabled', false).html('<i class="fas fa-magic"></i> تحليل الأحاديث');

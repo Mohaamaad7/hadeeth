@@ -343,6 +343,7 @@ class HadithController extends Controller
 
     /**
      * Preview parsed hadiths from bulk text (AJAX).
+     * Returns errors per-hadith if parsing fails.
      */
     public function bulkPreview(Request $request)
     {
@@ -351,6 +352,58 @@ class HadithController extends Controller
         ]);
 
         $results = $this->parser->parseMultiple($request->bulk_text);
+
+        $errors = [];
+        foreach ($results as $index => $item) {
+            $parsed = $item['parsed'];
+            $hadithErrors = [];
+            $raw = $item['raw'];
+            $snippet = mb_substr($raw, 0, 60, 'UTF-8') . '...';
+
+            if (empty($parsed['number'])) {
+                $hadithErrors[] = 'لم يتم العثور على رقم الحديث [xxx]';
+            }
+            if (empty($parsed['grade'])) {
+                $hadithErrors[] = 'لم يتم العثور على الحكم (صحيح/حسن/ضعيف)';
+            }
+            if (empty($parsed['narrator'])) {
+                $hadithErrors[] = 'لم يتم العثور على الراوي (عن xxx)';
+            }
+            if (empty($parsed['sources']) && empty($parsed['source_codes'])) {
+                $hadithErrors[] = 'لم يتم العثور على أي مصدر (خ م د ت ...)';
+            }
+            if (empty($parsed['clean_text'])) {
+                $hadithErrors[] = 'لم يتم استخراج نص الحديث';
+            }
+
+            // Check for unknown source codes
+            if (!empty($parsed['source_codes'])) {
+                foreach ($parsed['source_codes'] as $code) {
+                    $source = Source::where('code', $code)->first();
+                    if (!$source) {
+                        $hadithErrors[] = "رمز مصدر غير معروف: «{$code}» — أضفه من لوحة التحكم أولاً";
+                    }
+                }
+            }
+
+            if (!empty($hadithErrors)) {
+                $errors[] = [
+                    'index' => $index + 1,
+                    'snippet' => $snippet,
+                    'errors' => $hadithErrors,
+                ];
+            }
+        }
+
+        if (!empty($errors)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'يوجد ' . count($errors) . ' حديث به مشاكل في التحليل',
+                'errors' => $errors,
+                'count' => count($results),
+                'hadiths' => $results,
+            ], 422);
+        }
 
         return response()->json([
             'success' => true,
@@ -361,6 +414,7 @@ class HadithController extends Controller
 
     /**
      * Store multiple hadiths from bulk import.
+     * Halts entirely if any hadith has parsing issues.
      */
     public function bulkStore(Request $request): RedirectResponse
     {
@@ -375,6 +429,32 @@ class HadithController extends Controller
             'hadiths.*.sources' => 'nullable|string', // JSON encoded
             'hadiths.*.additions' => 'nullable|string', // JSON encoded
         ]);
+
+        // Pre-validate: re-parse each hadith and check for issues
+        $errors = [];
+        foreach ($request->hadiths as $index => $hadithData) {
+            $hadithErrors = [];
+
+            if (empty($hadithData['clean_text']) || mb_strlen(trim($hadithData['clean_text'])) < 5) {
+                $hadithErrors[] = 'نص الحديث فارغ أو قصير جداً';
+            }
+            if (empty($hadithData['grade'])) {
+                $hadithErrors[] = 'لم يتم تحديد الحكم';
+            }
+
+            if (!empty($hadithErrors)) {
+                $snippet = mb_substr($hadithData['raw_text'], 0, 60, 'UTF-8') . '...';
+                $errors[] = "حديث #" . ($index + 1) . " ({$snippet}): " . implode('، ', $hadithErrors);
+            }
+        }
+
+        if (!empty($errors)) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', '⛔ تم إيقاف الإدخال! يوجد ' . count($errors) . ' حديث به مشاكل:')
+                ->with('parsing_errors', $errors);
+        }
 
         $bookId = $request->book_id;
         $savedCount = 0;
