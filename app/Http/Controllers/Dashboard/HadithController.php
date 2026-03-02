@@ -99,13 +99,20 @@ class HadithController extends Controller
             $validated['number_in_book'] = $parsed['number'] ?? $validated['number_in_book'];
             $validated['grade'] = $parsed['grade'] ?? $validated['grade'];
 
-            // البحث عن الراوي إذا تم استخراجه
+            // البحث عن الراوي إذا تم استخراجه — لا يتم إنشاء رواة جدد تلقائياً
             if ($parsed['narrator']) {
-                $narrator = Narrator::firstOrCreate(
-                    ['name' => $parsed['narrator']],
-                    ['color_code' => 'default']
-                );
-                $validated['narrator_id'] = $narrator->id;
+                $narrator = Narrator::where('name', $parsed['narrator'])->first();
+                if (!$narrator) {
+                    $narrator = Narrator::where('name', 'LIKE', "%{$parsed['narrator']}%")->first();
+                }
+                if ($narrator) {
+                    $validated['narrator_id'] = $narrator->id;
+                } else {
+                    return redirect()->back()->withInput()->with(
+                        'error',
+                        "⛔ راوي غير معروف: «{$parsed['narrator']}» — أضفه من إدارة الرواة أولاً"
+                    );
+                }
             }
 
             // استخراج المصادر من الـ codes
@@ -368,6 +375,17 @@ class HadithController extends Controller
             }
             if (empty($parsed['narrator'])) {
                 $hadithErrors[] = 'لم يتم العثور على الراوي (عن xxx)';
+            } else {
+                // التحقق من وجود الراوي في قاعدة البيانات
+                $narratorName = $parsed['narrator'];
+                $narratorExists = Narrator::where('name', $narratorName)->exists();
+                if (!$narratorExists) {
+                    // محاولة بحث جزئي (قد يكون الاسم مخزن بشكل مختلف قليلاً)
+                    $narratorExists = Narrator::where('name', 'LIKE', "%{$narratorName}%")->exists();
+                }
+                if (!$narratorExists) {
+                    $hadithErrors[] = "راوي غير معروف: «{$narratorName}» — تأكد من صحة الاسم أو أضفه من إدارة الرواة أولاً";
+                }
             }
             if (empty($parsed['sources']) && empty($parsed['source_codes'])) {
                 $hadithErrors[] = 'لم يتم العثور على أي مصدر (خ م د ت ...)';
@@ -460,14 +478,18 @@ class HadithController extends Controller
         $savedCount = 0;
 
         foreach ($request->hadiths as $hadithData) {
-            // Handle narrator
+            // Handle narrator — لا يتم إنشاء رواة جدد تلقائياً
             $narratorId = null;
             if (!empty($hadithData['narrator'])) {
-                $narrator = Narrator::firstOrCreate(
-                    ['name' => $hadithData['narrator']],
-                    ['color_code' => 'default']
-                );
-                $narratorId = $narrator->id;
+                $narrator = Narrator::where('name', $hadithData['narrator'])->first();
+                if (!$narrator) {
+                    // محاولة بحث جزئي
+                    $narrator = Narrator::where('name', 'LIKE', "%{$hadithData['narrator']}%")->first();
+                }
+                if ($narrator) {
+                    $narratorId = $narrator->id;
+                }
+                // إذا لم يُوجد → narratorId يبقى null (لن يتم إنشاء راوي وهمي)
             }
 
             // Create hadith

@@ -91,6 +91,16 @@ class HadithParser
     private array $additionKeywords = ['زاد', 'وزاد', 'ولفظ', 'ورواه', 'وعند', 'وفي رواية'];
 
     /**
+     * Normalize source code by collapsing multiple tatweels (ـ) into one.
+     * Example: هــ → هـ (fixes ابن ماجه matching)
+     */
+    private function normalizeSourceCode(string $code): string
+    {
+        // Collapse multiple consecutive tatweel (U+0640) into one
+        return preg_replace('/\x{0640}+/u', "\u{0640}", $code);
+    }
+
+    /**
      * Parse hadith text and extract metadata.
      *
      * @param string $text
@@ -305,7 +315,7 @@ class HadithParser
                 // Split by spaces or extract individual Arabic/Latin letters
                 $parts = preg_split('/\s+/u', $match);
                 foreach ($parts as $part) {
-                    $part = trim($part);
+                    $part = $this->normalizeSourceCode(trim($part));
                     if (empty($part))
                         continue;
 
@@ -339,6 +349,10 @@ class HadithParser
     /**
      * Check if parenthesis content is explanatory text (not source codes).
      * Examples: (يعني الوحي), (أي الملائكة), etc.
+     * 
+     * Logic: reject as explanatory ONLY if:
+     * 1. Contains known explanatory keywords, OR
+     * 2. NONE of the parts are recognized source codes/groups
      */
     private function isExplanatoryParenthesis(string $content): bool
     {
@@ -358,16 +372,36 @@ class HadithParser
             }
         }
 
-        // If content has words longer than 4 characters that aren't in our source map
+        // Check if ANY part is recognized as a source code or group
+        // If at least one part is recognized → NOT explanatory (it's source codes)
         $parts = preg_split('/\s+/u', $content);
+        $hasAnyKnownCode = false;
+
         foreach ($parts as $part) {
             $part = trim($part);
-            if (mb_strlen($part, 'UTF-8') > 4 && !isset($this->sourceMap[$part])) {
-                return true;
+            if (empty($part))
+                continue;
+
+            // Check if this part is a known source code or group
+            if (isset($this->sourceMap[$part]) || isset($this->groupExpansion[$part])) {
+                $hasAnyKnownCode = true;
+                break;
+            }
+
+            // For short parts (≤3 chars), check individual characters
+            if (mb_strlen($part, 'UTF-8') <= 3) {
+                preg_match_all('/./u', $part, $chars);
+                foreach ($chars[0] as $char) {
+                    if (isset($this->sourceMap[$char]) || isset($this->groupExpansion[$char])) {
+                        $hasAnyKnownCode = true;
+                        break 2;
+                    }
+                }
             }
         }
 
-        return false;
+        // If no known codes found at all → it's explanatory text
+        return !$hasAnyKnownCode;
     }
 
 
@@ -402,7 +436,7 @@ class HadithParser
         // Split by spaces
         $parts = preg_split('/\s+/u', $content);
         foreach ($parts as $part) {
-            $part = trim($part);
+            $part = $this->normalizeSourceCode(trim($part));
             if (empty($part))
                 continue;
 

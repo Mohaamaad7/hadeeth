@@ -144,6 +144,7 @@
 
 <?php $__env->startSection('js'); ?>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(function () {
         // ========== Arabic Text Normalization ==========
@@ -284,7 +285,46 @@
                     }
                 },
                 error: function (xhr) {
-                    alert('حدث خطأ أثناء التحليل: ' + (xhr.responseJSON?.message || 'خطأ غير معروف'));
+                    if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                        const data = xhr.responseJSON;
+                        let errorHtml = `
+                            <div style="text-align:right; direction:rtl; max-height:450px; overflow-y:auto; padding:5px;">
+                                <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:14px; color:#856404;">
+                                    ⚠️ <strong>${data.message}</strong><br>
+                                    <span style="font-size:12px;">أصلح المشاكل أدناه ثم أعد التحليل</span>
+                                </div>`;
+
+                        data.errors.forEach(function (err) {
+                            errorHtml += `
+                                <div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:12px 16px; margin-bottom:10px; border-right:4px solid #dc3545;">
+                                    <div style="font-weight:bold; color:#0d6efd; font-size:15px; margin-bottom:6px;">📌 حديث رقم ${err.index}</div>
+                                    <div style="color:#6c757d; font-size:12px; font-family:'Scheherazade New',serif; line-height:1.8; margin-bottom:8px; padding:6px; background:#fff; border-radius:4px; border:1px dashed #dee2e6;">${err.snippet}</div>
+                                    <div style="padding-right:8px;">`;
+                            err.errors.forEach(function (e) {
+                                errorHtml += `<div style="color:#dc3545; font-size:13px; margin-bottom:3px;">❌ ${e}</div>`;
+                            });
+                            errorHtml += `</div></div>`;
+                        });
+
+                        errorHtml += `</div>`;
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: '<span style="font-size:20px;">⛔ مشاكل في التحليل</span>',
+                            html: errorHtml,
+                            width: '650px',
+                            confirmButtonText: '✏️ فهمت، سأصلح النصوص',
+                            confirmButtonColor: '#0d6efd',
+                            customClass: { popup: 'text-right' },
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'خطأ',
+                            text: xhr.responseJSON?.message || 'حدث خطأ أثناء التحليل',
+                            confirmButtonText: 'حسنًا',
+                        });
+                    }
                 },
                 complete: function () {
                     btn.prop('disabled', false).html('<i class="fas fa-magic"></i> تحليل الأحاديث');

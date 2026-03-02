@@ -338,6 +338,12 @@ return [
             'url' => 'dashboard/users',
             'icon' => 'fas fa-fw fa-user',
         ],
+        [
+            'text' => 'تنظيف قاعدة البيانات',
+            'url' => 'dashboard/cleanup',
+            'icon' => 'fas fa-fw fa-broom text-danger',
+            'icon_color' => 'danger',
+        ],
     ],
 
     /*

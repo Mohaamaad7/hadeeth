@@ -11,6 +11,7 @@ use App\Http\Controllers\Frontend\HadithController as FrontendHadithController;
 use App\Http\Controllers\Frontend\NarratorController as FrontendNarratorController;
 use App\Http\Controllers\Frontend\BookController as FrontendBookController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\Dashboard\CleanupController;
 use Illuminate\Support\Facades\Route;
 
 // SEO Routes
@@ -62,5 +63,16 @@ Route::middleware('auth')->group(function () {
         Route::get('hadiths-bulk', [DashboardHadithController::class, 'bulkCreate'])->name('hadiths.bulk.create');
         Route::post('hadiths-bulk/preview', [DashboardHadithController::class, 'bulkPreview'])->name('hadiths.bulk.preview');
         Route::post('hadiths-bulk/store', [DashboardHadithController::class, 'bulkStore'])->name('hadiths.bulk.store');
+
+        // Database Cleanup
+        Route::get('cleanup', [CleanupController::class, 'index'])->name('cleanup.index');
+        Route::post('cleanup/hadiths', [CleanupController::class, 'deleteHadiths'])->name('cleanup.hadiths');
+        Route::post('cleanup/narrators/orphan', [CleanupController::class, 'deleteOrphanNarrators'])->name('cleanup.narrators.orphan');
+        Route::post('cleanup/narrators/all', [CleanupController::class, 'deleteAllNarrators'])->name('cleanup.narrators.all');
+        Route::post('cleanup/books/empty', [CleanupController::class, 'deleteEmptyChapters'])->name('cleanup.books.empty');
+        Route::post('cleanup/books/all', [CleanupController::class, 'deleteAllBooks'])->name('cleanup.books.all');
+        Route::post('cleanup/sources/orphan', [CleanupController::class, 'deleteOrphanSources'])->name('cleanup.sources.orphan');
+        Route::post('cleanup/chains', [CleanupController::class, 'deleteChains'])->name('cleanup.chains');
+        Route::post('cleanup/nuke', [CleanupController::class, 'nukeAll'])->name('cleanup.nuke');
     });
 });
