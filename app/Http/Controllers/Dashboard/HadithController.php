@@ -23,6 +23,146 @@ class HadithController extends Controller
     }
 
     /**
+     * قاموس الأسماء المختصرة → الأسماء الكاملة.
+     * في كتاب صحيح الجامع الصغير، الصحابة المشهورون يُذكرون بأسمائهم المختصرة.
+     * هذا القاموس يضمن الربط الصحيح (جابر = جابر بن عبد الله وليس جابر بن سمرة).
+     */
+    private array $narratorAliases = [
+        // أسماء مفردة → الاسم الكامل
+        'عائشة' => 'عائشة بنت أبي بكر',
+        'جابر' => 'جابر بن عبد الله',
+        'أنس' => 'أنس بن مالك',
+        'ثوبان' => 'ثوبان مولى رسول الله',
+        'بلال' => 'بلال بن رباح',
+        'معاذ' => 'معاذ بن جبل',
+        'صهيب' => 'صهيب الرومي',
+        'سلمان' => 'سلمان الفارسي',
+        'حذيفة' => 'حذيفة بن اليمان',
+        'معاوية' => 'معاوية بن أبي سفيان',
+        'عمار' => 'عمار بن ياسر',
+        'عمر' => 'عمر بن الخطاب',
+        'جرير' => 'جرير بن عبد الله',
+        'سمرة' => 'سمرة بن جندب',
+        'خالد' => 'خالد بن الوليد',
+        'فاطمة' => 'فاطمة الزهراء',
+        // "ابن X" → الاسم الكامل
+        'ابن عمر' => 'عبد الله بن عمر',
+        'ابن عمرو' => 'عبد الله بن عمرو بن العاص',
+        'ابن عباس' => 'عبد الله بن عباس',
+        'ابن مسعود' => 'عبد الله بن مسعود',
+        'ابن الزبير' => 'عبد الله بن الزبير',
+
+        // "أبو/أبي X" → الاسم الكامل
+        'أبو هريرة' => 'أبو هريرة',
+        'أبي هريرة' => 'أبو هريرة',
+        'أبو ذر' => 'أبو ذر الغفاري',
+        'أبي ذر' => 'أبو ذر الغفاري',
+        'أبو موسى' => 'أبو موسى الأشعري',
+        'أبي موسى' => 'أبو موسى الأشعري',
+        'أبو سعيد' => 'أبو سعيد الخدري',
+        'أبي سعيد' => 'أبو سعيد الخدري',
+        'أبو بكر' => 'أبو بكر الصديق',
+        'أبي بكر' => 'أبو بكر الصديق',
+        'أبو الدرداء' => 'أبو الدرداء',
+        'أبي الدرداء' => 'أبو الدرداء',
+        'أبو أمامة' => 'أبو أمامة الباهلي',
+        'أبي أمامة' => 'أبو أمامة الباهلي',
+        'أبو أيوب' => 'أبو أيوب الأنصاري',
+        'أبي أيوب' => 'أبو أيوب الأنصاري',
+        'أبو قتادة' => 'أبو قتادة',
+        'أبي قتادة' => 'أبو قتادة',
+        'أبو بكرة' => 'أبو بكرة',
+        'أبي بكرة' => 'أبو بكرة',
+        'أبو مسعود' => 'أبو مسعود البدري',
+        'أبي مسعود' => 'أبو مسعود البدري',
+        'أبو طلحة' => 'أبو طلحة الأنصاري',
+        'أبي طلحة' => 'أبو طلحة الأنصاري',
+        'أبو مالك الأشجعي' => 'أبو مالك الأشعري',
+
+        // "أم X" → الاسم الكامل
+        'أم سلمة' => 'أم سلمة',
+        'أم حبيبة' => 'أم حبيبة',
+
+        // حالات خاصة
+        'والد أبي مالك الأشجعي' => 'أبو مالك الأشعري',
+        'عتبان بن مالك' => 'عتبان بن مالك',
+        'عتبان' => 'عتبان بن مالك',
+        'العرباض' => 'العرباض بن سارية',
+        'عبادة' => 'عبادة بن الصامت',
+    ];
+
+    /**
+     * البحث الذكي عن الراوي.
+     * المنطق:
+     * 1. قاموس الاختصارات (أولوية قصوى — يضمن الدقة)
+     * 2. مطابقة تامة في DB
+     * 3. بحث "يبدأ بـ" في DB (fallback فقط)
+     *
+     * @return Narrator|null
+     */
+    private function findNarrator(string $name): ?Narrator
+    {
+        $name = trim($name);
+        if (empty($name))
+            return null;
+
+        // إزالة النقطة الأخيرة إن وجدت
+        $name = rtrim($name, '.');
+
+        // 1️⃣ فحص قاموس الاختصارات أولاً
+        if (isset($this->narratorAliases[$name])) {
+            $fullName = $this->narratorAliases[$name];
+            $narrator = Narrator::where('name', $fullName)->first();
+            if ($narrator)
+                return $narrator;
+        }
+
+        // 2️⃣ مطابقة تامة في DB
+        $narrator = Narrator::where('name', $name)->first();
+        if ($narrator)
+            return $narrator;
+
+        // 3️⃣ تطبيع أبي→أبو ثم مطابقة تامة
+        $normalized = $name;
+        if (str_starts_with($normalized, 'أبي ') && $normalized !== 'أبي بن كعب') {
+            $normalized = 'أبو ' . mb_substr($normalized, 4);
+        } elseif (str_starts_with($normalized, 'أبا ')) {
+            $normalized = 'أبو ' . mb_substr($normalized, 4);
+        }
+
+        if ($normalized !== $name) {
+            // فحص القاموس بالاسم المطبّع
+            if (isset($this->narratorAliases[$normalized])) {
+                $fullName = $this->narratorAliases[$normalized];
+                $narrator = Narrator::where('name', $fullName)->first();
+                if ($narrator)
+                    return $narrator;
+            }
+            $narrator = Narrator::where('name', $normalized)->first();
+            if ($narrator)
+                return $narrator;
+        }
+
+        // 4️⃣ الاسم الكامل في DB يبدأ بالاسم المستخرج
+        // هذا يعمل فقط إذا لا يوجد أكثر من نتيجة (لتجنب الالتباس)
+        $candidates = Narrator::where('name', 'LIKE', "{$normalized} %")->get();
+        if ($candidates->count() === 1) {
+            return $candidates->first();
+        }
+
+        // 5️⃣ حالة "ابن X" — بدون القاموس
+        if (str_starts_with($normalized, 'ابن ')) {
+            $restOfName = mb_substr($normalized, 4);
+            $candidates = Narrator::where('name', 'LIKE', "%بن {$restOfName}%")->get();
+            if ($candidates->count() === 1) {
+                return $candidates->first();
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Display a listing of hadiths.
      */
     public function index(Request $request): View
@@ -99,12 +239,9 @@ class HadithController extends Controller
             $validated['number_in_book'] = $parsed['number'] ?? $validated['number_in_book'];
             $validated['grade'] = $parsed['grade'] ?? $validated['grade'];
 
-            // البحث عن الراوي إذا تم استخراجه — لا يتم إنشاء رواة جدد تلقائياً
+            // البحث عن الراوي إذا تم استخراجه — بحث ذكي
             if ($parsed['narrator']) {
-                $narrator = Narrator::where('name', $parsed['narrator'])->first();
-                if (!$narrator) {
-                    $narrator = Narrator::where('name', 'LIKE', "%{$parsed['narrator']}%")->first();
-                }
+                $narrator = $this->findNarrator($parsed['narrator']);
                 if ($narrator) {
                     $validated['narrator_id'] = $narrator->id;
                 } else {
@@ -376,14 +513,10 @@ class HadithController extends Controller
             if (empty($parsed['narrator'])) {
                 $hadithErrors[] = 'لم يتم العثور على الراوي (عن xxx)';
             } else {
-                // التحقق من وجود الراوي في قاعدة البيانات
+                // التحقق من وجود الراوي في قاعدة البيانات (بحث ذكي)
                 $narratorName = $parsed['narrator'];
-                $narratorExists = Narrator::where('name', $narratorName)->exists();
-                if (!$narratorExists) {
-                    // محاولة بحث جزئي (قد يكون الاسم مخزن بشكل مختلف قليلاً)
-                    $narratorExists = Narrator::where('name', 'LIKE', "%{$narratorName}%")->exists();
-                }
-                if (!$narratorExists) {
+                $foundNarrator = $this->findNarrator($narratorName);
+                if (!$foundNarrator) {
                     $hadithErrors[] = "راوي غير معروف: «{$narratorName}» — تأكد من صحة الاسم أو أضفه من إدارة الرواة أولاً";
                 }
             }
@@ -478,18 +611,14 @@ class HadithController extends Controller
         $savedCount = 0;
 
         foreach ($request->hadiths as $hadithData) {
-            // Handle narrator — لا يتم إنشاء رواة جدد تلقائياً
+            // Handle narrator — بحث ذكي بدون إنشاء تلقائي
             $narratorId = null;
             if (!empty($hadithData['narrator'])) {
-                $narrator = Narrator::where('name', $hadithData['narrator'])->first();
-                if (!$narrator) {
-                    // محاولة بحث جزئي
-                    $narrator = Narrator::where('name', 'LIKE', "%{$hadithData['narrator']}%")->first();
-                }
+                $narrator = $this->findNarrator($hadithData['narrator']);
                 if ($narrator) {
                     $narratorId = $narrator->id;
                 }
-                // إذا لم يُوجد → narratorId يبقى null (لن يتم إنشاء راوي وهمي)
+                // إذا لم يُوجد → narratorId يبقى null
             }
 
             // Create hadith
