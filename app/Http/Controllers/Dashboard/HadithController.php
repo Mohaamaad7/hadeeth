@@ -23,80 +23,9 @@ class HadithController extends Controller
     }
 
     /**
-     * قاموس الأسماء المختصرة → الأسماء الكاملة.
-     * في كتاب صحيح الجامع الصغير، الصحابة المشهورون يُذكرون بأسمائهم المختصرة.
-     * هذا القاموس يضمن الربط الصحيح (جابر = جابر بن عبد الله وليس جابر بن سمرة).
-     */
-    private array $narratorAliases = [
-        // أسماء مفردة → الاسم الكامل
-        'عائشة' => 'عائشة بنت أبي بكر',
-        'جابر' => 'جابر بن عبد الله',
-        'أنس' => 'أنس بن مالك',
-        'ثوبان' => 'ثوبان مولى رسول الله',
-        'بلال' => 'بلال بن رباح',
-        'معاذ' => 'معاذ بن جبل',
-        'صهيب' => 'صهيب الرومي',
-        'سلمان' => 'سلمان الفارسي',
-        'حذيفة' => 'حذيفة بن اليمان',
-        'معاوية' => 'معاوية بن أبي سفيان',
-        'عمار' => 'عمار بن ياسر',
-        'عمر' => 'عمر بن الخطاب',
-        'جرير' => 'جرير بن عبد الله',
-        'سمرة' => 'سمرة بن جندب',
-        'خالد' => 'خالد بن الوليد',
-        'فاطمة' => 'فاطمة الزهراء',
-        // "ابن X" → الاسم الكامل
-        'ابن عمر' => 'عبد الله بن عمر',
-        'ابن عمرو' => 'عبد الله بن عمرو بن العاص',
-        'ابن عباس' => 'عبد الله بن عباس',
-        'ابن مسعود' => 'عبد الله بن مسعود',
-        'ابن الزبير' => 'عبد الله بن الزبير',
-
-        // "أبو/أبي X" → الاسم الكامل
-        'أبو هريرة' => 'أبو هريرة',
-        'أبي هريرة' => 'أبو هريرة',
-        'أبو ذر' => 'أبو ذر الغفاري',
-        'أبي ذر' => 'أبو ذر الغفاري',
-        'أبو موسى' => 'أبو موسى الأشعري',
-        'أبي موسى' => 'أبو موسى الأشعري',
-        'أبو سعيد' => 'أبو سعيد الخدري',
-        'أبي سعيد' => 'أبو سعيد الخدري',
-        'أبو بكر' => 'أبو بكر الصديق',
-        'أبي بكر' => 'أبو بكر الصديق',
-        'أبو الدرداء' => 'أبو الدرداء',
-        'أبي الدرداء' => 'أبو الدرداء',
-        'أبو أمامة' => 'أبو أمامة الباهلي',
-        'أبي أمامة' => 'أبو أمامة الباهلي',
-        'أبو أيوب' => 'أبو أيوب الأنصاري',
-        'أبي أيوب' => 'أبو أيوب الأنصاري',
-        'أبو قتادة' => 'أبو قتادة',
-        'أبي قتادة' => 'أبو قتادة',
-        'أبو بكرة' => 'أبو بكرة',
-        'أبي بكرة' => 'أبو بكرة',
-        'أبو مسعود' => 'أبو مسعود البدري',
-        'أبي مسعود' => 'أبو مسعود البدري',
-        'أبو طلحة' => 'أبو طلحة الأنصاري',
-        'أبي طلحة' => 'أبو طلحة الأنصاري',
-        'أبو مالك الأشجعي' => 'أبو مالك الأشعري',
-
-        // "أم X" → الاسم الكامل
-        'أم سلمة' => 'أم سلمة',
-        'أم حبيبة' => 'أم حبيبة',
-
-        // حالات خاصة
-        'والد أبي مالك الأشجعي' => 'أبو مالك الأشعري',
-        'عتبان بن مالك' => 'عتبان بن مالك',
-        'عتبان' => 'عتبان بن مالك',
-        'العرباض' => 'العرباض بن سارية',
-        'عبادة' => 'عبادة بن الصامت',
-    ];
-
-    /**
      * البحث الذكي عن الراوي.
-     * المنطق:
-     * 1. قاموس الاختصارات (أولوية قصوى — يضمن الدقة)
-     * 2. مطابقة تامة في DB
-     * 3. بحث "يبدأ بـ" في DB (fallback فقط)
+     * يستخدم استعلام واحد يبحث في: الاسم الكامل، اسم الشهرة، والأسماء البديلة.
+     * ثم fallback: تطبيع أبي↔أبو ثنائي الاتجاه، يبدأ بـ، ابن X.
      *
      * @return Narrator|null
      */
@@ -109,50 +38,56 @@ class HadithController extends Controller
         // إزالة النقطة الأخيرة إن وجدت
         $name = rtrim($name, '.');
 
-        // 1️⃣ فحص قاموس الاختصارات أولاً
-        if (isset($this->narratorAliases[$name])) {
-            $fullName = $this->narratorAliases[$name];
-            $narrator = Narrator::where('name', $fullName)->first();
-            if ($narrator)
-                return $narrator;
-        }
+        // 1️⃣ استعلام موحد: الاسم، اسم الشهرة، أو الأسماء البديلة
+        $narrator = Narrator::where('name', $name)
+            ->orWhere('fame_name', $name)
+            ->orWhereHas('alternatives', function ($q) use ($name) {
+                $q->where('alternative_name', $name);
+            })
+            ->first();
 
-        // 2️⃣ مطابقة تامة في DB
-        $narrator = Narrator::where('name', $name)->first();
         if ($narrator)
             return $narrator;
 
-        // 3️⃣ تطبيع أبي→أبو ثم مطابقة تامة
-        $normalized = $name;
-        if (str_starts_with($normalized, 'أبي ') && $normalized !== 'أبي بن كعب') {
-            $normalized = 'أبو ' . mb_substr($normalized, 4);
-        } elseif (str_starts_with($normalized, 'أبا ')) {
-            $normalized = 'أبو ' . mb_substr($normalized, 4);
+        // 2️⃣ تطبيع ثنائي الاتجاه: أبي↔أبو + أبا↔أبو
+        $variants = [];
+
+        if (str_starts_with($name, 'أبي ') && $name !== 'أبي بن كعب') {
+            // أبي → أبو
+            $variants[] = 'أبو ' . mb_substr($name, 4);
+        } elseif (str_starts_with($name, 'أبو ')) {
+            // أبو → أبي (بحث عكسي)
+            $variants[] = 'أبي ' . mb_substr($name, 4);
+        } elseif (str_starts_with($name, 'أبا ')) {
+            // أبا → أبو + أبي
+            $variants[] = 'أبو ' . mb_substr($name, 4);
+            $variants[] = 'أبي ' . mb_substr($name, 4);
         }
 
-        if ($normalized !== $name) {
-            // فحص القاموس بالاسم المطبّع
-            if (isset($this->narratorAliases[$normalized])) {
-                $fullName = $this->narratorAliases[$normalized];
-                $narrator = Narrator::where('name', $fullName)->first();
-                if ($narrator)
-                    return $narrator;
-            }
-            $narrator = Narrator::where('name', $normalized)->first();
+        foreach ($variants as $variant) {
+            $narrator = Narrator::where('name', $variant)
+                ->orWhere('fame_name', $variant)
+                ->orWhereHas('alternatives', function ($q) use ($variant) {
+                    $q->where('alternative_name', $variant);
+                })
+                ->first();
+
             if ($narrator)
                 return $narrator;
         }
 
-        // 4️⃣ الاسم الكامل في DB يبدأ بالاسم المستخرج
-        // هذا يعمل فقط إذا لا يوجد أكثر من نتيجة (لتجنب الالتباس)
-        $candidates = Narrator::where('name', 'LIKE', "{$normalized} %")->get();
-        if ($candidates->count() === 1) {
-            return $candidates->first();
+        // 3️⃣ الاسم المستخرج أو أحد تحويلاته يبدأ به اسم في DB
+        $searchNames = array_merge([$name], $variants);
+        foreach ($searchNames as $searchName) {
+            $candidates = Narrator::where('name', 'LIKE', "{$searchName} %")->get();
+            if ($candidates->count() === 1) {
+                return $candidates->first();
+            }
         }
 
-        // 5️⃣ حالة "ابن X" — بدون القاموس
-        if (str_starts_with($normalized, 'ابن ')) {
-            $restOfName = mb_substr($normalized, 4);
+        // 4️⃣ حالة "ابن X"
+        if (str_starts_with($name, 'ابن ')) {
+            $restOfName = mb_substr($name, 4);
             $candidates = Narrator::where('name', 'LIKE', "%بن {$restOfName}%")->get();
             if ($candidates->count() === 1) {
                 return $candidates->first();
@@ -223,7 +158,8 @@ class HadithController extends Controller
             'number_in_book' => 'required|integer|min:1',
             'grade' => 'required|string|in:صحيح,حسن,ضعيف,موضوع',
             'book_id' => 'required|exists:books,id',
-            'narrator_id' => 'nullable|exists:narrators,id',
+            'narrator_ids' => 'nullable|array',
+            'narrator_ids.*' => 'exists:narrators,id',
             'source_ids' => 'nullable|array',
             'source_ids.*' => 'exists:sources,id',
         ]);
@@ -239,17 +175,29 @@ class HadithController extends Controller
             $validated['number_in_book'] = $parsed['number'] ?? $validated['number_in_book'];
             $validated['grade'] = $parsed['grade'] ?? $validated['grade'];
 
-            // البحث عن الراوي إذا تم استخراجه — بحث ذكي
-            if ($parsed['narrator']) {
-                $narrator = $this->findNarrator($parsed['narrator']);
-                if ($narrator) {
-                    $validated['narrator_id'] = $narrator->id;
-                } else {
+            // البحث عن الرواة إذا تم استخراجهم — بحث ذكي
+            if (!empty($parsed['narrators'])) {
+                $narratorIds = [];
+                $missingNarrators = [];
+
+                foreach ($parsed['narrators'] as $narratorName) {
+                    $narrator = $this->findNarrator($narratorName);
+                    if ($narrator) {
+                        $narratorIds[] = $narrator->id;
+                    } else {
+                        $missingNarrators[] = $narratorName;
+                    }
+                }
+
+                if (!empty($missingNarrators)) {
+                    $names = implode('، ', $missingNarrators);
                     return redirect()->back()->withInput()->with(
                         'error',
-                        "⛔ راوي غير معروف: «{$parsed['narrator']}» — أضفه من إدارة الرواة أولاً"
+                        "⛔ رواة غير معروفين: «{$names}» — أضفهم من إدارة الرواة أولاً"
                     );
                 }
+
+                $validated['narrator_ids'] = $narratorIds;
             }
 
             // استخراج المصادر من الـ codes
@@ -274,10 +222,17 @@ class HadithController extends Controller
             'explanation' => $validated['explanation'] ?? null,
             'number_in_book' => $validated['number_in_book'],
             'grade' => $validated['grade'],
+            'status' => 'pending',
             'book_id' => $validated['book_id'],
-            'narrator_id' => $validated['narrator_id'] ?? null,
+            'narrator_id' => !empty($validated['narrator_ids']) ? $validated['narrator_ids'][0] : null, // Legacy support
+            'entered_by' => auth()->id(),
             'additions' => $validated['additions'] ?? null,
         ]);
+
+        // Attach narrators (many-to-many)
+        if (!empty($validated['narrator_ids'])) {
+            $hadith->narrators()->attach($validated['narrator_ids']);
+        }
 
         // Attach sources
         if (!empty($validated['source_ids'])) {
@@ -286,7 +241,7 @@ class HadithController extends Controller
 
         return redirect()
             ->route('dashboard.hadiths.show', $hadith)
-            ->with('success', 'تم تحديث الحديث وسلاسل الرواة بنجاح!');
+            ->with('success', 'تم إدخال الحديث بنجاح وهو بانتظار المراجعة ⏳');
     }
 
     /**
@@ -326,7 +281,8 @@ class HadithController extends Controller
             'number_in_book' => 'required|integer|min:1',
             'grade' => 'required|string|in:صحيح,حسن,ضعيف,موضوع',
             'book_id' => 'required|exists:books,id',
-            'narrator_id' => 'nullable|exists:narrators,id',
+            'narrator_ids' => 'nullable|array',
+            'narrator_ids.*' => 'exists:narrators,id',
             'source_ids' => 'nullable|array',
             'source_ids.*' => 'exists:sources,id',
             // الشرح المنظم
@@ -387,8 +343,15 @@ class HadithController extends Controller
             'number_in_book' => $validated['number_in_book'],
             'grade' => $validated['grade'],
             'book_id' => $validated['book_id'],
-            'narrator_id' => $validated['narrator_id'] ?? null,
+            'narrator_id' => !empty($validated['narrator_ids']) ? $validated['narrator_ids'][0] : null,
         ], $sharhData));
+
+        // Sync narrators
+        if (isset($validated['narrator_ids'])) {
+            $hadith->narrators()->sync($validated['narrator_ids']);
+        } else {
+            $hadith->narrators()->detach();
+        }
 
         // Sync sources
         if (isset($validated['source_ids'])) {
@@ -488,6 +451,7 @@ class HadithController extends Controller
     /**
      * Preview parsed hadiths from bulk text (AJAX).
      * Returns errors per-hadith if parsing fails.
+     * Narrator issues are warnings (non-blocking), not errors.
      */
     public function bulkPreview(Request $request)
     {
@@ -498,9 +462,11 @@ class HadithController extends Controller
         $results = $this->parser->parseMultiple($request->bulk_text);
 
         $errors = [];
+        $warnings = [];
         foreach ($results as $index => $item) {
             $parsed = $item['parsed'];
             $hadithErrors = [];
+            $hadithWarnings = [];
             $raw = $item['raw'];
             $snippet = mb_substr($raw, 0, 60, 'UTF-8') . '...';
 
@@ -510,16 +476,36 @@ class HadithController extends Controller
             if (empty($parsed['grade'])) {
                 $hadithErrors[] = 'لم يتم العثور على الحكم (صحيح/حسن/ضعيف)';
             }
-            if (empty($parsed['narrator'])) {
-                $hadithErrors[] = 'لم يتم العثور على الراوي (عن xxx)';
+
+            $narratorsData = [];
+            if (empty($parsed['narrators'])) {
+                // تحذير فقط — ليس خطأ حرج
+                $hadithWarnings[] = 'لم يتم العثور على الراوي (عن ...)';
             } else {
-                // التحقق من وجود الراوي في قاعدة البيانات (بحث ذكي)
-                $narratorName = $parsed['narrator'];
-                $foundNarrator = $this->findNarrator($narratorName);
-                if (!$foundNarrator) {
-                    $hadithErrors[] = "راوي غير معروف: «{$narratorName}» — تأكد من صحة الاسم أو أضفه من إدارة الرواة أولاً";
+                // التحقق من وجود الرواة في قاعدة البيانات
+                foreach ($parsed['narrators'] as $narratorName) {
+                    $foundNarrator = $this->findNarrator($narratorName);
+                    if ($foundNarrator) {
+                        $narratorsData[] = [
+                            'id' => $foundNarrator->id,
+                            'name' => $foundNarrator->name,
+                            'found' => true,
+                            'original' => $narratorName
+                        ];
+                    } else {
+                        // تحذير — ليس خطأ حرج (يمكن التصحيح inline)
+                        $hadithWarnings[] = "راوي غير معروف: «{$narratorName}» — يمكنك تصحيحه أدناه";
+                        $narratorsData[] = [
+                            'id' => null,
+                            'name' => $narratorName,
+                            'found' => false,
+                            'original' => $narratorName
+                        ];
+                    }
                 }
             }
+            $results[$index]['parsed']['narrators_data'] = $narratorsData;
+
             if (empty($parsed['sources']) && empty($parsed['source_codes'])) {
                 $hadithErrors[] = 'لم يتم العثور على أي مصدر (خ م د ت ...)';
             }
@@ -544,8 +530,16 @@ class HadithController extends Controller
                     'errors' => $hadithErrors,
                 ];
             }
+            if (!empty($hadithWarnings)) {
+                $warnings[] = [
+                    'index' => $index + 1,
+                    'snippet' => $snippet,
+                    'warnings' => $hadithWarnings,
+                ];
+            }
         }
 
+        // أخطاء حرجة فقط تمنع المعاينة
         if (!empty($errors)) {
             return response()->json([
                 'success' => false,
@@ -560,6 +554,7 @@ class HadithController extends Controller
             'success' => true,
             'count' => count($results),
             'hadiths' => $results,
+            'warnings' => $warnings,
         ]);
     }
 
@@ -576,7 +571,9 @@ class HadithController extends Controller
             'hadiths.*.clean_text' => 'required|string',
             'hadiths.*.number' => 'nullable|integer',
             'hadiths.*.grade' => 'nullable|string',
-            'hadiths.*.narrator' => 'nullable|string',
+            'hadiths.*.narrators_data' => 'nullable|string', // JSON encoded array
+            'hadiths.*.narrator_ids' => 'nullable|array',
+            'hadiths.*.narrator_ids.*' => 'nullable|exists:narrators,id',
             'hadiths.*.sources' => 'nullable|string', // JSON encoded
             'hadiths.*.additions' => 'nullable|string', // JSON encoded
         ]);
@@ -611,14 +608,32 @@ class HadithController extends Controller
         $savedCount = 0;
 
         foreach ($request->hadiths as $hadithData) {
-            // Handle narrator — بحث ذكي بدون إنشاء تلقائي
-            $narratorId = null;
-            if (!empty($hadithData['narrator'])) {
-                $narrator = $this->findNarrator($hadithData['narrator']);
-                if ($narrator) {
-                    $narratorId = $narrator->id;
+
+            $narratorIdsToAttach = [];
+
+            // استخدام الـ IDs المصححة/المختارة من inline fix (Select2 Multiple)
+            if (!empty($hadithData['narrator_ids'])) {
+                foreach ($hadithData['narrator_ids'] as $nId) {
+                    if (!empty($nId)) {
+                        $narratorIdsToAttach[] = (int) $nId;
+                    }
                 }
-                // إذا لم يُوجد → narratorId يبقى null
+            } elseif (!empty($hadithData['narrators_data'])) {
+                // استخدام الـ IDs المستخرجة من الـ Parser
+                $narratorsData = json_decode($hadithData['narrators_data'], true);
+                if (is_array($narratorsData)) {
+                    foreach ($narratorsData as $nd) {
+                        if (!empty($nd['id'])) {
+                            $narratorIdsToAttach[] = (int) $nd['id'];
+                        } else if (!empty($nd['original'])) {
+                            // fallback search just in case
+                            $n = $this->findNarrator($nd['original']);
+                            if ($n) {
+                                $narratorIdsToAttach[] = $n->id;
+                            }
+                        }
+                    }
+                }
             }
 
             // Create hadith
@@ -627,10 +642,17 @@ class HadithController extends Controller
                 'raw_text' => $hadithData['raw_text'],
                 'number_in_book' => $hadithData['number'] ?? null,
                 'grade' => $hadithData['grade'] ?? 'صحيح',
+                'status' => 'pending',
                 'book_id' => $bookId,
-                'narrator_id' => $narratorId,
+                'narrator_id' => !empty($narratorIdsToAttach) ? $narratorIdsToAttach[0] : null, // Legacy support
+                'entered_by' => auth()->id(),
                 'additions' => !empty($hadithData['additions']) ? json_decode($hadithData['additions'], true) : null,
             ]);
+
+            // Attach narrators (many-to-many)
+            if (!empty($narratorIdsToAttach)) {
+                $hadith->narrators()->attach(array_unique($narratorIdsToAttach));
+            }
 
             // Attach sources
             if (!empty($hadithData['sources'])) {
@@ -654,6 +676,6 @@ class HadithController extends Controller
 
         return redirect()
             ->route('dashboard.hadiths.index')
-            ->with('success', "تم إدخال {$savedCount} حديث بنجاح! 🎉");
+            ->with('success', "تم إدخال {$savedCount} حديث بنجاح وهي بانتظار المراجعة ⏳");
     }
 }

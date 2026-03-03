@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Narrator extends Model
 {
-    protected $fillable = ['name', 'bio', 'grade_status', 'color_code', 'is_companion'];
+    protected $fillable = ['name', 'fame_name', 'bio', 'grade_status', 'color_code', 'is_companion'];
 
     protected $casts = [
         'is_companion' => 'boolean',
@@ -27,6 +27,14 @@ class Narrator extends Model
     public function hadiths(): HasMany
     {
         return $this->hasMany(Hadith::class);
+    }
+
+    /**
+     * الأسماء البديلة (أخطاء نساخ، تهجئات بديلة، ألقاب، كنى)
+     */
+    public function alternatives(): HasMany
+    {
+        return $this->hasMany(NarratorAlternative::class);
     }
 
     /**

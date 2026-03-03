@@ -132,15 +132,27 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label>الصحابي</label>
-                        <select name="narrator_id" class="form-control">
-                            <option value="">-- اختر الصحابي --</option>
-                            @foreach($companions as $companion)
-                                <option value="{{ $companion->id }}" {{ old('narrator_id', $hadith->narrator_id) == $companion->id ? 'selected' : '' }}>
-                                    {{ $companion->name }}
-                                </option>
-                            @endforeach
+                        <label>الصحابي (أو الرواة)</label>
+                        <select name="narrator_ids[]" id="narratorId" class="form-control" style="width: 100%;" multiple="multiple">
+                            @php
+                                $narratorIds = old('narrator_ids', $hadith->narrators->pluck('id')->toArray());
+                                // Legacy support: if hadith->narrator_id exists but narrators relation is empty
+                                if (empty($narratorIds) && $hadith->narrator_id) {
+                                    $narratorIds = [$hadith->narrator_id];
+                                }
+                            @endphp
+                            @if(!empty($narratorIds))
+                                @foreach($narratorIds as $nId)
+                                    @php $oldNarrator = \App\Models\Narrator::find($nId); @endphp
+                                    @if($oldNarrator)
+                                        <option value="{{ $oldNarrator->id }}" selected>{{ $oldNarrator->name }}</option>
+                                    @endif
+                                @endforeach
+                            @endif
                         </select>
+                        <small class="form-text text-muted">
+                            ابدأ بكتابة الاسم للبحث — يمكن ادخال اكثر من راوي للحديث الواحد
+                        </small>
                     </div>
                 </div>
             </div>
@@ -310,8 +322,8 @@
 
 @section('css')
 {{-- Select2 --}}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+<link href="{{ asset('vendor/select2/css/select2.min.css') }}" rel="stylesheet" />
+<link href="{{ asset('vendor/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}" rel="stylesheet" />
 
 <style>
     /* Select2 RTL fixes */
@@ -323,7 +335,7 @@
 @stop
 
 @section('js')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
 {{-- Summernote is now loaded via AdminLTE plugins --}}
 <script>
     // بيانات الرواة والصحابة
@@ -354,15 +366,43 @@
             return null;
         }
 
-        // تفعيل Select2 مع البحث العربي المحسّن
-        $('.select2').select2({
+        // تفعيل Select2 مع البحث العربي المحسّن للكتب
+        $('.select2:not(#narratorId)').select2({
             theme: 'bootstrap4',
             language: "ar",
             dir: "rtl",
             matcher: arabicMatcher
         });
 
+        // تفعيل Select2 مع AJAX للرواة
+        let lastSearchTerm = '';
+        $('#narratorId').select2({
+            theme: 'bootstrap4',
+            language: "ar",
+            dir: "rtl",
+            placeholder: '-- ابحث عن الصحابي --',
+            allowClear: true,
+            minimumInputLength: 2,
+            ajax: {
+                url: '{{ route("dashboard.narrators.search") }}',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) {
+                    lastSearchTerm = params.term;
+                    return { q: params.term };
+                },
+                processResults: function (data) {
+                    let results = data.map(function (item) {
+                        let label = item.name;
+                        if (item.fame_name) label += ' (' + item.fame_name + ')';
+                        if (item.match_type === 'alternative') label += ' ⚠️';
+                        return { id: item.id, text: label };
+                    });
 
+                    return { results: results };
+                }
+            }
+        });
 
         // إدارة الكتب والأبواب
         const mainBookSelect = $('#mainBookSelect');

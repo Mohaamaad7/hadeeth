@@ -1,7 +1,7 @@
 # 🗺️ مرجع المسارات (Routes Reference)
 
 ## تاريخ التحديث
-2026-03-01
+2026-03-03
 
 ---
 
@@ -15,7 +15,7 @@
 | GET | `/hadith/{hadith}` | HadithController@show | `hadith.show` | عرض حديث |
 | GET | `/random` | HadithController@random | `hadith.random` | حديث عشوائي |
 
-### تصفح الكتب (جديد)
+### تصفح الكتب
 | Method | URI | Controller | Name | الوصف |
 |---|---|---|---|---|
 | GET | `/books` | Frontend\BookController@index | `books.index` | فهرس الكتب |
@@ -60,6 +60,19 @@
 | GET | `/dashboard/hadiths/bulk` | `dashboard.hadiths.bulk.create` | صفحة الإدخال الجماعي |
 | POST | `/dashboard/hadiths/bulk/preview` | `dashboard.hadiths.bulk.preview` | معاينة (AJAX) |
 | POST | `/dashboard/hadiths/bulk/store` | `dashboard.hadiths.bulk.store` | حفظ جماعي |
+
+### تنظيف قاعدة البيانات (جديد)
+| Method | URI | Name | الوصف |
+|---|---|---|---|
+| GET | `/dashboard/cleanup` | `dashboard.cleanup.index` | صفحة التنظيف |
+| POST | `/dashboard/cleanup/hadiths` | `dashboard.cleanup.hadiths` | حذف الأحاديث |
+| POST | `/dashboard/cleanup/narrators/orphan` | `dashboard.cleanup.narrators.orphan` | حذف الرواة الأيتام |
+| POST | `/dashboard/cleanup/narrators/all` | `dashboard.cleanup.narrators.all` | حذف جميع الرواة |
+| POST | `/dashboard/cleanup/books/empty` | `dashboard.cleanup.books.empty` | حذف الأبواب الفارغة |
+| POST | `/dashboard/cleanup/books/all` | `dashboard.cleanup.books.all` | حذف جميع الكتب |
+| POST | `/dashboard/cleanup/sources/orphan` | `dashboard.cleanup.sources.orphan` | حذف المصادر الأيتام |
+| POST | `/dashboard/cleanup/chains` | `dashboard.cleanup.chains` | حذف سلاسل الإسناد |
+| POST | `/dashboard/cleanup/nuke` | `dashboard.cleanup.nuke` | تنظيف شامل |
 
 ---
 

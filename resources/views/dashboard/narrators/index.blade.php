@@ -99,6 +99,10 @@
                             <td>{{ $narrator->id }}</td>
                             <td>
                                 <strong>{{ $narrator->name }}</strong>
+                                @if($narrator->fame_name)
+                                    <span class="badge badge-outline-secondary"
+                                        style="border: 1px solid #aaa; color: #888;">{{ $narrator->fame_name }}</span>
+                                @endif
                                 @if($narrator->bio)
                                     <br>
                                     <small class="text-muted">

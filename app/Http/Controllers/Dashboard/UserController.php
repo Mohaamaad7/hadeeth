@@ -24,9 +24,9 @@ class UserController extends Controller
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -52,6 +52,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(8)],
+            'role' => 'required|in:admin,data_entry,reviewer',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -88,6 +89,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => ['nullable', 'confirmed', Password::min(8)],
+            'role' => 'required|in:admin,data_entry,reviewer',
         ]);
 
         // Only update password if provided

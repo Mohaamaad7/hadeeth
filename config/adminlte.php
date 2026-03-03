@@ -332,6 +332,12 @@ return [
             'url' => 'dashboard/sources',
             'icon' => 'fas fa-fw fa-database',
         ],
+        ['header' => 'المراجعة'],
+        [
+            'text' => 'مراجعة الأحاديث',
+            'url' => 'dashboard/review',
+            'icon' => 'fas fa-fw fa-clipboard-check text-warning',
+        ],
         ['header' => 'الإعدادات'],
         [
             'text' => 'المستخدمين',

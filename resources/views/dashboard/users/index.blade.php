@@ -75,6 +75,7 @@
                         <th style="width: 50px">#</th>
                         <th>الاسم</th>
                         <th>البريد الإلكتروني</th>
+                        <th style="width: 120px">الدور</th>
                         <th style="width: 150px">تاريخ التسجيل</th>
                         <th style="width: 150px" class="text-center">الإجراءات</th>
                     </tr>
@@ -90,6 +91,7 @@
                                 @endif
                             </td>
                             <td>{{ $user->email }}</td>
+                            <td><span class="badge badge-{{ $user->role_badge }}">{{ $user->role_name }}</span></td>
                             <td>
                                 <small class="text-muted">
                                     {{ $user->created_at->diffForHumans() }}

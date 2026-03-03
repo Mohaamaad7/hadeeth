@@ -18,13 +18,14 @@ class HomeController extends Controller
     public function index(): View
     {
         $latestHadiths = Hadith::with(['book', 'narrator', 'sources'])
+            ->approved()
             ->latest()
             ->take(3)
             ->get();
 
         return view('frontend.home', [
             'latestHadiths' => $latestHadiths,
-            'totalHadiths' => Hadith::count(),
+            'totalHadiths' => Hadith::approved()->count(),
             'totalBooks' => Book::count(),
             'totalSources' => Source::count(),
         ]);

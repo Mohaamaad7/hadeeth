@@ -18,14 +18,14 @@ class HadithController extends Controller
      */
     public function search(Request $request): View
     {
-        $query = Hadith::with(['book', 'narrator', 'sources']);
+        $query = Hadith::with(['book', 'narrator', 'sources'])->approved();
 
         // Text search
         if ($request->filled('q')) {
             $search = $request->q;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('content', 'like', "%{$search}%")
-                  ->orWhere('content_searchable', 'like', "%{$search}%");
+                    ->orWhere('content_searchable', 'like', "%{$search}%");
             });
         }
 
@@ -41,7 +41,7 @@ class HadithController extends Controller
 
         // Filter by source
         if ($request->filled('source')) {
-            $query->whereHas('sources', function($q) use ($request) {
+            $query->whereHas('sources', function ($q) use ($request) {
                 $q->where('code', $request->source);
             });
         }
@@ -58,14 +58,16 @@ class HadithController extends Controller
     public function show(int $id): View
     {
         $hadith = Hadith::with(['book', 'narrator', 'sources', 'chains.source', 'chains.narrators'])
+            ->approved()
             ->findOrFail($id);
 
         // Get related hadiths (same book or same narrator)
         $relatedHadiths = Hadith::with(['book', 'narrator'])
+            ->approved()
             ->where('id', '!=', $hadith->id)
-            ->where(function($query) use ($hadith) {
+            ->where(function ($query) use ($hadith) {
                 $query->where('book_id', $hadith->book_id)
-                      ->orWhere('narrator_id', $hadith->narrator_id);
+                    ->orWhere('narrator_id', $hadith->narrator_id);
             })
             ->take(4)
             ->get();
@@ -78,7 +80,7 @@ class HadithController extends Controller
      */
     public function random(): RedirectResponse
     {
-        $hadith = Hadith::inRandomOrder()->first();
+        $hadith = Hadith::approved()->inRandomOrder()->first();
 
         if (!$hadith) {
             return redirect()->route('home')

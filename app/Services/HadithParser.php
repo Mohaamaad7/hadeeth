@@ -111,7 +111,7 @@ class HadithParser
         $number = $this->extractNumber($text);
         $grade = $this->extractGrade($text);
         $additions = $this->extractAdditions($text);
-        $narrator = $this->extractNarrator($text);
+        $narrators = $this->extractNarrators($text);
         $sourceCodes = $this->extractSourceCodes($text);
         $sources = $this->decodeSources($sourceCodes);
         $cleanText = $this->cleanText($text);
@@ -119,7 +119,7 @@ class HadithParser
         return [
             'number' => $number,
             'grade' => $grade,
-            'narrator' => $narrator,
+            'narrators' => $narrators, // Now returns an array
             'source_codes' => $sourceCodes,
             'sources' => $sources,
             'additions' => $additions,
@@ -193,26 +193,69 @@ class HadithParser
     }
 
     /**
-     * Extract narrator - text after "عن" in the metadata section.
-     * Stops at addition keywords like زاد, ولفظ, etc.
+     * Extract narrators - text after "عن" in the metadata section ONLY.
+     * Returns an array of narrators.
+     * 
+     * المشكلة: كلمة "عن" تظهر في متن الحديث (مثل: النهي عن المنكر)
+     * الحل: الراوي يأتي دائماً بعد [رقم_الصفحة] (الحكم) (المصادر) عن الراوي
+     *       لذلك نبحث عن "عن" فقط في القسم الذي يلي [رقم_الصفحة]
      */
-    private function extractNarrator(string $text): ?string
+    private function extractNarrators(string $text): array
     {
-        // Build a regex-safe alternation of addition keywords
-        $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
-
-        // Look for عن after source codes section: (codes) عن NAME
-        // Stop at: [ or ( or addition keywords or end-of-string or period/dot
-        $pattern = '/عن\s+([^\[\(]+?)(?:\s*\[|\s*\(|\s+(?:' . $additionPattern . ')\s|\s*\.\s*$|$)/u';
-
-        if (preg_match($pattern, $text, $matches)) {
-            return $this->normalizeNarrator(trim($matches[1]));
+        // 1. أوجد قسم البيانات الوصفية (بعد [رقم الصفحة])
+        // هذا يفصل متن الحديث عن معلومات التخريج
+        $metadataSection = $text;
+        if (preg_match('/\[\d+\]/u', $text, $matches, PREG_OFFSET_CAPTURE)) {
+            $metadataSection = substr($text, $matches[0][1]);
         }
-        return null;
+
+        $narratorsStr = null;
+
+        // 2. في قسم البيانات الوصفية، ابحث عن "عن" بعد آخر قوس ) (أي بعد المصادر)
+        $lastParenPos = mb_strrpos($metadataSection, ')');
+        if ($lastParenPos !== false) {
+            $afterLastParen = mb_substr($metadataSection, $lastParenPos + 1);
+
+            // ابحث عن "عن NARRATOR" — توقف عند: نقطة نهائية أو قوس جديد أو كلمة زيادة
+            $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
+
+            $pattern = '/عن\s+(.+?)(?:\s*\(|\s+(?:' . $additionPattern . ')\s|\s*\.\s*$|$)/u';
+
+            if (preg_match($pattern, $afterLastParen, $narratorMatch)) {
+                $narratorsStr = trim($narratorMatch[1]);
+            }
+        }
+
+        // 3. Fallback: ابحث عن "عن" في كل قسم البيانات الوصفية (بعد [رقم])
+        if (!$narratorsStr) {
+            $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
+            $pattern = '/عن\s+([^\[\(]+?)(?:\s*\[|\s*\(|\s+(?:' . $additionPattern . ')\s|\s*\.\s*$|$)/u';
+
+            if (preg_match($pattern, $metadataSection, $matches)) {
+                $narratorsStr = trim($matches[1]);
+            }
+        }
+
+        if (!$narratorsStr)
+            return [];
+
+        // تقسيم النص إذا كان يحتوي على أكثر من راوي ("عن فلان وعن فلان" أو "عن فلان وفلان")
+        $narrators = [];
+        // تقسيم بكلمة "وعن" أولاً
+        $parts = preg_split('/(?:\s+وعن\s+|\s+و\s+)/u', $narratorsStr);
+        foreach ($parts as $part) {
+            $cleaned = $this->normalizeNarrator($part);
+            if (!empty($cleaned)) {
+                $narrators[] = $cleaned;
+            }
+        }
+
+        return $narrators;
     }
 
     /**
-     * Normalize narrator name (handle Arabic grammar: Abi/Aba -> Abu).
+     * Normalize narrator name — basic cleanup only.
+     * لا نحول أبي→أبو هنا — findNarrator يتولى البحث الثنائي.
      */
     private function normalizeNarrator(string $name): string
     {
@@ -220,16 +263,6 @@ class HadithParser
 
         // إزالة النقطة من آخر الاسم إذا وجدت
         $name = rtrim($name, '.');
-
-        // قاعدة ذكية: تحويل "أبي" إلى "أبو" إلا إذا تبعتها "بن" (مثل: أبي بن كعب)
-        if (preg_match('/^أبي\s+(?!بن)/u', $name)) {
-            $name = preg_replace('/^أبي\s+/u', 'أبو ', $name);
-        }
-
-        // تحويل "أبا" إلى "أبو" (حالة النصب)
-        if (preg_match('/^أبا\s+/u', $name)) {
-            $name = preg_replace('/^أبا\s+/u', 'أبو ', $name);
-        }
 
         return trim($name);
     }
@@ -466,38 +499,46 @@ class HadithParser
      */
     private function cleanText(string $text): string
     {
-        // Remove number [123]
-        $text = preg_replace('/\[\d+\]/u', '', $text);
+        // أوجد بداية قسم البيانات الوصفية [رقم الصفحة]
+        // كل شيء من [رقم] وحتى نهاية النص هو metadata ويُحذف
+        $cleanedText = $text;
 
-        // Remove grade (صحيح), (حسن), etc.
-        $text = preg_replace('/\((صحيح|حسن|ضعيف|موضوع)\)/u', '', $text);
+        if (preg_match('/\[\d+\]/u', $text, $matches, PREG_OFFSET_CAPTURE)) {
+            // احتفظ فقط بمتن الحديث (قبل [رقم الصفحة])
+            $cleanedText = substr($text, 0, $matches[0][1]);
+        } else {
+            // Fallback: لا يوجد [رقم] — حذف يدوي
+            // Remove number [123]
+            $cleanedText = preg_replace('/\[\d+\]/u', '', $cleanedText);
 
-        // Remove source codes in parentheses (but keep explanatory ones)
-        $text = preg_replace_callback('/\([^\)]+\)/u', function ($match) {
-            $content = trim($match[0], '()');
-            // Keep explanatory parentheses like (يعني الوحي)
-            if ($this->isExplanatoryParenthesis($content)) {
-                return $match[0];
-            }
-            // Remove grade words
-            if (preg_match('/^(صحيح|حسن|ضعيف|موضوع)$/u', $content)) {
+            // Remove grade (صحيح), (حسن), etc.
+            $cleanedText = preg_replace('/\((صحيح|حسن|ضعيف|موضوع)\)/u', '', $cleanedText);
+
+            // Remove source codes in parentheses (but keep explanatory ones)
+            $cleanedText = preg_replace_callback('/\([^\)]+\)/u', function ($match) {
+                $content = trim($match[0], '()');
+                if ($this->isExplanatoryParenthesis($content)) {
+                    return $match[0];
+                }
                 return '';
-            }
-            return '';
-        }, $text);
+            }, $cleanedText);
 
-        // Build addition keywords alternation
-        $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
+            // Build addition keywords alternation
+            $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
 
-        // Remove the additions section entirely: زاد (طب) في آخره: text
-        $text = preg_replace('/\s*(?:' . $additionPattern . ')\s*\([^\)]+\).*$/u', '', $text);
+            // Remove the additions section
+            $cleanedText = preg_replace('/\s*(?:' . $additionPattern . ')\s*\([^\)]+\).*$/u', '', $cleanedText);
 
-        // Remove narrator prefix "عن ..." from the end (after source codes)
-        $text = preg_replace('/\s*عن\s+[^\[\(]+$/u', '', $text);
+            // Remove narrator prefix "عن ..." from the end
+            $cleanedText = preg_replace('/\s*عن\s+[^\[\(]+$/u', '', $cleanedText);
+        }
+
+        // Remove leading hadith number: "4934-" or "10-"
+        $cleanedText = preg_replace('/^\d+[\-\–]\s*/u', '', $cleanedText);
 
         // Clean up extra spaces
-        $text = preg_replace('/\s+/u', ' ', $text);
+        $cleanedText = preg_replace('/\s+/u', ' ', $cleanedText);
 
-        return trim($text);
+        return trim($cleanedText, " \t\n\r\0\x0B.");
     }
 }

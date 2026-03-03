@@ -17,6 +17,8 @@
 | 06 | [bulk-import-validation](./06-bulk-import-validation.md) | تحسين الإدخال الجماعي (التحقق والإيقاف عند الخطأ) | ⭐⭐ |
 | 07 | [source-dictionary](./07-source-dictionary.md) | قاموس المصادر الكامل | ⭐⭐ |
 | 08 | [routes-reference](./08-routes-reference.md) | مرجع المسارات | ⭐ |
+| 09 | [smart-narrator-matching](./09-smart-narrator-matching.md) | البحث الذكي عن الرواة (قاموس الاختصارات) | ⭐⭐⭐ |
+| 10 | [database-cleanup](./10-database-cleanup.md) | صفحة تنظيف قاعدة البيانات | ⭐⭐ |
 
 ---
 
@@ -25,21 +27,24 @@
 ### ملفات جديدة
 ```
 app/Http/Controllers/Frontend/BookController.php
+app/Http/Controllers/Dashboard/CleanupController.php
 app/Console/Commands/ReparseHadiths.php
 resources/views/frontend/books/index.blade.php
 resources/views/frontend/books/show.blade.php
 resources/views/frontend/books/pdf.blade.php
+resources/views/dashboard/cleanup/index.blade.php
 docs/ (هذا المجلد)
 ```
 
 ### ملفات مُعدَّلة
 ```
-app/Services/HadithParser.php                           ← تحميل ديناميكي للمصادر
-app/Http/Controllers/Dashboard/HadithController.php     ← تحقق في الإدخال الجماعي
-routes/web.php                                          ← 3 مسارات جديدة
+app/Services/HadithParser.php                           ← تحميل ديناميكي للمصادر + تطبيع التطويلة
+app/Http/Controllers/Dashboard/HadithController.php     ← بحث ذكي عن الرواة + تحقق في الإدخال الجماعي
+routes/web.php                                          ← 3 مسارات frontend + 9 مسارات cleanup
+config/adminlte.php                                     ← رابط التنظيف في القائمة الجانبية
 resources/views/frontend/home.blade.php                 ← ربط Navbar
 resources/views/frontend/search.blade.php               ← ربط Navbar + إصلاح المصادر
-resources/views/dashboard/hadiths/bulk-create.blade.php ← عرض أخطاء التحليل
+resources/views/dashboard/hadiths/bulk-create.blade.php ← SweetAlert2 + عرض أخطاء التحليل
 composer.json / composer.lock                           ← مكتبة mPDF
 ```
 
@@ -77,3 +82,5 @@ routes/web.php
 - **عند تعديل PDF** ← راجع `03-pdf-export.md`
 - **عند إضافة صفحة جديدة** ← راجع `01-browse-books-feature.md` و `08-routes-reference.md`
 - **عند مشكلة في الإدخال الجماعي** ← راجع `06-bulk-import-validation.md`
+- **عند مشكلة في اسم الراوي** ← راجع `09-smart-narrator-matching.md`
+- **لتنظيف قاعدة البيانات** ← راجع `10-database-cleanup.md`

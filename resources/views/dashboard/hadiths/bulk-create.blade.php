@@ -127,13 +127,159 @@
         </form>
     </div>
 </div>
+
+{{-- Modal: إضافة راوي سريع --}}
+<div class="modal fade" id="quickNarratorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success">
+                <h5 class="modal-title text-white"><i class="fas fa-plus-circle"></i> إضافة راوي سريع</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>الاسم الكامل <span class="text-danger">*</span></label>
+                    <input type="text" id="quickNarratorName" class="form-control" placeholder="مثال: عتبان بن مالك">
+                </div>
+                <div class="form-group">
+                    <label>اسم الشهرة</label>
+                    <input type="text" id="quickNarratorFame" class="form-control" placeholder="مثال: عتبان">
+                </div>
+                <div class="form-group">
+                    <label>الدرجة</label>
+                    <select id="quickNarratorGrade" class="form-control">
+                        <option value="">-- اختياري --</option>
+                        <option value="صحابي">صحابي</option>
+                        <option value="ثقة">ثقة</option>
+                        <option value="صدوق">صدوق</option>
+                        <option value="ضعيف">ضعيف</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="saveQuickNarrator">
+                    <i class="fas fa-save"></i> حفظ وربط
+                </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 @section('css')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css"
-    rel="stylesheet" />
+<link href="{{ asset('vendor/select2/css/select2.min.css') }}" rel="stylesheet" />
+<link href="{{ asset('vendor/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}" rel="stylesheet" />
 <style>
+    /* ===== Narrator column in bulk preview ===== */
+    .narrator-fix {
+        min-width: 170px;
+    }
+
+    .narrator-fix .select2-container {
+        width: 100% !important;
+    }
+
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple {
+        min-height: 38px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        padding: 4px 6px;
+    }
+
+    /* Pill chips — vibrant gradient style */
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 5px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 4px 10px;
+        margin: 2px 3px 2px 0;
+        line-height: 1.4;
+        gap: 0;
+    }
+
+    .narrator-fix .select2-selection__choice:nth-child(2) {
+        background: linear-gradient(135deg, #f093fb, #f5576c) !important;
+    }
+
+    .narrator-fix .select2-selection__choice:nth-child(3) {
+        background: linear-gradient(135deg, #4facfe, #00f2fe) !important;
+        color: #003d5b !important;
+    }
+
+    .narrator-fix .select2-selection__choice:nth-child(4) {
+        background: linear-gradient(135deg, #43e97b, #38f9d7) !important;
+        color: #1a4d3a !important;
+    }
+
+    /* × remove button — hide Bootstrap4 theme gray × and use our own clean style */
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-size: 13px !important;
+        font-weight: bold;
+        line-height: 1;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        border-radius: 0 !important;
+        width: auto !important;
+        height: auto !important;
+        margin-left: 8px !important;
+        margin-right: 0 !important;
+        float: none;
+        display: inline;
+        order: 2;
+        box-shadow: none !important;
+        /* أخفي أي pseudo-element من الثيم */
+        text-indent: 0;
+    }
+
+    /* أخفي الـ × الرمادي من Bootstrap4 theme */
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove::before,
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove::after {
+        display: none !important;
+    }
+
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: #fff !important;
+        background: transparent !important;
+    }
+
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__rendered {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 0;
+        gap: 2px;
+    }
+
+    .narrator-fix .select2-container--bootstrap4 .select2-search--inline .select2-search__field {
+        font-size: 12px;
+        color: #495057;
+        margin: 2px 0;
+        min-width: 80px;
+    }
+
+    .narrator-fix .select2-container--bootstrap4:not(.select2-container--open) .select2-search--inline {
+        width: 0;
+        overflow: hidden;
+    }
+
+    .narrator-missing {
+        font-size: 11px;
+        color: #dc3545;
+        margin-top: 4px;
+        display: block;
+        font-weight: 500;
+    }
+
     /* Select2 RTL fixes */
     .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
         right: auto !important;
@@ -143,8 +289,8 @@
 @stop
 
 @section('js')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
+<script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
 <script>
     $(function () {
         // ========== Arabic Text Normalization ==========
@@ -275,7 +421,7 @@
                 },
                 success: function (response) {
                     if (response.success && response.count > 0) {
-                        renderPreview(response.hadiths);
+                        renderPreview(response.hadiths, response.warnings);
                         $('#formBookId').val(bookId);
                         $('#parsedCount').text(response.count);
                         $('#step1').slideUp(300);
@@ -339,12 +485,62 @@
         });
 
         // ========== Build preview table ==========
-        function renderPreview(hadiths) {
+        function renderPreview(hadiths, warnings) {
+            // عرض التحذيرات (رواة غير معروفين)
+            if (warnings && warnings.length > 0) {
+                let warnHtml = '<div class="alert alert-warning alert-dismissible" id="warningsAlert">';
+                warnHtml += '<button type="button" class="close" data-dismiss="alert">&times;</button>';
+                warnHtml += '<h6><i class="fas fa-exclamation-triangle"></i> تحذيرات — يمكنك تصحيح الرواة أدناه مباشرة:</h6><ul class="mb-0">';
+                warnings.forEach(function (w) {
+                    w.warnings.forEach(function (msg) {
+                        warnHtml += '<li>حديث #' + w.index + ': ' + msg + '</li>';
+                    });
+                });
+                warnHtml += '</ul></div>';
+                $('#step2 .card-body').prepend(warnHtml);
+            }
+
             let html = '';
             hadiths.forEach(function (item, index) {
                 const p = item.parsed;
                 const sourcesStr = (p.sources || []).join('، ');
                 const additionsCount = (p.additions || []).length;
+
+                // عمود الراوي (Select2 المتعدد)
+                let narratorCell = `
+                    <div class="narrator-fix" data-index="${index}">
+                        <select class="narrator-select" data-index="${index}" style="width:100%;" multiple="multiple">
+                `;
+
+                let hasMissing = false;
+                let missingNames = [];
+
+                if (p.narrators_data && p.narrators_data.length > 0) {
+                    p.narrators_data.forEach(nd => {
+                        if (nd.found && nd.id) {
+                            narratorCell += `<option value="${nd.id}" selected>${nd.name}</option>`;
+                        } else {
+                            hasMissing = true;
+                            missingNames.push(nd.original);
+                        }
+                    });
+                } else if (p.narrators && p.narrators.length > 0) {
+                    hasMissing = true;
+                    missingNames = p.narrators;
+                } else {
+                    hasMissing = true;
+                    missingNames.push('لا يوجد');
+                }
+
+                narratorCell += `</select>`;
+
+                if (hasMissing && missingNames[0] !== 'لا يوجد') {
+                    narratorCell += `<small class="narrator-missing"><i class="fas fa-exclamation-circle"></i> غير معروف: ${missingNames.join('، ')}</small>`;
+                } else if (hasMissing && missingNames[0] === 'لا يوجد') {
+                    narratorCell += `<small class="text-muted d-block" style="font-size:11px;">لم يتم العثور على أي راوي</small>`;
+                }
+
+                narratorCell += `</div>`;
 
                 html += `
                 <tr>
@@ -358,7 +554,7 @@
                     <td class="text-center">
                         <span class="badge badge-${gradeColor(p.grade)}">${p.grade || '—'}</span>
                     </td>
-                    <td class="text-center">${p.narrator || '—'}</td>
+                    <td>${narratorCell}</td>
                     <td><small>${sourcesStr || '—'}</small></td>
                     <td class="text-center">
                         ${additionsCount > 0 ? '<span class="badge badge-warning">' + additionsCount + '</span>' : '—'}
@@ -372,6 +568,58 @@
 
             $('#previewBody').html(html);
             window._parsedHadiths = hadiths;
+
+            // تفعيل Select2 AJAX على خلايا الراوي المفقودين
+            initNarratorSelects();
+        }
+
+        // ========== Initialize inline narrator Select2 ==========
+        let activeSelectIndex = null;
+        let lastSearchTerm = '';
+
+        function initNarratorSelects() {
+            $('.narrator-select').each(function () {
+                const idx = $(this).data('index');
+
+                $(this).select2({
+                    theme: 'bootstrap4',
+                    language: 'ar',
+                    dir: 'rtl',
+                    placeholder: 'ابحث عن الرواة...',
+                    allowClear: true,
+                    minimumInputLength: 2,
+                    width: '100%',
+                    ajax: {
+                        url: '{{ route("dashboard.narrators.search") }}',
+                        dataType: 'json',
+                        delay: 300,
+                        data: function (params) {
+                            lastSearchTerm = params.term;
+                            return { q: params.term };
+                        },
+                        processResults: function (data) {
+                            let results = data.map(function (item) {
+                                let label = item.name;
+                                if (item.fame_name) label += ' (' + item.fame_name + ')';
+                                if (item.match_type === 'alternative') label += ' ⚠️';
+                                return { id: item.id, text: label };
+                            });
+                            results.push({ id: '__new__', text: '➕ إضافة كراوي جديد' });
+                            return { results: results };
+                        }
+                    }
+                });
+
+                // عند الاختيار
+                $(this).on('select2:select', function (e) {
+                    if (e.params.data.id === '__new__') {
+                        activeSelectIndex = idx;
+                        $(this).find('option[value="__new__"]').remove(); // إزالة خيار الإضافة المؤقت
+                        $('#quickNarratorName').val(lastSearchTerm);
+                        $('#quickNarratorModal').modal('show');
+                    }
+                });
+            });
         }
 
         // ========== Submit form ==========
@@ -390,7 +638,22 @@
                 container.append(`<input type="hidden" name="${prefix}[clean_text]" value="${escapeHtml(p.clean_text)}">`);
                 container.append(`<input type="hidden" name="${prefix}[number]" value="${p.number || ''}">`);
                 container.append(`<input type="hidden" name="${prefix}[grade]" value="${p.grade || 'صحيح'}">`);
-                container.append(`<input type="hidden" name="${prefix}[narrator]" value="${escapeHtml(p.narrator || '')}">`);
+
+                // إرسال معلومات الرواة كـ JSON
+                if (p.narrators_data) {
+                    container.append(`<input type="hidden" name="${prefix}[narrators_data]" value="${escapeHtml(JSON.stringify(p.narrators_data))}">`);
+                }
+
+                // إرسال IDs المحددة من Select2 المتعدد
+                const selectedIds = $(`.narrator-select[data-index="${idx}"]`).val();
+                if (selectedIds && selectedIds.length > 0) {
+                    selectedIds.forEach(nId => {
+                        if (nId !== '__new__') {
+                            container.append(`<input type="hidden" name="${prefix}[narrator_ids][]" value="${nId}">`);
+                        }
+                    });
+                }
+
                 container.append(`<input type="hidden" name="${prefix}[sources]" value="${escapeHtml(JSON.stringify(p.sources || []))}">`);
                 container.append(`<input type="hidden" name="${prefix}[additions]" value="${escapeHtml(JSON.stringify(p.additions || []))}">`);
                 checkedCount++;
@@ -422,6 +685,52 @@
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
         }
+
+        // ========== Quick narrator modal ==========
+        $('#saveQuickNarrator').click(function () {
+            const name = $('#quickNarratorName').val().trim();
+            if (!name) { alert('الاسم مطلوب'); return; }
+
+            const btn = $(this);
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...');
+
+            $.ajax({
+                url: '{{ route("dashboard.narrators.quick-store") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    name: name,
+                    fame_name: $('#quickNarratorFame').val().trim(),
+                    grade_status: $('#quickNarratorGrade').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        const narrator = response.narrator;
+                        $('#quickNarratorModal').modal('hide');
+                        $('#quickNarratorName').val('');
+                        $('#quickNarratorFame').val('');
+                        $('#quickNarratorGrade').val('');
+
+                        // Update the inline select if from bulk preview
+                        if (activeSelectIndex !== null) {
+                            const option = new Option(narrator.name, narrator.id, true, true);
+                            $(`.narrator-select[data-index="${activeSelectIndex}"]`).append(option).trigger('change');
+                            activeSelectIndex = null;
+                        }
+                    }
+                },
+                error: function (xhr) {
+                    let msg = 'حدث خطأ';
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        msg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                    }
+                    alert(msg);
+                },
+                complete: function () {
+                    btn.prop('disabled', false).html('<i class="fas fa-save"></i> حفظ وربط');
+                }
+            });
+        });
     });
 </script>
 @stop

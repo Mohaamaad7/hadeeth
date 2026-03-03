@@ -6,6 +6,7 @@ use App\Http\Controllers\Dashboard\BookController;
 use App\Http\Controllers\Dashboard\NarratorController;
 use App\Http\Controllers\Dashboard\SourceController;
 use App\Http\Controllers\Dashboard\UserController;
+use App\Http\Controllers\Dashboard\ReviewController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\HadithController as FrontendHadithController;
 use App\Http\Controllers\Frontend\NarratorController as FrontendNarratorController;
@@ -42,20 +43,23 @@ Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logou
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Dashboard CRUD Routes
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
+
+        // ═══════════════════════════════════════════════
+        // إدخال البيانات (الكل: admin + data_entry + reviewer)
+        // ═══════════════════════════════════════════════
+
         // Books CRUD
         Route::get('books/{book}/chapters', [BookController::class, 'getChapters'])->name('books.chapters');
         Route::resource('books', BookController::class);
 
-        // Narrators CRUD
+        // Narrators CRUD + AJAX
         Route::resource('narrators', NarratorController::class);
+        Route::get('narrators-search', [NarratorController::class, 'search'])->name('narrators.search');
+        Route::post('narrators-quick', [NarratorController::class, 'quickStore'])->name('narrators.quick-store');
 
         // Sources CRUD
         Route::resource('sources', SourceController::class);
-
-        // Users CRUD
-        Route::resource('users', UserController::class);
 
         // Hadiths CRUD
         Route::resource('hadiths', DashboardHadithController::class);
@@ -64,15 +68,34 @@ Route::middleware('auth')->group(function () {
         Route::post('hadiths-bulk/preview', [DashboardHadithController::class, 'bulkPreview'])->name('hadiths.bulk.preview');
         Route::post('hadiths-bulk/store', [DashboardHadithController::class, 'bulkStore'])->name('hadiths.bulk.store');
 
-        // Database Cleanup
-        Route::get('cleanup', [CleanupController::class, 'index'])->name('cleanup.index');
-        Route::post('cleanup/hadiths', [CleanupController::class, 'deleteHadiths'])->name('cleanup.hadiths');
-        Route::post('cleanup/narrators/orphan', [CleanupController::class, 'deleteOrphanNarrators'])->name('cleanup.narrators.orphan');
-        Route::post('cleanup/narrators/all', [CleanupController::class, 'deleteAllNarrators'])->name('cleanup.narrators.all');
-        Route::post('cleanup/books/empty', [CleanupController::class, 'deleteEmptyChapters'])->name('cleanup.books.empty');
-        Route::post('cleanup/books/all', [CleanupController::class, 'deleteAllBooks'])->name('cleanup.books.all');
-        Route::post('cleanup/sources/orphan', [CleanupController::class, 'deleteOrphanSources'])->name('cleanup.sources.orphan');
-        Route::post('cleanup/chains', [CleanupController::class, 'deleteChains'])->name('cleanup.chains');
-        Route::post('cleanup/nuke', [CleanupController::class, 'nukeAll'])->name('cleanup.nuke');
+        // ═══════════════════════════════════════════════
+        // المراجعة (reviewer + admin)
+        // ═══════════════════════════════════════════════
+        Route::middleware('role:reviewer,admin')->group(function () {
+            Route::get('review', [ReviewController::class, 'index'])->name('review.index');
+            Route::get('review/{hadith}', [ReviewController::class, 'show'])->name('review.show');
+            Route::post('review/{hadith}/approve', [ReviewController::class, 'approve'])->name('review.approve');
+            Route::post('review/{hadith}/reject', [ReviewController::class, 'reject'])->name('review.reject');
+        });
+
+        // الاعتماد الجماعي (admin فقط)
+        Route::middleware('role:admin')->group(function () {
+            Route::post('review/bulk-approve', [ReviewController::class, 'bulkApprove'])->name('review.bulk-approve');
+            Route::post('review/approve-all', [ReviewController::class, 'approveAll'])->name('review.approve-all');
+
+            // Users CRUD
+            Route::resource('users', UserController::class);
+
+            // Database Cleanup
+            Route::get('cleanup', [CleanupController::class, 'index'])->name('cleanup.index');
+            Route::post('cleanup/hadiths', [CleanupController::class, 'deleteHadiths'])->name('cleanup.hadiths');
+            Route::post('cleanup/narrators/orphan', [CleanupController::class, 'deleteOrphanNarrators'])->name('cleanup.narrators.orphan');
+            Route::post('cleanup/narrators/all', [CleanupController::class, 'deleteAllNarrators'])->name('cleanup.narrators.all');
+            Route::post('cleanup/books/empty', [CleanupController::class, 'deleteEmptyChapters'])->name('cleanup.books.empty');
+            Route::post('cleanup/books/all', [CleanupController::class, 'deleteAllBooks'])->name('cleanup.books.all');
+            Route::post('cleanup/sources/orphan', [CleanupController::class, 'deleteOrphanSources'])->name('cleanup.sources.orphan');
+            Route::post('cleanup/chains', [CleanupController::class, 'deleteChains'])->name('cleanup.chains');
+            Route::post('cleanup/nuke', [CleanupController::class, 'nukeAll'])->name('cleanup.nuke');
+        });
     });
 });

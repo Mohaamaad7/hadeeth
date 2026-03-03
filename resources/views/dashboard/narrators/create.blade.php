@@ -33,6 +33,15 @@
             </div>
 
             <div class="form-group">
+                <label>اسم الشهرة</label>
+                <input type="text" name="fame_name" class="form-control" value="{{ old('fame_name') }}"
+                    placeholder="مثال: عائشة، جابر، ابن عمر، أنس">
+                <small class="form-text text-muted">
+                    الاسم المختصر المشهور به الراوي في كتب الحديث. مثلاً: "جابر" بدلاً من "جابر بن عبد الله"
+                </small>
+            </div>
+
+            <div class="form-group">
                 <label>السيرة الذاتية</label>
                 <textarea name="bio" class="form-control" rows="5"
                     placeholder="نبذة عن الراوي، حياته، وعلمه...">{{ old('bio') }}</textarea>

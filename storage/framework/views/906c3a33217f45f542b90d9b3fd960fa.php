@@ -99,6 +99,10 @@
                             <td><?php echo e($narrator->id); ?></td>
                             <td>
                                 <strong><?php echo e($narrator->name); ?></strong>
+                                <?php if($narrator->fame_name): ?>
+                                    <span class="badge badge-outline-secondary"
+                                        style="border: 1px solid #aaa; color: #888;"><?php echo e($narrator->fame_name); ?></span>
+                                <?php endif; ?>
                                 <?php if($narrator->bio): ?>
                                     <br>
                                     <small class="text-muted">
