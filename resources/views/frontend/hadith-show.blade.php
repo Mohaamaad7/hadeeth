@@ -5,10 +5,10 @@
     $hadithSnippet = Str::limit(strip_tags($hadith->content), 60, '...');
     $appName = config('app.name', 'موسوعة الحديث الصحيح');
     $pageTitle = $appName . ' | ' . $hadithSnippet;
-    
+
     // Meta Description أطول للوصف
     $metaDescription = Str::limit(strip_tags($hadith->content), 155) . ' - حديث ' . $hadith->grade . ' من رواية ' . ($hadith->narrator?->name ?? 'غير محدد') . ' في ' . ($hadith->book?->name ?? 'كتب الحديث');
-    
+
     $ogImage = asset('images/og-hadith.png');
 @endphp
 
@@ -91,56 +91,6 @@
 @endpush
 
 @section('content')
-    <!-- Header / Navbar -->
-    <nav class="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <!-- Logo -->
-                <a href="{{ route('home') }}" class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-100 transform rotate-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 -rotate-3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                        </svg>
-                    </div>
-                    <span class="text-lg font-black text-emerald-950 tracking-tight hidden md:block">موسوعة الحديث الصحيح</span>
-                </a>
-
-                <!-- Search Bar -->
-                <div class="flex-grow max-w-xl mx-4 hidden md:block">
-                    <form action="{{ route('search') }}" method="GET" class="relative">
-                        <input type="text" name="q"
-                            class="w-full py-2.5 pr-10 pl-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
-                            placeholder="بحث جديد...">
-                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-gray-400 text-sm"></i>
-                    </form>
-                </div>
-
-                <!-- Auth & Mobile Menu -->
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('hadith.random') }}" class="hidden md:flex items-center gap-2 text-gray-600 font-bold px-4 py-2 hover:text-emerald-600 transition-colors">
-                        <i class="fa-solid fa-shuffle"></i> عشوائي
-                    </a>
-                    <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-emerald-600 text-xl">
-                        <i class="fa-solid fa-bars-staggered"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Mobile Menu Overlay -->
-    <div id="mobile-menu" class="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 transform translate-x-full transition-transform duration-300 flex flex-col items-center justify-center md:hidden">
-        <button id="close-menu" class="absolute top-6 left-6 text-3xl text-gray-500 hover:text-red-500">
-            <i class="fa-solid fa-times"></i>
-        </button>
-        <nav class="flex flex-col items-center gap-6 text-xl font-bold text-gray-700">
-            <a href="{{ route('home') }}" class="hover:text-emerald-600">الرئيسية</a>
-            <a href="#" class="hover:text-emerald-600">الكتب</a>
-            <a href="#" class="hover:text-emerald-600">الرواة</a>
-            <a href="{{ route('hadith.random') }}" class="hover:text-emerald-600">حديث عشوائي</a>
-        </nav>
-    </div>
-
     <div class="container mx-auto px-4 py-8 max-w-5xl">
 
         <!-- Breadcrumb -->
@@ -248,7 +198,7 @@
                             <div class="mt-1 rounded-b-xl border border-t-0 border-amber-200/60 overflow-hidden shadow-inner">
                                 {{-- الشريط العلوي الزخرفي --}}
                                 <div class="h-0.5 bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300"></div>
-                                
+
                                 <div class="p-4 md:p-6 relative" style="background: linear-gradient(135deg, #fffdf5 0%, #fef9e7 50%, #fffdf5 100%);">
                                     {{-- زخارف الأركان --}}
                                     <div class="absolute top-2 right-2 w-4 h-4 border-t border-r border-amber-400/50 rounded-tr-sm"></div>
@@ -265,7 +215,7 @@
                                     <div class="mt-4 pt-3 border-t border-dashed border-amber-300/50 text-center">
                                         <p class="text-[10px] text-amber-600/80 font-medium flex items-center justify-center gap-1.5">
                                             <i class="fa-solid fa-book-open text-amber-400"></i>
-                                            هذا النص الأصلي كما ورد في كتاب "صحيح الجامع الصغير وزيادته" للإمام الألباني رحمه الله
+                                            هذا النص الأصلي كما ورد في كتاب "صحيح الجامع الصغير وزيادته"
                                         </p>
                                     </div>
                                 </div>
@@ -413,26 +363,11 @@
 
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-gray-100 py-10 mt-10">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <div class="flex items-center justify-center gap-3 mb-4">
-                <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                    </svg>
-                </div>
-                <h4 class="text-lg font-black text-gray-900">موسوعة الحديث الصحيح</h4>
-            </div>
-            <p class="text-gray-400 text-sm">© {{ date('Y') }} جميع الحقوق محفوظة</p>
-        </div>
-    </footer>
-
     <!-- Share Modal -->
     <div id="shareModal" class="fixed inset-0 z-50 hidden items-center justify-center">
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeShareModal()"></div>
-        
+
         <!-- Modal Content -->
         <div class="relative bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-md mx-4 transform scale-95 opacity-0 transition-all duration-300" id="shareModalContent">
             <!-- Header -->
@@ -445,7 +380,7 @@
                     <i class="fa-solid fa-times text-xl"></i>
                 </button>
             </div>
-            
+
             <!-- Share Buttons Grid -->
             <div class="grid grid-cols-2 gap-3 mb-6">
                 <!-- WhatsApp -->
@@ -453,33 +388,33 @@
                     <i class="fa-brands fa-whatsapp text-2xl"></i>
                     <span>واتساب</span>
                 </button>
-                
+
                 <!-- Twitter/X -->
                 <button onclick="shareToTwitter()" class="flex items-center justify-center gap-3 bg-black hover:bg-gray-800 text-white py-4 px-4 rounded-2xl font-bold transition-all hover:scale-105 shadow-lg">
                     <i class="fa-brands fa-x-twitter text-2xl"></i>
                     <span>تويتر</span>
                 </button>
-                
+
                 <!-- Telegram -->
                 <button onclick="shareToTelegram()" class="flex items-center justify-center gap-3 bg-[#0088cc] hover:bg-[#0077b5] text-white py-4 px-4 rounded-2xl font-bold transition-all hover:scale-105 shadow-lg shadow-blue-200">
                     <i class="fa-brands fa-telegram text-2xl"></i>
                     <span>تيليجرام</span>
                 </button>
-                
+
                 <!-- Facebook -->
                 <button onclick="shareToFacebook()" class="flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#166fe5] text-white py-4 px-4 rounded-2xl font-bold transition-all hover:scale-105 shadow-lg shadow-blue-200">
                     <i class="fa-brands fa-facebook-f text-2xl"></i>
                     <span>فيسبوك</span>
                 </button>
             </div>
-            
+
             <!-- Divider -->
             <div class="flex items-center gap-3 mb-4">
                 <div class="flex-grow h-px bg-gray-200"></div>
                 <span class="text-gray-400 text-sm">أو</span>
                 <div class="flex-grow h-px bg-gray-200"></div>
             </div>
-            
+
             <!-- Copy Link -->
             <button onclick="copyLinkOnly()" class="w-full flex items-center justify-center gap-3 bg-gray-100 hover:bg-gray-200 text-gray-700 py-4 px-4 rounded-2xl font-bold transition-all">
                 <i class="fa-solid fa-link text-xl text-emerald-500"></i>
@@ -495,13 +430,13 @@
         function toggleRawText() {
             const content = document.getElementById('rawTextContent');
             const arrow = document.getElementById('rawTextArrow');
-            
+
             if (content.style.maxHeight === '0px') {
                 // مغلق ← نفتحه
                 content.style.maxHeight = content.scrollHeight + 'px';
                 content.style.opacity = '1';
                 arrow.style.transform = 'rotate(180deg)';
-                
+
                 // بعد انتهاء الحركة، نجعله none ليتمدد بحرية مع الشاشات
                 setTimeout(() => {
                     if (content.style.maxHeight !== '0px') {
@@ -516,7 +451,7 @@
                     // Force DOM reflow
                     content.offsetHeight;
                 }
-                
+
                 // إغلاق القسم
                 content.style.maxHeight = '0px';
                 content.style.opacity = '0';
@@ -549,10 +484,10 @@
                 document.body.appendChild(textarea);
                 textarea.focus();
                 textarea.select();
-                
+
                 const successful = document.execCommand('copy');
                 document.body.removeChild(textarea);
-                
+
                 if (successful) {
                     resolve();
                 } else {
@@ -580,7 +515,7 @@
             const hadithNumber = `{{ $hadith->number_in_book }}`;
             const sources = `{{ $hadith->sources->pluck('name')->join('، ') }}`;
             const url = window.location.href;
-            
+
             // Format: Hadith first, then source, link, then metadata
             let formattedText = `« ${hadithContent} »\n\n`;
             formattedText += `📚 المصدر: موسوعة الحديث الصحيح\n`;
@@ -594,7 +529,7 @@
             if (sources) {
                 formattedText += `📑 التخريج: ${sources}\n`;
             }
-            
+
             copyToClipboard(formattedText)
                 .then(() => showToast('تم نسخ الحديث مع المعلومات'))
                 .catch(() => showToast('فشل النسخ - جرب التحديد اليدوي', true));
@@ -630,7 +565,7 @@
         const book = `{{ $hadith->book?->name ?? '' }}`;
         const hadithNumber = `{{ $hadith->number_in_book }}`;
         const sources = `{{ $hadith->sources->pluck('name')->join('، ') }}`;
-        
+
         let shareTextRaw = `« {{ $hadith->content }} »\n\n`;
         shareTextRaw += `المصدر: موسوعة الحديث الصحيح\n`;
         shareTextRaw += `الرابط: ${shareUrl}\n\n`;
@@ -643,7 +578,7 @@
         if (sources) {
             shareTextRaw += `التخريج: ${sources}\n`;
         }
-        
+
         const shareText = encodeURIComponent(shareTextRaw);
 
         function shareToWhatsApp() {

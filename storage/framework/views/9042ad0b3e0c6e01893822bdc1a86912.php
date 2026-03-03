@@ -296,6 +296,26 @@
             box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2), 0 4px 6px -2px rgba(16, 185, 129, 0.1);
             border-color: #10b981;
         }
+
+        /* Mobile menu animations */
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Navbar scroll effect */
+        .navbar-scrolled {
+            background: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-color: rgba(16, 185, 129, 0.12) !important;
+        }
     </style>
 
     <?php echo $__env->yieldPushContent('styles'); ?>
@@ -303,20 +323,80 @@
 
 <body class="font-tajawal text-gray-800 min-h-screen flex flex-col modern-islamic-bg">
 
+    
+    <?php echo $__env->make('frontend.partials.header', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+    
+    <?php echo $__env->make('frontend.partials.mobile-menu', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+    
     <?php echo $__env->yieldContent('content'); ?>
 
-    <script>
-        // Mobile Menu Logic
-        const mobileBtn = document.getElementById('mobile-menu-btn');
-        const closeBtn = document.getElementById('close-menu');
-        const mobileMenu = document.getElementById('mobile-menu');
+    
+    <?php echo $__env->make('frontend.partials.footer', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-        function toggleMenu() {
-            if (mobileMenu) mobileMenu.classList.toggle('translate-x-full');
+    <script>
+        // ═══════════════════════════════════════════════════
+        //  Mobile Menu — Open/Close with overlay
+        // ═══════════════════════════════════════════════════
+        function openMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            if (menu) {
+                menu.classList.remove('translate-x-full');
+                document.body.style.overflow = 'hidden';
+            }
+            if (overlay) {
+                overlay.classList.remove('opacity-0', 'pointer-events-none');
+                overlay.classList.add('opacity-100', 'pointer-events-auto');
+            }
         }
 
-        if (mobileBtn) mobileBtn.addEventListener('click', toggleMenu);
-        if (closeBtn) closeBtn.addEventListener('click', toggleMenu);
+        function closeMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            if (menu) {
+                menu.classList.add('translate-x-full');
+                document.body.style.overflow = '';
+            }
+            if (overlay) {
+                overlay.classList.remove('opacity-100', 'pointer-events-auto');
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        if (mobileBtn) mobileBtn.addEventListener('click', openMobileMenu);
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMobileMenu();
+        });
+
+        // ═══════════════════════════════════════════════════
+        //  Scroll Progress Bar & Navbar Effect
+        // ═══════════════════════════════════════════════════
+        const navbar = document.getElementById('main-navbar');
+        const progressBar = document.getElementById('scroll-progress');
+
+        window.addEventListener('scroll', () => {
+            // Navbar scroll effect
+            if (navbar) {
+                if (window.scrollY > 20) {
+                    navbar.classList.add('navbar-scrolled');
+                } else {
+                    navbar.classList.remove('navbar-scrolled');
+                }
+            }
+
+            // Progress bar
+            if (progressBar) {
+                const scrollTop = document.documentElement.scrollTop;
+                const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+                progressBar.style.width = progress + '%';
+            }
+        });
     </script>
 
     <?php echo $__env->yieldPushContent('scripts'); ?>

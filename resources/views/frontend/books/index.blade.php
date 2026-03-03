@@ -4,57 +4,6 @@
 @section('meta_description', 'تصفح فهرس كتب موسوعة الحديث الصحيح - 45 كتاباً مرتبة بترتيب المصنف مع الأبواب والأحاديث')
 
 @section('content')
-    <!-- Navbar -->
-    <nav class="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <a href="{{ route('home') }}" class="flex items-center gap-3">
-                    <div
-                        class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-100 transform rotate-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                            stroke="currentColor" class="w-5 h-5 -rotate-3">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                        </svg>
-                    </div>
-                    <span class="text-lg font-black text-emerald-950 tracking-tight hidden md:block">موسوعة الحديث
-                        الصحيح</span>
-                </a>
-                <div class="hidden md:flex items-center space-x-reverse space-x-10">
-                    <a href="{{ route('home') }}"
-                        class="text-gray-500 font-semibold hover:text-emerald-600 transition-colors">الرئيسية</a>
-                    <a href="{{ route('books.index') }}"
-                        class="text-emerald-700 font-bold hover:text-emerald-500 transition-colors">الكتب</a>
-                    <a href="{{ route('about') }}"
-                        class="text-gray-500 font-semibold hover:text-emerald-600 transition-colors">عن المشروع</a>
-                </div>
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('hadith.random') }}"
-                        class="hidden md:flex items-center gap-2 text-gray-600 font-bold px-4 py-2 hover:text-emerald-600 transition-colors">
-                        <i class="fa-solid fa-shuffle"></i> حديث عشوائي
-                    </a>
-                    <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-emerald-600 text-xl">
-                        <i class="fa-solid fa-bars-staggered"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Mobile Menu -->
-    <div id="mobile-menu"
-        class="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 transform translate-x-full transition-transform duration-300 flex flex-col items-center justify-center md:hidden">
-        <button id="close-menu" class="absolute top-6 left-6 text-3xl text-gray-500 hover:text-red-500">
-            <i class="fa-solid fa-times"></i>
-        </button>
-        <nav class="flex flex-col items-center gap-6 text-xl font-bold text-gray-700">
-            <a href="{{ route('home') }}" class="hover:text-emerald-600">الرئيسية</a>
-            <a href="{{ route('books.index') }}" class="text-emerald-600">الكتب</a>
-            <a href="{{ route('about') }}" class="hover:text-emerald-600">عن المشروع</a>
-            <a href="{{ route('hadith.random') }}" class="hover:text-emerald-600">حديث عشوائي</a>
-        </nav>
-    </div>
-
     <!-- Hero Header -->
     <section class="hero-pattern py-16 text-white">
         <div class="max-w-5xl mx-auto px-4 text-center relative z-10">
@@ -145,20 +94,4 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-gray-100 py-10">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <div class="flex items-center justify-center gap-3 mb-4">
-                <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                        stroke="currentColor" class="w-4 h-4">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                    </svg>
-                </div>
-                <h4 class="text-lg font-black text-gray-900">موسوعة الحديث الصحيح</h4>
-            </div>
-            <p class="text-gray-400 text-sm">© {{ date('Y') }} جميع الحقوق محفوظة</p>
-        </div>
-    </footer>
 @endsection

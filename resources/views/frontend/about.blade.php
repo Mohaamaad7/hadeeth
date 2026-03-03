@@ -4,37 +4,6 @@
 @section('meta_description', 'موسوعة الحديث الصحيح - نبعٌ صافٍ من مشكاة النبوة. مرجع موثوق للأحاديث الصحيحة فقط.')
 
 @section('content')
-    <!-- Header / Navbar -->
-    <nav class="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <!-- Logo -->
-                <a href="{{ route('home') }}" class="flex items-center gap-3">
-                    <div
-                        class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-100 transform rotate-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                            stroke="currentColor" class="w-5 h-5 -rotate-3">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                        </svg>
-                    </div>
-                    <span class="text-lg font-black text-emerald-950 tracking-tight hidden md:block">موسوعة الحديث
-                        الصحيح</span>
-                </a>
-
-                <!-- Navigation -->
-                <div class="flex items-center gap-4">
-                    <a href="{{ route('home') }}" class="text-gray-600 hover:text-emerald-600 transition font-medium">
-                        <i class="fas fa-home ml-1"></i> الرئيسية
-                    </a>
-                    <a href="{{ route('search') }}" class="text-gray-600 hover:text-emerald-600 transition font-medium">
-                        <i class="fas fa-search ml-1"></i> البحث
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
     <!-- Hero Section -->
     <section class="relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-950"></div>
@@ -289,31 +258,4 @@
         </section>
 
     </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-white py-12 mt-16">
-        <div class="max-w-5xl mx-auto px-4 text-center">
-            <div class="mb-6">
-                <div class="inline-flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                            stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                        </svg>
-                    </div>
-                    <span class="text-xl font-bold">موسوعة الحديث الصحيح</span>
-                </div>
-                <p class="text-gray-400">الصحيح.. ولا شيء غير الصحيح</p>
-            </div>
-            <div class="flex justify-center gap-6 mb-6">
-                <a href="{{ route('home') }}" class="text-gray-400 hover:text-white transition">الرئيسية</a>
-                <a href="{{ route('search') }}" class="text-gray-400 hover:text-white transition">البحث</a>
-                <a href="{{ route('about') }}" class="text-emerald-400 hover:text-emerald-300 transition">عن الموسوعة</a>
-            </div>
-            <p class="text-gray-500 text-sm">
-                جميع الحقوق محفوظة © {{ date('Y') }}
-            </p>
-        </div>
-    </footer>
 @endsection
