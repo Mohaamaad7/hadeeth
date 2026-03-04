@@ -23,7 +23,7 @@ class ReviewController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Hadith::with(['book', 'narrator', 'sources', 'enteredBy']);
+        $query = Hadith::with(['book', 'narrators', 'sources', 'enteredBy']);
 
         // فلتر الحالة
         $status = $request->get('status', 'pending');
@@ -58,7 +58,7 @@ class ReviewController extends Controller
      */
     public function show(Hadith $hadith): View
     {
-        $hadith->load(['book', 'narrator', 'sources', 'enteredBy', 'reviewer']);
+        $hadith->load(['book', 'narrators', 'sources', 'enteredBy', 'reviewer']);
 
         // الحديث السابق والتالي في نفس الحالة
         $previousPending = Hadith::pending()

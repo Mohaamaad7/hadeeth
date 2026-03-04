@@ -97,7 +97,7 @@
                     </tr>
                     <tr>
                         <td class="font-weight-bold">الراوي</td>
-                        <td>{{ $hadith->narrator->name ?? '—' }}</td>
+                        <td>{{ $hadith->narrators->pluck('name')->join('، ') ?: '—' }}</td>
                     </tr>
                     <tr>
                         <td class="font-weight-bold">الكتاب</td>
@@ -135,7 +135,8 @@
                         <tr>
                             <td class="font-weight-bold">ملاحظات</td>
                             <td class="text-{{ $hadith->status === 'rejected' ? 'danger' : 'muted' }}">
-                                {{ $hadith->review_notes }}</td>
+                                {{ $hadith->review_notes }}
+                            </td>
                         </tr>
                     @endif
                 </table>

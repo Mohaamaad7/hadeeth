@@ -7,7 +7,7 @@
     $pageTitle = $appName . ' | ' . $hadithSnippet;
 
     // Meta Description أطول للوصف
-    $metaDescription = Str::limit(strip_tags($hadith->content), 155) . ' - حديث ' . $hadith->grade . ' من رواية ' . ($hadith->narrator?->name ?? 'غير محدد') . ' في ' . ($hadith->book?->name ?? 'كتب الحديث');
+    $metaDescription = Str::limit(strip_tags($hadith->content), 155) . ' - حديث ' . $hadith->grade . ' من رواية ' . ($hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد') . ' في ' . ($hadith->book?->name ?? 'كتب الحديث');
 
     $ogImage = asset('images/og-hadith.png');
 @endphp
@@ -16,7 +16,7 @@
 
 @section('meta_description', $metaDescription)
 
-@section('meta_keywords', 'حديث رقم ' . $hadith->number_in_book . ', ' . ($hadith->narrator?->name ?? '') . ', ' . ($hadith->book?->name ?? '') . ', حديث ' . $hadith->grade . ', الأحاديث النبوية')
+@section('meta_keywords', 'حديث رقم ' . $hadith->number_in_book . ', ' . ($hadith->narrators->pluck('name')->join('، ') ?? '') . ', ' . ($hadith->book?->name ?? '') . ', حديث ' . $hadith->grade . ', الأحاديث النبوية')
 
 @section('og_type', 'article')
 @section('og_title', $pageTitle)
@@ -36,7 +36,7 @@
     "description": "{{ Str::limit($hadith->content, 200) }}",
     "author": {
         "@@type": "Person",
-        "name": "{{ $hadith->narrator?->name ?? 'غير محدد' }}"
+        "name": "{{ $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد' }}"
     },
     "publisher": {
         "@@type": "Organization",
@@ -50,7 +50,7 @@
     "datePublished": "{{ $hadith->created_at?->toIso8601String() ?? now()->toIso8601String() }}",
     "dateModified": "{{ $hadith->updated_at?->toIso8601String() ?? now()->toIso8601String() }}",
     "articleBody": "{{ $hadith->content }}",
-    "keywords": ["حديث", "{{ $hadith->grade }}", "{{ $hadith->narrator?->name ?? '' }}", "{{ $hadith->book?->name ?? '' }}"]
+    "keywords": ["حديث", "{{ $hadith->grade }}", "{{ $hadith->narrators->pluck('name')->join('، ') }}", "{{ $hadith->book?->name ?? '' }}"]
 }
 </script>
 <script type="application/ld+json">
@@ -131,10 +131,12 @@
                     <span class="bg-{{ $gradeColor }}-50 text-{{ $gradeColor }}-700 px-4 py-1.5 rounded-full text-sm font-bold border border-{{ $gradeColor }}-200">
                         <i class="fa-solid fa-check-circle ml-1"></i> {{ $hadith->grade }}
                     </span>
-                    @if($hadith->narrator)
-                        <span class="bg-gray-50 text-gray-600 px-4 py-1.5 rounded-full text-sm font-bold border border-gray-200">
-                            <i class="fa-solid fa-user ml-1 text-gray-400"></i> الصحابي: {{ $hadith->narrator->name }}
-                        </span>
+                    @if($hadith->narrators->count() > 0)
+                        @foreach($hadith->narrators as $nar)
+                            <span class="bg-gray-50 text-gray-600 px-4 py-1.5 rounded-full text-sm font-bold border border-gray-200">
+                                <i class="fa-solid fa-user ml-1 text-gray-400"></i> الصحابي: {{ $nar->name }}
+                            </span>
+                        @endforeach
                     @endif
                     @if($hadith->book)
                         <span class="bg-purple-50 text-purple-600 px-4 py-1.5 rounded-full text-sm font-bold border border-purple-200">
@@ -311,7 +313,8 @@
         @endif
 
         <!-- Narrator Bio (if available) -->
-        @if($hadith->narrator && $hadith->narrator->bio)
+        @if($hadith->narrators->filter(fn($n) => $n->bio)->count() > 0)
+            @foreach($hadith->narrators->filter(fn($n) => $n->bio) as $nar)
             <section class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 mb-8 animate-up"
                 style="animation-delay: 0.1s;">
                 <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
@@ -323,17 +326,18 @@
                         <i class="fa-solid fa-user"></i>
                     </div>
                     <div class="flex-grow">
-                        <h4 class="font-bold text-lg text-gray-800 mb-2">{{ $hadith->narrator->name }}</h4>
-                        @if($hadith->narrator->grade_status)
+                        <h4 class="font-bold text-lg text-gray-800 mb-2">{{ $nar->name }}</h4>
+                        @if($nar->grade_status)
                             <span class="inline-block px-3 py-1 rounded-full text-xs font-bold mb-3"
-                                style="background-color: {{ $hadith->narrator->color_code }}20; color: {{ $hadith->narrator->color_code }}; border: 1px solid {{ $hadith->narrator->color_code }};">
-                                {{ $hadith->narrator->grade_status }}
+                                style="background-color: {{ $nar->color_code }}20; color: {{ $nar->color_code }}; border: 1px solid {{ $nar->color_code }};">
+                                {{ $nar->grade_status }}
                             </span>
                         @endif
-                        <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">{{ $hadith->narrator->bio }}</p>
+                        <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">{{ $nar->bio }}</p>
                     </div>
                 </div>
             </section>
+            @endforeach
         @endif
 
         <!-- Related Hadiths -->
@@ -509,7 +513,7 @@
         function copyHadith() {
             // Build formatted hadith text
             const hadithContent = `{{ $hadith->content }}`;
-            const narrator = `{{ $hadith->narrator?->name ?? 'غير محدد' }}`;
+            const narrator = `{{ $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد' }}`;
             const grade = `{{ $hadith->grade }}`;
             const book = `{{ $hadith->book?->name ?? '' }}`;
             const hadithNumber = `{{ $hadith->number_in_book }}`;
@@ -560,7 +564,7 @@
 
         // Share Text - Same format as copy but without emojis (URL encoding issues)
         const shareUrl = window.location.href;
-        const narrator = `{{ $hadith->narrator?->name ?? 'غير محدد' }}`;
+        const narrator = `{{ $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد' }}`;
         const grade = `{{ $hadith->grade }}`;
         const book = `{{ $hadith->book?->name ?? '' }}`;
         const hadithNumber = `{{ $hadith->number_in_book }}`;
@@ -588,7 +592,7 @@
 
         function shareToTwitter() {
             // Twitter has character limit, so use shorter version
-            const twitterText = encodeURIComponent(`« {{ Str::limit($hadith->content, 200) }} »\n\n• {{ $hadith->narrator?->name ?? '' }} | {{ $hadith->grade }}\n\nموسوعة الحديث الصحيح`);
+            const twitterText = encodeURIComponent(`« {{ Str::limit($hadith->content, 200) }} »\n\n• {{ $hadith->narrators->pluck('name')->join('، ') ?: '' }} | {{ $hadith->grade }}\n\nموسوعة الحديث الصحيح`);
             window.open(`https://twitter.com/intent/tweet?text=${twitterText}&url=${encodeURIComponent(shareUrl)}`, '_blank');
             closeShareModal();
         }

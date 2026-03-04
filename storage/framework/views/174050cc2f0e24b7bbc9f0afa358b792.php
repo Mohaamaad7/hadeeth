@@ -138,7 +138,7 @@
                             <td><span class="badge badge-primary"><?php echo e($hadith->number_in_book); ?></span></td>
                             <td><?php echo e(Str::limit($hadith->content, 100)); ?></td>
                             <td><span class="badge badge-info"><?php echo e($hadith->grade); ?></span></td>
-                            <td><?php echo e($hadith->narrator->name ?? '—'); ?></td>
+                            <td><?php echo e($hadith->narrators->pluck('name')->join('، ') ?: '—'); ?></td>
                             <td><span class="badge badge-<?php echo e($hadith->status_badge); ?>"><?php echo e($hadith->status_name); ?></span></td>
                             <td><?php echo e($hadith->enteredBy->name ?? '—'); ?></td>
                             <td><small><?php echo e($hadith->created_at->diffForHumans()); ?></small></td>

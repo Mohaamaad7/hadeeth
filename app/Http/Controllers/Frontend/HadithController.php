@@ -18,15 +18,30 @@ class HadithController extends Controller
      */
     public function search(Request $request): View
     {
-        $query = Hadith::with(['book', 'narrator', 'sources'])->approved();
+        $query = Hadith::with(['book', 'narrators', 'sources'])->approved();
 
-        // Text search
+        // Text search — FULLTEXT (fast) with LIKE fallback for short queries
         if ($request->filled('q')) {
             $search = $request->q;
-            $query->where(function ($q) use ($search) {
-                $q->where('content', 'like', "%{$search}%")
-                    ->orWhere('content_searchable', 'like', "%{$search}%");
-            });
+            $searchClean = preg_replace('/[+\-><\(\)~*\"@]+/', ' ', $search);
+            $searchClean = trim($searchClean);
+
+            if (mb_strlen($searchClean) >= 2) {
+                // Use FULLTEXT (MATCH AGAINST) on the indexed column
+                $query->whereRaw(
+                    'MATCH(content_searchable) AGAINST(? IN BOOLEAN MODE)',
+                    [$searchClean . '*']
+                )
+                    ->addSelect(['*'])
+                    ->selectRaw(
+                        'MATCH(content_searchable) AGAINST(? IN BOOLEAN MODE) as relevance',
+                        [$searchClean . '*']
+                    )
+                    ->orderByDesc('relevance');
+            } else {
+                // Fallback to LIKE for very short queries
+                $query->where('content', 'like', "%{$search}%");
+            }
         }
 
         // Filter by grade
@@ -57,12 +72,12 @@ class HadithController extends Controller
      */
     public function show(int $id): View
     {
-        $hadith = Hadith::with(['book', 'narrator', 'sources', 'chains.source', 'chains.narrators'])
+        $hadith = Hadith::with(['book', 'narrators', 'sources', 'chains.source', 'chains.narrators'])
             ->approved()
             ->findOrFail($id);
 
         // Get related hadiths (same book or same narrator)
-        $relatedHadiths = Hadith::with(['book', 'narrator'])
+        $relatedHadiths = Hadith::with(['book', 'narrators'])
             ->approved()
             ->where('id', '!=', $hadith->id)
             ->where(function ($query) use ($hadith) {

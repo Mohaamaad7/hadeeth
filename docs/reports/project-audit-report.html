@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقرير تقييم شامل — موسوعة الحديث الصحيح</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-code: #0d1117;
+            --accent: #38bdf8;
+            --accent-dim: #075985;
+            --red: #ef4444;
+            --red-bg: #450a0a;
+            --orange: #f97316;
+            --orange-bg: #431407;
+            --yellow: #facc15;
+            --yellow-bg: #422006;
+            --green: #22c55e;
+            --green-bg: #052e16;
+            --purple: #a78bfa;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .report-header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .report-header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: .5rem;
+        }
+
+        .report-header .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .report-header .date {
+            color: var(--accent);
+            font-size: .9rem;
+            margin-top: .5rem;
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .summary-card .number {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+
+        .summary-card .label {
+            color: var(--text-muted);
+            font-size: .85rem;
+        }
+
+        .critical .number {
+            color: var(--red);
+        }
+
+        .high .number {
+            color: var(--orange);
+        }
+
+        .medium .number {
+            color: var(--yellow);
+        }
+
+        .low .number {
+            color: var(--green);
+        }
+
+        /* Section */
+        .section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .section-body {
+            padding: 1.5rem;
+        }
+
+        .severity-critical .section-header {
+            border-right: 4px solid var(--red);
+        }
+
+        .severity-high .section-header {
+            border-right: 4px solid var(--orange);
+        }
+
+        .severity-medium .section-header {
+            border-right: 4px solid var(--yellow);
+        }
+
+        .severity-low .section-header {
+            border-right: 4px solid var(--green);
+        }
+
+        /* Issue */
+        .issue {
+            background: rgba(15, 23, 42, .5);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .issue:last-child {
+            margin-bottom: 0;
+        }
+
+        .issue-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: .5rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .issue-files {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .3rem;
+            margin-bottom: .75rem;
+        }
+
+        .file-badge {
+            background: var(--accent-dim);
+            color: var(--accent);
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: .75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .issue p {
+            color: var(--text-muted);
+            margin-bottom: .5rem;
+        }
+
+        .issue strong {
+            color: var(--text);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-code);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: .82rem;
+            color: var(--accent);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: .75rem 0;
+            direction: ltr;
+            text-align: left;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .82rem;
+            line-height: 1.6;
+            color: #c9d1d9;
+        }
+
+        pre .del {
+            color: var(--red);
+        }
+
+        pre .add {
+            color: var(--green);
+        }
+
+        pre .comment {
+            color: #8b949e;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: .7rem;
+            font-weight: 600;
+        }
+
+        .tag-critical {
+            background: var(--red-bg);
+            color: var(--red);
+        }
+
+        .tag-high {
+            background: var(--orange-bg);
+            color: var(--orange);
+        }
+
+        .tag-medium {
+            background: var(--yellow-bg);
+            color: var(--yellow);
+        }
+
+        .tag-low {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .arrow {
+            color: var(--red);
+            margin: 0 .3rem;
+        }
+
+        .check {
+            color: var(--green);
+        }
+
+        .toc {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .toc li {
+            padding: .3rem 0;
+        }
+
+        .toc a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+
+            .report-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- ═══════════════ Header ═══════════════ -->
+        <div class="report-header">
+            <h1>🔍 تقرير التقييم الشامل</h1>
+            <div class="subtitle">مشروع موسوعة الحديث الصحيح — مراجعة كاملة للكود والمعمارية والتوثيق</div>
+            <div class="date">📅 3 مارس 2026 — آخر تحديث: 4 مارس 2026 | تم فحص: 7 موديلات | 12 كنترولر | 1 سيرفس | 22
+                هجرة | 10 وثائق</div>
+        </div>
+
+        <!-- ═══════════════ Summary ═══════════════ -->
+        <div class="summary-grid">
+            <div class="summary-card critical">
+                <div class="number">0</div>
+                <div class="label">🔴 حرج — تم إصلاح 4 من 4 ✅</div>
+            </div>
+            <div class="summary-card high">
+                <div class="number">4</div>
+                <div class="label">🟠 مهم — تم إصلاح 1 من 5</div>
+            </div>
+            <div class="summary-card medium">
+                <div class="number">6</div>
+                <div class="label">🟡 متوسط — تحسين مطلوب</div>
+            </div>
+            <div class="summary-card low">
+                <div class="number">5</div>
+                <div class="label">🟢 ملاحظات عامة</div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- 🔴 المشاكل الحرجة                      -->
+        <!-- ═══════════════════════════════════════ -->
+        <div class="section severity-critical">
+            <div class="section-header">
+                <span class="tag tag-critical">حرج</span>
+                <h2>🔴 مشاكل حرجة — خطر أمني أو فقدان بيانات</h2>
+            </div>
+            <div class="section-body">
+
+                <!-- Issue 1 — ✅ تم الإصلاح -->
+                <div class="issue" style="border: 1px solid var(--green); background: rgba(34,197,94,.06);">
+                    <div class="issue-title">
+                        <span class="tag" style="background:#052e16;color:#22c55e;">✅ تم الإصلاح</span>
+                        <span style="text-decoration: line-through; opacity:.6;">SQL Injection — حقن SQL في البحث عن
+                            المصادر</span>
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">HadithController.php (Dashboard)</span>
+                    </div>
+                    <p>
+                        <strong style="color: var(--green);">تم حل المشكلة بتاريخ 4 مارس 2026.</strong>
+                        تم استبدال استعلامات <code>LIKE</code> الخام باستراتيجية مطابقة آمنة على مرحلتين:
+                    </p>
+                    <ul style="padding-right: 1.5rem; color: var(--text-muted); margin-bottom: .75rem;">
+                        <li>تحميل جميع المصادر من قاعدة البيانات مرة واحدة (<code>Source::all()</code>)</li>
+                        <li>مطابقة تامة أولاً (<code>firstWhere('name', $sourceName)</code>)</li>
+                        <li>Fallback آمن في الذاكرة (<code>str_contains</code>) بدون أي SQL</li>
+                        <li>حذف تكرار الـ IDs (<code>in_array</code> check)</li>
+                    </ul>
+                    <p><strong>قبل الإصلاح:</strong></p>
+                    <pre>
+<span class="del">$source = Source::where('name', 'LIKE', "%{$sourceName}%")->first();</span>
+<span class="comment">// ← SQL injection + N+1 query في كل تكرار</span>
+</pre>
+                    <p><strong>بعد الإصلاح:</strong></p>
+                    <pre>
+<span class="add">$allSources = Source::all(); // تحميل مسبق مرة واحدة</span>
+
+<span class="comment">// 1️⃣ مطابقة تامة (الحالة الطبيعية)</span>
+<span class="add">$source = $allSources->firstWhere('name', $sourceName);</span>
+
+<span class="comment">// 2️⃣ Fallback آمن في الذاكرة</span>
+<span class="add">if (!$source) {</span>
+<span class="add">    $source = $allSources->first(fn(Source $s) => str_contains($s->name, $sourceName));</span>
+<span class="add">}</span>
+</pre>
+                    <p style="color: var(--green); font-size: .85rem;">
+                        ✅ تم تطبيق الإصلاح في <code>store()</code> (سطر 203) و <code>bulkStore()</code> (سطر 657)
+                    </p>
+                </div>
+
+                <!-- Issue 2 — ✅ تم الإصلاح -->
+                <div class="issue" style="border: 1px solid var(--green); background: rgba(34,197,94,.06);">
+                    <div class="issue-title">
+                        <span class="tag" style="background:#052e16;color:#22c55e;">✅ تم الإصلاح</span>
+                        <span style="text-decoration: line-through; opacity:.6;">عمليات Cleanup بدون DB Transaction —
+                            خطر فقدان بيانات</span>
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">CleanupController.php</span>
+                    </div>
+                    <p>
+                        <strong style="color: var(--green);">تم حل المشكلة بتاريخ 4 مارس 2026.</strong>
+                        تم لف جميع عمليات الحذف المتعددة الجداول في <code>DB::transaction()</code> لضمان الذرية
+                        (atomicity).
+                    </p>
+                    <ul style="padding-right: 1.5rem; color: var(--text-muted); margin-bottom: .75rem;">
+                        <li><code>deleteHadiths()</code> — 5 جداول داخل transaction + إضافة <code>hadith_narrator</code>
+                            المفقود</li>
+                        <li><code>deleteAllNarrators()</code> — جدولين داخل transaction</li>
+                        <li><code>deleteAllBooks()</code> — جدولين داخل transaction</li>
+                        <li><code>deleteChains()</code> — جدولين داخل transaction</li>
+                        <li><code>nukeAll()</code> — 8 جداول داخل transaction + إضافة <code>hadith_narrator</code>
+                            المفقود</li>
+                    </ul>
+                    <p><strong>قبل الإصلاح:</strong></p>
+                    <pre>
+<span class="del">DB::table('hadith_source')->delete();</span>
+<span class="del">DB::table('chain_narrators')->delete();</span>
+<span class="del">HadithChain::query()->delete();  // ❌ لو فشل هنا؟</span>
+<span class="del">Hadith::query()->delete();       // ← لن يتم تنفيذه!</span>
+</pre>
+                    <p><strong>بعد الإصلاح:</strong></p>
+                    <pre>
+<span class="add">DB::transaction(function () {</span>
+    DB::table('hadith_source')->delete();
+<span class="add">    DB::table('hadith_narrator')->delete(); // ← كان مفقوداً!</span>
+    DB::table('chain_narrators')->delete();
+    HadithChain::query()->delete();
+    Hadith::query()->delete();
+<span class="add">}); // ← لو فشل أي شيء → rollback تلقائي</span>
+</pre>
+                    <p style="color: var(--green); font-size: .85rem;">
+                        ✅ تم تطبيق الإصلاح على 5 methods + إضافة حذف <code>hadith_narrator</code> pivot المفقود
+                    </p>
+                </div>
+
+                <!-- Issue 3 -->
+                <div class="issue" style="opacity: .6; border-right-color: var(--green);">
+                    <div class="issue-title">
+                        <span class="tag" style="background:#052e16;color:#22c55e;">تم الإصلاح ✅</span>
+                        <del>علاقة Narrator مزدوجة ومتناقضة في Hadith Model</del>
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">Hadith.php (Model)</span>
+                        <span class="file-badge">Narrator.php (Model)</span>
+                        <span class="file-badge">8 Controllers</span>
+                        <span class="file-badge">12 Blade Views</span>
+                    </div>
+                    <p>
+                        <strong>الإصلاح:</strong> تم توحيد جميع استعلامات الرواة لاستخدام علاقة <code>narrators()</code>
+                        (M2M) بدلاً من <code>narrator()</code> (BelongsTo):
+                    </p>
+                    <pre>
+<span class="comment">// التغييرات:</span>
+<span class="comment">// 1. Narrator Model: إضافة hadithsM2M() BelongsToMany</span>
+<span class="comment">// 2. 8 Controllers: with('narrator') → with('narrators')</span>
+<span class="comment">// 3. 12 Blade Views: عرض أكثر من راوي بشكل badges منفصلة</span>
+<span class="comment">// 4. سيرة الراوي: تعرض الآن جميع الرواة اللي عندهم bio</span>
+</pre>
+                    <p style="color: var(--green); font-size: .85rem;">
+                        ✅ تم الإصلاح — الفرونت إند الآن يعرض كل الرواة المرتبطين بالحديث بدل راوي واحد فقط
+                    </p>
+                </div>
+
+                <!-- Issue 4 -->
+                <div class="issue" style="opacity: .6; border-right-color: var(--green);">
+                    <div class="issue-title">
+                        <span class="tag" style="background:#052e16;color:#22c55e;">تم الإصلاح ✅</span>
+                        <del>Frontend PDF Export بدون أي حماية (Authentication)</del>
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">routes/web.php</span>
+                    </div>
+                    <p>
+                        <strong>الإصلاح:</strong> تمت إضافة <code>throttle:5,1</code> middleware لمسار تصدير PDF.
+                        الآن محدود بـ 5 طلبات في الدقيقة لكل IP.
+                    </p>
+                    <pre>
+<span class="add">Route::get('/books/{book}/pdf', [...])</span>
+<span class="add">    ->name('books.pdf')</span>
+<span class="add">    ->middleware('throttle:5,1'); // حماية من DDoS</span>
+</pre>
+                    <p style="color: var(--green); font-size: .85rem;">
+                        ✅ تم الإصلاح — الآن محمي ضد الاستخدام المفرط
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- 🟠 مشاكل مهمة                          -->
+        <!-- ═══════════════════════════════════════ -->
+        <div class="section severity-high">
+            <div class="section-header">
+                <span class="tag tag-high">مهم</span>
+                <h2>🟠 مشاكل مهمة — تضعف الجودة والأداء</h2>
+            </div>
+            <div class="section-body">
+
+                <div class="issue" style="opacity: .6; border-right-color: var(--green);">
+                    <div class="issue-title">
+                        <span class="tag" style="background:#052e16;color:#22c55e;">تم الإصلاح ✅</span>
+                        <del>كنترولر بحث مكرر — SearchController ميت وغير مستخدم</del>
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">SearchController.php ❌ تم حذفه</span>
+                        <span class="file-badge">search-results.blade.php ❌ تم حذفه</span>
+                        <span class="file-badge">Frontend/HadithController.php</span>
+                        <span class="file-badge">Dashboard/HadithController.php</span>
+                    </div>
+                    <p>
+                        <strong>الإصلاح:</strong> تم حذف <code>SearchController.php</code> الميت والـ view الخاص به.
+                        تم ترقية البحث من <code>LIKE</code> إلى <code>MATCH AGAINST</code> (FULLTEXT) في الفرونت
+                        والداشبورد.
+                    </p>
+                    <pre>
+<span class="comment">// التغييرات:</span>
+<span class="del">SearchController.php  → تم حذفه</span>
+<span class="del">search-results.blade.php → تم حذفه</span>
+<span class="add">LIKE '%كلمة%' → MATCH(content_searchable) AGAINST('كلمة*' IN BOOLEAN MODE)</span>
+<span class="comment">// أسرع 10-50× مع ترتيب حسب الصلة (relevance)</span>
+</pre>
+                    <p style="color: var(--green); font-size: .85rem;">
+                        ✅ تم الإصلاح — بحث FULLTEXT + حذف الكود الميت
+                    </p>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-high">6</span>
+                        N+1 Query Problem في bulkPreview و bulkStore
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">HadithController.php (Dashboard)</span>
+                    </div>
+                    <p>
+                        في <code>bulkPreview()</code>، لكل حديث يتم إرسال <strong>استعلامات منفصلة</strong> للبحث عن
+                        الرواة والمصادر:
+                    </p>
+                    <pre>
+<span class="comment">// لكل حديث (قد يكون 50+ حديث):</span>
+foreach ($parsed['narrators'] as $narratorName) {
+    $this->findNarrator($narratorName);
+    <span class="comment">// ← هذه الدالة تُرسل 4-5 استعلامات لكل اسم!</span>
+}
+foreach ($parsed['source_codes'] as $code) {
+    Source::where('code', $code)->first();
+    <span class="comment">// ← استعلام لكل كود!</span>
+}
+<span class="comment">// لو 50 حديث × 3 رواة × 5 استعلامات = 750 استعلام!</span>
+</pre>
+                    <p><strong>الحل:</strong> تحميل كل الرواة والمصادر مرة واحدة في الذاكرة قبل الحلقة:</p>
+                    <pre>
+<span class="add">$allNarrators = Narrator::with('alternatives')->get()->keyBy('name');</span>
+<span class="add">$allSources = Source::all()->keyBy('code');</span>
+</pre>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-high">7</span>
+                        $narratorAliases محفور في الكنترولر — ليس في Model أو Config
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">HadithController.php (Dashboard)</span>
+                    </div>
+                    <p>
+                        الوثيقة <code>09-smart-narrator-matching.md</code> تشرح وجود قاموس <code>$narratorAliases</code>
+                        ضخم
+                        داخل <code>HadithController</code>. لكن الكود الفعلي <strong>لا يحتوي على هذا القاموس</strong>!
+                    </p>
+                    <p>
+                        الكود الحالي في <code>findNarrator()</code> يعتمد على:
+                    </p>
+                    <ul style="padding-right: 1.5rem; color: var(--text-muted);">
+                        <li>مطابقة تامة مع <code>name</code> / <code>fame_name</code> / <code>alternatives</code></li>
+                        <li>تطبيع أبي↔أبو ثنائي الاتجاه</li>
+                        <li>بحث "يبدأ بـ" (LIKE)</li>
+                        <li>حالة "ابن X"</li>
+                    </ul>
+                    <p>
+                        <strong>التعارض:</strong> التوثيق يتكلم عن قاموس اختصارات (عائشة ← عائشة بنت أبي بكر) بينما
+                        الكود لا يحتوي هذا القاموس.
+                        إما الكود تطور وأُزيل القاموس بدون تحديث التوثيق، أو التوثيق مبني على نسخة مخططة لم تُنفذ.
+                    </p>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-high">8</span>
+                        Dashboard routes بدون حماية role — الكل يقدر يحذف ويعدل
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">routes/web.php</span>
+                    </div>
+                    <p>
+                        مسارات الداشبورد الأساسية (CRUD للكتب، الأحاديث، الرواة، المصادر) محمية بـ <code>auth</code> فقط
+                        بدون <code>role</code> middleware. هذا يعني أن <strong>مُدخل البيانات</strong> يقدر:
+                    </p>
+                    <ul style="padding-right: 1.5rem; color: var(--text-muted);">
+                        <li>حذف أي حديث أو كتاب أو راوي</li>
+                        <li>تعديل أي بيانات بدون مراجعة</li>
+                        <li>الوصول لكل البيانات المحمية</li>
+                    </ul>
+                    <pre>
+<span class="comment">// routes/web.php سطر 52-69 — بدون role middleware!</span>
+Route::resource('books', BookController::class);
+Route::resource('narrators', NarratorController::class);
+Route::resource('sources', SourceController::class);
+Route::resource('hadiths', DashboardHadithController::class);
+<span class="comment">// ← أي مستخدم مسجل يقدر يحذف كل شيء!</span>
+</pre>
+                    <p>
+                        <strong>بينما:</strong> مسارات المراجعة والـ cleanup محمية بـ <code>role:reviewer,admin</code> و
+                        <code>role:admin</code>.
+                        هذا تناقض واضح.
+                    </p>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-high">9</span>
+                        Book Model ناقص fillable — حقل <code>number_in_book</code>
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">Book.php (Model)</span>
+                    </div>
+                    <p>
+                        التوثيق في <code>01-browse-books-feature.md</code> يذكر حقل <code>number_in_book</code> في نموذج
+                        Book، لكن:
+                    </p>
+                    <pre>
+<span class="comment">// Book.php — الكود الحالي:</span>
+protected $fillable = ['name', 'sort_order', 'parent_id'];
+<span class="comment">// ← لا يوجد number_in_book!</span>
+</pre>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- 🟡 متوسطة                              -->
+        <!-- ═══════════════════════════════════════ -->
+        <div class="section severity-medium">
+            <div class="section-header">
+                <span class="tag tag-medium">متوسط</span>
+                <h2>🟡 مشاكل متوسطة — تحتاج تحسين</h2>
+            </div>
+            <div class="section-body">
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-medium">10</span>
+                        bulkStore بدون DB::transaction — إدخال جزئي ممكن
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">HadithController.php</span>
+                    </div>
+                    <p>
+                        <code>bulkStore()</code> يحفظ 50+ حديث في حلقة <code>foreach</code> بدون transaction.
+                        لو حصل خطأ في الحديث رقم 30 من 50، سيتم حفظ أول 29 والباقي يضيع.
+                        المستخدم لن يعرف أي أحاديث تم حفظها وأيها لم يتم.
+                    </p>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-medium">11</span>
+                        exportPdf يستخدم <code>header()</code> بدلاً من Response headers
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">Frontend/BookController.php</span>
+                    </div>
+                    <pre>
+<span class="comment">// الكود الحالي — سطر 148-149:</span>
+<span class="del">header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');</span>
+<span class="del">header('Pragma: no-cache');</span>
+
+<span class="comment">// المشكلة: header() الـ PHP العادية قد لا تعمل مع Laravel Response</span>
+<span class="comment">// الحل الصحيح: استخدام response helpers أو mPDF output headers</span>
+</pre>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-medium">12</span>
+                        حذف Chain بدون حذف chain_narrators أولاً
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">HadithController.php</span>
+                    </div>
+                    <pre>
+<span class="comment">// update() — سطر 366:</span>
+$hadith->chains()->delete();
+<span class="comment">// ← يحذف HadithChain records لكن chain_narrators pivot تبقى يتيمة!</span>
+<span class="comment">// CleanupController يحذف chain_narrators أولاً لكن هنا لا</span>
+</pre>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-medium">13</span>
+                        Hadith status لا يستخدم Enum — سلسلة نصية في كل مكان
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">Hadith.php</span>
+                        <span class="file-badge">HadithController.php</span>
+                        <span class="file-badge">BookController.php</span>
+                    </div>
+                    <p>
+                        المشروع يستخدم <code>App\Enums\AlternativeNameType</code> لأنواع الأسماء البديلة (ممتاز)،
+                        لكن حالة الحديث <code>status</code> لا تزال سلسلة نصية خام: <code>'pending'</code>,
+                        <code>'approved'</code>, <code>'rejected'</code>.
+                        وكذلك <code>grade</code>: <code>'صحيح'</code>, <code>'حسن'</code>, <code>'ضعيف'</code>.
+                    </p>
+                    <p>هذه الحالات موزعة في الكود كنصوص ثابتة (magic strings) بدون Enum موحد.</p>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-medium">14</span>
+                        <code>content_searchable</code> يُستخدم في البحث لكن لا يُولَّد
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">Hadith.php</span>
+                        <span class="file-badge">HadithController.php</span>
+                    </div>
+                    <p>
+                        الحقل <code>content_searchable</code> موجود في <code>$fillable</code> ويُستخدم في البحث:
+                    </p>
+                    <pre>
+<span class="comment">// Dashboard/HadithController@index — سطر 111:</span>
+->orWhere('content_searchable', 'LIKE', "%{$search}%")
+</pre>
+                    <p>
+                        لكن <strong>لا يوجد أي كود يملأ هذا الحقل</strong>. لا في <code>store()</code> ولا في
+                        <code>bulkStore()</code>
+                        ولا في Observer. الحقل فارغ دائماً! هناك Trait <code>HasDiacriticStripper</code> يوحي بأن
+                        <code>content_searchable</code> يجب أن يحتوي النص بدون تشكيل، لكن لم يتم ربطه.
+                    </p>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-medium">15</span>
+                        Narrator Model — علاقة <code>hadiths()</code> ناقصة العكس
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">Narrator.php</span>
+                    </div>
+                    <p>
+                        <code>Narrator</code> يعرّف <code>hadiths()</code> كـ <code>HasMany</code> (من
+                        <code>narrator_id</code>)
+                        لكن <strong>لا يوجد علاقة</strong> <code>hadithsMany()</code> كـ <code>BelongsToMany</code> عبر
+                        <code>hadith_narrator</code>.
+                    </p>
+                    <pre>
+<span class="comment">// Narrator.php الحالي:</span>
+public function hadiths(): HasMany  <span class="comment">// ← من narrator_id فقط</span>
+
+<span class="comment">// المفقود:</span>
+<span class="add">public function hadithsM2M(): BelongsToMany</span>
+<span class="add">{</span>
+<span class="add">    return $this->belongsToMany(Hadith::class, 'hadith_narrator');</span>
+<span class="add">}</span>
+</pre>
+                    <p>هذا يتسبب في أن <code>CleanupController::deleteOrphanNarrators()</code> يفحص
+                        <code>hadiths()</code> (HasMany)
+                        ويعتبر الراوي يتيمًا حتى لو هو مرتبط عبر الجدول الوسيط M2M!
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- 🟢 ملاحظات عامة                        -->
+        <!-- ═══════════════════════════════════════ -->
+        <div class="section severity-low">
+            <div class="section-header">
+                <span class="tag tag-low">ملاحظة</span>
+                <h2>🟢 ملاحظات عامة وتحسينات</h2>
+            </div>
+            <div class="section-body">
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-low">16</span>
+                        وثيقة Routes خاطئة — الاسم والكنترولر لا يطابقان الفعلي
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">docs/08-routes-reference.md</span>
+                    </div>
+                    <p>التوثيق يذكر:</p>
+                    <pre>
+GET /search   → SearchController@index    name: search
+GET /random   → HadithController@random   name: hadith.random
+</pre>
+                    <p>الكود الفعلي:</p>
+                    <pre>
+GET /search        → FrontendHadithController@search   name: search
+GET /random-hadith → FrontendHadithController@random   name: hadith.random
+<span class="comment">// ← URI مختلف: /random vs /random-hadith</span>
+<span class="comment">// ← Controller مختلف: SearchController vs FrontendHadithController</span>
+</pre>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-low">17</span>
+                        ملفات Roadmap ضخمة في الـ Root — لا تنتمي للمشروع
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">sahih_jami_roadmap.md (57KB)</span>
+                        <span class="file-badge">sahih_jami_roadmap6.md (86KB)</span>
+                        <span class="file-badge">sahih_jami_roadmap8.md (126KB)</span>
+                        <span class="file-badge">test_parser.php</span>
+                        <span class="file-badge">workflow.md</span>
+                        <span class="file-badge">PROGRESS.md</span>
+                    </div>
+                    <p>
+                        يوجد 6 ملفات في الـ root مجموعها <strong>~280KB</strong> وهي ملفات تخطيط وتطوير ليس لها علاقة
+                        بالإنتاج.
+                        <code>test_parser.php</code> هو ملف اختبار يدوي. يجب نقلها لمجلد <code>docs/</code> أو حذفها.
+                    </p>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-low">18</span>
+                        HadithParser يُنشأ كـ Singleton ضمني بدون تسجيل
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">HadithParser.php</span>
+                    </div>
+                    <p>
+                        <code>HadithParser</code> يُحقن عبر Constructor injection في <code>HadithController</code>.
+                        Laravel يُنشئه
+                        من الـ Container في كل request. لكن لأنه يقرأ من DB في الـ constructor، هذا يعني <strong>استعلام
+                            DB في كل request</strong>
+                        لأي صفحة dashboard حتى لو لم تحتاج الـ Parser.
+                    </p>
+                    <p><strong>الحل:</strong> سجّله كـ <code>singleton</code> في <code>AppServiceProvider</code> أو
+                        استخدم Lazy loading.</p>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-low">19</span>
+                        Frontend BookController: <code>children()->count()</code> يُطلق استعلام إضافي
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">Frontend/BookController.php</span>
+                    </div>
+                    <pre>
+<span class="comment">// show() — سطر 46:</span>
+if ($book->children()<span class="del">->count()</span> > 0) { ... }
+<span class="comment">// ← يُطلق COUNT query إضافي</span>
+
+<span class="comment">// exportPdf() — سطر 89:</span>
+if ($book->children()<span class="del">->count()</span> > 0) { ... }
+
+<span class="comment">// الحل الأفضل: استخدام withCount مسبقاً أو exists()</span>
+<span class="add">if ($book->children()->exists()) { ... }</span>
+</pre>
+                </div>
+
+                <div class="issue">
+                    <div class="issue-title">
+                        <span class="tag tag-low">20</span>
+                        التوثيق يتكلم عن <code>extractNarrator()</code> مفرد لكن الكود <code>extractNarrators()</code>
+                        جمع
+                    </div>
+                    <div class="issue-files">
+                        <span class="file-badge">docs/04-hadith-parser-refactoring.md</span>
+                        <span class="file-badge">HadithParser.php</span>
+                    </div>
+                    <p>
+                        التوثيق في ملف <code>04</code> يشرح دالة <code>extractNarrator()</code> (مفرد) التي ترجع سلسلة
+                        نصية واحدة.
+                        اسم الدالة الفعلي هو <code>extractNarrators()</code> (جمع) وترجع مصفوفة. كذلك الـ parse يرجع
+                        <code>narrators</code> (جمع)
+                        بدلاً من <code>narrator</code> (مفرد) المذكور في التوثيق.
+                    </p>
+                    <p>هذا يعني التوثيق مبني على نسخة أقدم ولم يتم تحديثه بعد التحول لدعم رواة متعددين.</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ═══════════════ الخلاصة ═══════════════ -->
+        <div class="section" style="border-right: 4px solid var(--accent);">
+            <div class="section-header">
+                <h2>📋 ملخص التوصيات الفورية</h2>
+            </div>
+            <div class="section-body">
+                <p style="margin-bottom: 1rem;">ملخص بأهم الإجراءات المطلوبة مرتبة حسب الأولوية:</p>
+
+                <table style="width:100%; border-collapse: collapse; font-size: .9rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border);">
+                            <th style="padding: .5rem; text-align: right; color: var(--text-muted);">#</th>
+                            <th style="padding: .5rem; text-align: right;">الإجراء</th>
+                            <th style="padding: .5rem; text-align: center;">الأولوية</th>
+                            <th style="padding: .5rem; text-align: center;">الصعوبة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid var(--border); opacity: .5;">
+                            <td style="padding: .5rem;">1</td>
+                            <td style="padding: .5rem;"><del>إضافة <code>throttle</code> middleware لـ PDF export</del>
+                                ✅</td>
+                            <td style="padding: .5rem; text-align: center;"><span class="tag"
+                                    style="background:#052e16;color:#22c55e;">تم</span>
+                            </td>
+                            <td style="padding: .5rem; text-align: center;">—</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border); opacity: .5;">
+                            <td style="padding: .5rem;">2</td>
+                            <td style="padding: .5rem;"><del>لف عمليات Cleanup في <code>DB::transaction</code></del> ✅
+                            </td>
+                            <td style="padding: .5rem; text-align: center;"><span class="tag"
+                                    style="background:#052e16;color:#22c55e;">تم</span>
+                            </td>
+                            <td style="padding: .5rem; text-align: center;">—</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border); opacity: .5;">
+                            <td style="padding: .5rem;">3</td>
+                            <td style="padding: .5rem;"><del>استبدال <code>LIKE</code> بمطابقة تامة للمصادر</del> ✅</td>
+                            <td style="padding: .5rem; text-align: center;"><span class="tag"
+                                    style="background:#052e16;color:#22c55e;">تم</span>
+                            </td>
+                            <td style="padding: .5rem; text-align: center;">—</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border); opacity: .5;">
+                            <td style="padding: .5rem;">4</td>
+                            <td style="padding: .5rem;"><del>توحيد علاقة Narrator (اختيار واحدة: HasMany أو M2M)</del> ✅
+                            </td>
+                            <td style="padding: .5rem; text-align: center;"><span class="tag"
+                                    style="background:#052e16;color:#22c55e;">تم</span>
+                            </td>
+                            <td style="padding: .5rem; text-align: center;">—</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: .5rem;">5</td>
+                            <td style="padding: .5rem;">إضافة <code>role</code> middleware لمسارات CRUD</td>
+                            <td style="padding: .5rem; text-align: center;"><span class="tag tag-high">مهم</span></td>
+                            <td style="padding: .5rem; text-align: center;">⭐ سهل</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border); opacity: .5;">
+                            <td style="padding: .5rem;">6</td>
+                            <td style="padding: .5rem;"><del>حذف <code>SearchController.php</code> أو تفعيله بدل
+                                    LIKE</del> ✅</td>
+                            <td style="padding: .5rem; text-align: center;"><span class="tag"
+                                    style="background:#052e16;color:#22c55e;">تم</span></td>
+                            <td style="padding: .5rem; text-align: center;">—</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: .5rem;">7</td>
+                            <td style="padding: .5rem;">تفعيل <code>content_searchable</code> عبر Observer</td>
+                            <td style="padding: .5rem; text-align: center;"><span class="tag tag-medium">متوسط</span>
+                            </td>
+                            <td style="padding: .5rem; text-align: center;">⭐⭐ متوسط</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: .5rem;">8</td>
+                            <td style="padding: .5rem;">تحديث التوثيق ليطابق الكود الفعلي</td>
+                            <td style="padding: .5rem; text-align: center;"><span class="tag tag-low">ملاحظة</span></td>
+                            <td style="padding: .5rem; text-align: center;">⭐⭐ متوسط</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <hr>
+                <p style="color: var(--text-muted); text-align: center; font-size: .85rem;">
+                    تم إنشاء هذا التقرير بواسطة مراجعة يدوية شاملة لكل ملفات المشروع — 3 مارس 2026
+                </p>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

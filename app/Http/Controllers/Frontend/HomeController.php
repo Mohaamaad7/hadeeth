@@ -17,7 +17,7 @@ class HomeController extends Controller
      */
     public function index(): View
     {
-        $latestHadiths = Hadith::with(['book', 'narrator', 'sources'])
+        $latestHadiths = Hadith::with(['book', 'narrators', 'sources'])
             ->approved()
             ->latest()
             ->take(3)

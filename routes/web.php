@@ -27,7 +27,7 @@ Route::get('/random-hadith', [FrontendHadithController::class, 'random'])->name(
 Route::get('/narrator/{id}', [FrontendNarratorController::class, 'show'])->name('narrator.show');
 Route::get('/books', [FrontendBookController::class, 'index'])->name('books.index');
 Route::get('/books/{book}', [FrontendBookController::class, 'show'])->name('books.show');
-Route::get('/books/{book}/pdf', [FrontendBookController::class, 'exportPdf'])->name('books.pdf');
+Route::get('/books/{book}/pdf', [FrontendBookController::class, 'exportPdf'])->name('books.pdf')->middleware('throttle:5,1');
 Route::get('/about', function () {
     return view('frontend.about');
 })->name('about');

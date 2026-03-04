@@ -324,8 +324,8 @@
                             };
                         @endphp
                         <span class="hadith-grade {{ $gradeClass }}">{{ $hadith->grade }}</span>
-                        @if($hadith->narrator)
-                            <span class="hadith-narrator">🧑 {{ $hadith->narrator->name }}</span>
+                        @if($hadith->narrators->count() > 0)
+                            <span class="hadith-narrator">🧑 {{ $hadith->narrators->pluck('name')->join('، ') }}</span>
                         @endif
                     </div>
                     <div class="hadith-text">{{ $useOriginal ? ($hadith->raw_text ?: $hadith->content) : $hadith->content }}</div>
@@ -369,8 +369,8 @@
                         };
                     @endphp
                     <span class="hadith-grade {{ $gradeClass }}">{{ $hadith->grade }}</span>
-                    @if($hadith->narrator)
-                        <span class="hadith-narrator">🧑 {{ $hadith->narrator->name }}</span>
+                    @if($hadith->narrators->count() > 0)
+                        <span class="hadith-narrator">🧑 {{ $hadith->narrators->pluck('name')->join('، ') }}</span>
                     @endif
                 </div>
                 <div class="hadith-text">{{ $useOriginal ? ($hadith->raw_text ?: $hadith->content) : $hadith->content }}</div>

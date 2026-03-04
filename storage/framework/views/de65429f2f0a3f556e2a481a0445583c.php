@@ -141,14 +141,16 @@
                 <p class="text-gray-500 text-xs font-medium">
                     © <?php echo e(date('Y')); ?> جميع الحقوق محفوظة — موسوعة الحديث الصحيح
                 </p>
-                <div class="flex items-center gap-2 text-gray-600">
+                <div class="flex items-center gap-2 text-gray-400">
                     <span class="text-[10px]">برمجة و تطوير - </span>
-                    <i class="fa-solid fa-heart text-[10px] text-emerald-500/50"></i>
-                    <span class="text-[10px] text-danger"><a class="text-primary" href="fb.com/mohaamaad" target="_blank">محمد عبد الرازق الهشة</a> </span>
-                    <span class="text-[10px]">- نالت شرف استضافة الموسوعة <a href="https://www.areyada.com" target="_blank"> شركة ريادة لنظم المعلومات</a></span>
+                    <i class="fa-solid fa-heart text-[10px] text-emerald-400"></i>
+                    <span class="text-[10px]"><a class="text-emerald-300 hover:text-white transition-colors font-bold"
+                            href="https://fb.com/mohaamaad" target="_blank">محمد عبد الرازق الهشة</a></span>
+                    <span class="text-[10px]">— استضافة <a
+                            class="text-emerald-300 hover:text-white transition-colors font-bold"
+                            href="https://www.areyada.com" target="_blank">ريادة لنظم المعلومات</a></span>
                 </div>
             </div>
         </div>
     </div>
-</footer>
-<?php /**PATH C:\laragon\www\hadeeth\resources\views/frontend/partials/footer.blade.php ENDPATH**/ ?>
+</footer><?php /**PATH C:\laragon\www\hadeeth\resources\views/frontend/partials/footer.blade.php ENDPATH**/ ?>

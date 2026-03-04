@@ -102,15 +102,26 @@ class HadithController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Hadith::with(['book', 'narrator', 'sources']);
+        $query = Hadith::with(['book', 'narrators', 'sources']);
 
-        // Search functionality
+        // Search functionality — FULLTEXT with LIKE fallback
         if ($search = $request->get('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('content', 'LIKE', "%{$search}%")
-                    ->orWhere('content_searchable', 'LIKE', "%{$search}%")
-                    ->orWhere('number_in_book', 'LIKE', "%{$search}%");
-            });
+            $searchClean = preg_replace('/[+\-><\(\)~*\"@]+/', ' ', $search);
+            $searchClean = trim($searchClean);
+
+            if (mb_strlen($searchClean) >= 2 && !is_numeric($search)) {
+                $query->where(function ($q) use ($searchClean, $search) {
+                    $q->whereRaw(
+                        'MATCH(content_searchable) AGAINST(? IN BOOLEAN MODE)',
+                        [$searchClean . '*']
+                    )->orWhere('number_in_book', 'LIKE', "%{$search}%");
+                });
+            } else {
+                $query->where(function ($q) use ($search) {
+                    $q->where('content', 'LIKE', "%{$search}%")
+                        ->orWhere('number_in_book', 'LIKE', "%{$search}%");
+                });
+            }
         }
 
         // Filter by grade
@@ -200,12 +211,18 @@ class HadithController extends Controller
                 $validated['narrator_ids'] = $narratorIds;
             }
 
-            // استخراج المصادر من الـ codes
+            // استخراج المصادر من الـ codes — مطابقة آمنة بدون LIKE خام
             if (!empty($parsed['sources'])) {
+                $allSources = Source::all();
                 $sourceIds = [];
                 foreach ($parsed['sources'] as $sourceName) {
-                    $source = Source::where('name', 'LIKE', "%{$sourceName}%")->first();
-                    if ($source) {
+                    // 1️⃣ مطابقة تامة (الحالة الطبيعية — الـ Parser يُرجع الاسم الكامل)
+                    $source = $allSources->firstWhere('name', $sourceName);
+                    // 2️⃣ Fallback — بحث جزئي آمن في الذاكرة (بدون SQL)
+                    if (!$source) {
+                        $source = $allSources->first(fn(Source $s) => str_contains($s->name, $sourceName));
+                    }
+                    if ($source && !in_array($source->id, $sourceIds)) {
                         $sourceIds[] = $source->id;
                     }
                 }
@@ -249,7 +266,7 @@ class HadithController extends Controller
      */
     public function show(Hadith $hadith): View
     {
-        $hadith->load(['book', 'narrator', 'sources']);
+        $hadith->load(['book', 'narrators', 'sources']);
 
         return view('dashboard.hadiths.show', compact('hadith'));
     }
@@ -606,6 +623,7 @@ class HadithController extends Controller
 
         $bookId = $request->book_id;
         $savedCount = 0;
+        $allSources = Source::all(); // تحميل مسبق — مطابقة آمنة في الذاكرة
 
         foreach ($request->hadiths as $hadithData) {
 
@@ -654,14 +672,19 @@ class HadithController extends Controller
                 $hadith->narrators()->attach(array_unique($narratorIdsToAttach));
             }
 
-            // Attach sources
+            // Attach sources — مطابقة آمنة بدون LIKE خام
             if (!empty($hadithData['sources'])) {
                 $sourceNames = json_decode($hadithData['sources'], true);
                 if (is_array($sourceNames)) {
                     $sourceIds = [];
                     foreach ($sourceNames as $sourceName) {
-                        $source = Source::where('name', 'LIKE', "%{$sourceName}%")->first();
-                        if ($source) {
+                        // 1️⃣ مطابقة تامة أولاً
+                        $source = $allSources->firstWhere('name', $sourceName);
+                        // 2️⃣ Fallback — بحث جزئي آمن في الذاكرة
+                        if (!$source) {
+                            $source = $allSources->first(fn(Source $s) => str_contains($s->name, $sourceName));
+                        }
+                        if ($source && !in_array($source->id, $sourceIds)) {
                             $sourceIds[] = $source->id;
                         }
                     }

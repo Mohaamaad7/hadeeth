@@ -116,7 +116,7 @@
                                 </td>
                                 <td>
                                     <span class="badge badge-secondary">
-                                        {{ $hadith->narrator?->name ?? 'غير محدد' }}
+                                        {{ $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد' }}
                                     </span>
                                 </td>
                                 <td>
@@ -124,10 +124,10 @@
                                 </td>
                                 <td>
                                     <span class="badge badge-{{ 
-                                                            $hadith->grade === 'صحيح' ? 'success' :
+                                                                        $hadith->grade === 'صحيح' ? 'success' :
                     ($hadith->grade === 'حسن' ? 'info' :
                         ($hadith->grade === 'ضعيف' ? 'warning' : 'danger')) 
-                                                        }}">
+                                                                    }}">
                                         {{ $hadith->grade }}
                                     </span>
                                 </td>

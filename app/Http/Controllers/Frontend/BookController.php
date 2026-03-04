@@ -59,7 +59,7 @@ class BookController extends Controller
         // Otherwise show hadiths directly (book without chapters, or a chapter itself)
         $hadiths = $book->hadiths()
             ->where('status', 'approved')
-            ->with(['narrator', 'sources'])
+            ->with(['narrators', 'sources'])
             ->orderBy('number_in_book')
             ->paginate(20);
 
@@ -94,7 +94,7 @@ class BookController extends Controller
                 ->with([
                     'hadiths' => function ($q) {
                         $q->where('status', 'approved')
-                            ->with(['narrator', 'sources'])->orderBy('number_in_book');
+                            ->with(['narrators', 'sources'])->orderBy('number_in_book');
                     }
                 ])
                 ->orderBy('sort_order')
@@ -105,7 +105,7 @@ class BookController extends Controller
             // Single chapter or book without chapters
             $hadiths = $book->hadiths()
                 ->where('status', 'approved')
-                ->with(['narrator', 'sources'])
+                ->with(['narrators', 'sources'])
                 ->orderBy('number_in_book')
                 ->get();
 

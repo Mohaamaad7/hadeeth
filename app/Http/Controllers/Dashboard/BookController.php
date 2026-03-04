@@ -99,7 +99,7 @@ class BookController extends Controller
                 $query->withCount('hadiths')->orderBy('sort_order');
             },
             'hadiths' => function ($query) {
-                $query->with(['narrator', 'sources'])->orderBy('number_in_book')->take(10);
+                $query->with(['narrators', 'sources'])->orderBy('number_in_book')->take(10);
             }
         ]);
 

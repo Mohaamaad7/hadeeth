@@ -32,7 +32,7 @@ class DashboardController extends Controller
             'total_sources' => Source::count(),
         ];
 
-        $recent_hadiths = Hadith::with(['book', 'narrator'])
+        $recent_hadiths = Hadith::with(['book', 'narrators'])
             ->latest()
             ->take(10)
             ->get();

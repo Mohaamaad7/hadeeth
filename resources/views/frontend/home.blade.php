@@ -185,7 +185,8 @@
                         </p>
                         <div class="mt-4 pt-4 border-t border-gray-50 text-sm text-gray-500 flex items-center justify-between">
                             <span>
-                                <i class="fa-solid fa-user ml-1 text-emerald-400"></i> {{ $hadith->narrator?->name ?? 'غير محدد' }}
+                                <i class="fa-solid fa-user ml-1 text-emerald-400"></i>
+                                {{ $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد' }}
                             </span>
                             <span class="text-emerald-600 font-bold group-hover:translate-x-[-4px] transition-transform">
                                 اقرأ المزيد ←

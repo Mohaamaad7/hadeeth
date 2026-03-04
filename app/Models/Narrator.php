@@ -24,9 +24,20 @@ class Narrator extends Model
         return $query->where('is_companion', true);
     }
 
+    /**
+     * @deprecated Use hadithsM2M() for the M2M relationship via hadith_narrator pivot.
+     */
     public function hadiths(): HasMany
     {
         return $this->hasMany(Hadith::class);
+    }
+
+    /**
+     * الأحاديث المرتبطة بالراوي عبر جدول hadith_narrator (M2M).
+     */
+    public function hadithsM2M(): BelongsToMany
+    {
+        return $this->belongsToMany(Hadith::class, 'hadith_narrator');
     }
 
     /**

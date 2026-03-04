@@ -70,11 +70,14 @@ class CleanupController extends Controller
 
         $count = Hadith::count();
 
-        // حذف العلاقات أولاً
-        DB::table('hadith_source')->delete();
-        HadithChain::query()->delete();
-        DB::table('chain_narrators')->delete();
-        Hadith::query()->delete();
+        // حذف العلاقات أولاً — داخل transaction لضمان الاتساق
+        DB::transaction(function () {
+            DB::table('hadith_source')->delete();
+            DB::table('hadith_narrator')->delete();
+            DB::table('chain_narrators')->delete();
+            HadithChain::query()->delete();
+            Hadith::query()->delete();
+        });
 
         return redirect()->route('dashboard.cleanup.index')
             ->with('success', "✅ تم حذف {$count} حديث وجميع العلاقات المرتبطة");
@@ -114,8 +117,11 @@ class CleanupController extends Controller
         }
 
         $count = Narrator::count();
-        DB::table('chain_narrators')->delete();
-        Narrator::query()->delete();
+
+        DB::transaction(function () {
+            DB::table('chain_narrators')->delete();
+            Narrator::query()->delete();
+        });
 
         return redirect()->route('dashboard.cleanup.index')
             ->with('success', "✅ تم حذف {$count} راوي");
@@ -155,8 +161,11 @@ class CleanupController extends Controller
 
         // حذف الأبواب (children) أولاً ثم الكتب الرئيسية
         $count = Book::count();
-        Book::whereNotNull('parent_id')->delete();
-        Book::query()->delete();
+
+        DB::transaction(function () {
+            Book::whereNotNull('parent_id')->delete();
+            Book::query()->delete();
+        });
 
         return redirect()->route('dashboard.cleanup.index')
             ->with('success', "✅ تم حذف {$count} كتاب/باب");
@@ -189,8 +198,11 @@ class CleanupController extends Controller
         ]);
 
         $count = HadithChain::count();
-        DB::table('chain_narrators')->delete();
-        HadithChain::query()->delete();
+
+        DB::transaction(function () {
+            DB::table('chain_narrators')->delete();
+            HadithChain::query()->delete();
+        });
 
         return redirect()->route('dashboard.cleanup.index')
             ->with('success', "✅ تم حذف {$count} سلسلة إسناد");
@@ -205,15 +217,18 @@ class CleanupController extends Controller
             'confirm' => 'required|in:NUKE',
         ]);
 
-        // الترتيب مهم: من الأكثر تبعية إلى الأقل
-        DB::table('hadith_source')->delete();
-        DB::table('chain_narrators')->delete();
-        HadithChain::query()->delete();
-        Hadith::query()->delete();
-        Book::whereNotNull('parent_id')->delete();
-        Book::query()->delete();
-        Narrator::query()->delete();
-        // المصادر لا نحذفها — هي القاموس الأساسي
+        // الترتيب مهم: من الأكثر تبعية إلى الأقل — داخل transaction لضمان الاتساق
+        DB::transaction(function () {
+            DB::table('hadith_source')->delete();
+            DB::table('hadith_narrator')->delete();
+            DB::table('chain_narrators')->delete();
+            HadithChain::query()->delete();
+            Hadith::query()->delete();
+            Book::whereNotNull('parent_id')->delete();
+            Book::query()->delete();
+            Narrator::query()->delete();
+            // المصادر لا نحذفها — هي القاموس الأساسي
+        });
 
         return redirect()->route('dashboard.cleanup.index')
             ->with('success', '✅ تم تنظيف قاعدة البيانات بالكامل (ما عدا المصادر والمستخدمين)');

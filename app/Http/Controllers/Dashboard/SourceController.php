@@ -22,10 +22,10 @@ class SourceController extends Controller
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('type', 'like', "%{$search}%");
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('type', 'like', "%{$search}%");
             });
         }
 
@@ -71,9 +71,11 @@ class SourceController extends Controller
     public function show(Source $source): View
     {
         $source->loadCount('hadiths');
-        $source->load(['hadiths' => function($query) {
-            $query->with(['book', 'narrator'])->latest()->take(10);
-        }]);
+        $source->load([
+            'hadiths' => function ($query) {
+                $query->with(['book', 'narrators'])->latest()->take(10);
+            }
+        ]);
 
         return view('dashboard.sources.show', compact('source'));
     }

@@ -24,7 +24,7 @@ class ReparseHadiths extends Command
 
         $hadiths = Hadith::whereNotNull('raw_text')
             ->where('raw_text', '!=', '')
-            ->with(['sources', 'narrator'])
+            ->with(['sources', 'narrators'])
             ->get();
 
         $this->info("📚 عدد الأحاديث المراد تحليلها: {$hadiths->count()}");

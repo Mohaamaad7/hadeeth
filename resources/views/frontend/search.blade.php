@@ -73,10 +73,12 @@
                         <span class="bg-{{ $gradeColor }}-50 text-{{ $gradeColor }}-700 px-3 py-1.5 rounded-full text-xs font-bold border border-{{ $gradeColor }}-200">
                             <i class="fa-solid fa-check-circle ml-1"></i> {{ $hadith->grade }}
                         </span>
-                        @if($hadith->narrator)
-                            <span class="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full text-xs font-bold border border-gray-200">
-                                <i class="fa-solid fa-user ml-1"></i> {{ $hadith->narrator->name }}
-                            </span>
+                        @if($hadith->narrators->count() > 0)
+                            @foreach($hadith->narrators as $nar)
+                                <span class="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full text-xs font-bold border border-gray-200">
+                                    <i class="fa-solid fa-user ml-1"></i> {{ $nar->name }}
+                                </span>
+                            @endforeach
                         @endif
                         @if($hadith->book)
                             <span class="bg-purple-50 text-purple-600 px-3 py-1.5 rounded-full text-xs font-bold border border-purple-200">

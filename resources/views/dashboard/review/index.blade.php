@@ -138,7 +138,7 @@
                             <td><span class="badge badge-primary">{{ $hadith->number_in_book }}</span></td>
                             <td>{{ Str::limit($hadith->content, 100) }}</td>
                             <td><span class="badge badge-info">{{ $hadith->grade }}</span></td>
-                            <td>{{ $hadith->narrator->name ?? '—' }}</td>
+                            <td>{{ $hadith->narrators->pluck('name')->join('، ') ?: '—' }}</td>
                             <td><span class="badge badge-{{ $hadith->status_badge }}">{{ $hadith->status_name }}</span></td>
                             <td>{{ $hadith->enteredBy->name ?? '—' }}</td>
                             <td><small>{{ $hadith->created_at->diffForHumans() }}</small></td>
