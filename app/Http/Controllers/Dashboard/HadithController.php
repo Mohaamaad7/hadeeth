@@ -110,10 +110,14 @@ class HadithController extends Controller
             $searchClean = trim($searchClean);
 
             if (mb_strlen($searchClean) >= 2 && !is_numeric($search)) {
-                $query->where(function ($q) use ($searchClean, $search) {
+                // Prefix each word with + to require ALL words (AND mode)
+                $words = preg_split('/\s+/', $searchClean, -1, PREG_SPLIT_NO_EMPTY);
+                $booleanQuery = implode(' ', array_map(fn($w) => '+' . $w, $words));
+
+                $query->where(function ($q) use ($booleanQuery, $search) {
                     $q->whereRaw(
                         'MATCH(content_searchable) AGAINST(? IN BOOLEAN MODE)',
-                        [$searchClean . '*']
+                        [$booleanQuery]
                     )->orWhere('number_in_book', 'LIKE', "%{$search}%");
                 });
             } else {

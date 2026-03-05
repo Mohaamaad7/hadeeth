@@ -27,15 +27,19 @@ class HadithController extends Controller
             $searchClean = trim($searchClean);
 
             if (mb_strlen($searchClean) >= 2) {
+                // Prefix each word with + to require ALL words (AND mode)
+                $words = preg_split('/\s+/', $searchClean, -1, PREG_SPLIT_NO_EMPTY);
+                $booleanQuery = implode(' ', array_map(fn($w) => '+' . $w, $words));
+
                 // Use FULLTEXT (MATCH AGAINST) on the indexed column
                 $query->whereRaw(
                     'MATCH(content_searchable) AGAINST(? IN BOOLEAN MODE)',
-                    [$searchClean . '*']
+                    [$booleanQuery]
                 )
                     ->addSelect(['*'])
                     ->selectRaw(
                         'MATCH(content_searchable) AGAINST(? IN BOOLEAN MODE) as relevance',
-                        [$searchClean . '*']
+                        [$booleanQuery]
                     )
                     ->orderByDesc('relevance');
             } else {
