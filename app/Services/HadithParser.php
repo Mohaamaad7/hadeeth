@@ -339,40 +339,8 @@ class HadithParser
                     continue;
                 }
 
-                // Check for group codes first (entire content)
-                if (isset($this->groupExpansion[$match])) {
-                    $codes = array_merge($codes, $this->groupExpansion[$match]);
-                    continue;
-                }
-
-                // Split by spaces or extract individual Arabic/Latin letters
-                $parts = preg_split('/\s+/u', $match);
-                foreach ($parts as $part) {
-                    $part = $this->normalizeSourceCode(trim($part));
-                    if (empty($part))
-                        continue;
-
-                    // Check if it's a group code
-                    if (isset($this->groupExpansion[$part])) {
-                        $codes = array_merge($codes, $this->groupExpansion[$part]);
-                    } elseif (isset($this->sourceMap[$part])) {
-                        // Check for multi-char codes (مالك, حم, حب, etc.)
-                        $codes[] = $part;
-                    } else {
-                        // Only split single-char codes if the part is short enough (max 3 chars)
-                        // This prevents splitting words like "يعني" into individual chars
-                        if (mb_strlen($part, 'UTF-8') <= 3) {
-                            preg_match_all('/./u', $part, $chars);
-                            foreach ($chars[0] as $char) {
-                                if (isset($this->groupExpansion[$char])) {
-                                    $codes = array_merge($codes, $this->groupExpansion[$char]);
-                                } elseif (isset($this->sourceMap[$char])) {
-                                    $codes[] = $char;
-                                }
-                            }
-                        }
-                    }
-                }
+                $parenthesisCodes = $this->decodeParenthesisContent($match);
+                $codes = array_merge($codes, $parenthesisCodes);
             }
         }
 
@@ -382,10 +350,6 @@ class HadithParser
     /**
      * Check if parenthesis content is explanatory text (not source codes).
      * Examples: (يعني الوحي), (أي الملائكة), etc.
-     * 
-     * Logic: reject as explanatory ONLY if:
-     * 1. Contains known explanatory keywords, OR
-     * 2. NONE of the parts are recognized source codes/groups
      */
     private function isExplanatoryParenthesis(string $content): bool
     {
@@ -406,40 +370,14 @@ class HadithParser
         }
 
         // Check if ANY part is recognized as a source code or group
-        // If at least one part is recognized → NOT explanatory (it's source codes)
-        $parts = preg_split('/\s+/u', $content);
-        $hasAnyKnownCode = false;
-
-        foreach ($parts as $part) {
-            $part = trim($part);
-            if (empty($part))
-                continue;
-
-            // Check if this part is a known source code or group
-            if (isset($this->sourceMap[$part]) || isset($this->groupExpansion[$part])) {
-                $hasAnyKnownCode = true;
-                break;
-            }
-
-            // For short parts (≤3 chars), check individual characters
-            if (mb_strlen($part, 'UTF-8') <= 3) {
-                preg_match_all('/./u', $part, $chars);
-                foreach ($chars[0] as $char) {
-                    if (isset($this->sourceMap[$char]) || isset($this->groupExpansion[$char])) {
-                        $hasAnyKnownCode = true;
-                        break 2;
-                    }
-                }
-            }
-        }
-
-        // If no known codes found at all → it's explanatory text
-        return !$hasAnyKnownCode;
+        // By running the decoding function and checking if it found anything
+        $codes = $this->decodeParenthesisContent($content);
+        return empty($codes);
     }
 
 
     /**
-     * Decode source codes to source names.
+     * Decode sources to original names
      */
     private function decodeSources(array $codes): array
     {
@@ -455,11 +393,12 @@ class HadithParser
     /**
      * Decode content inside parentheses into source codes.
      * Shared helper used by both extractSourceCodes and extractAdditions.
+     * Uses Greedy Matching to find grouped words like "ابن سعد" before splitting.
      */
     private function decodeParenthesisContent(string $content): array
     {
         $codes = [];
-        $content = trim($content);
+        $content = $this->normalizeSourceCode(trim($content));
 
         // Check for group codes first (entire content)
         if (isset($this->groupExpansion[$content])) {
@@ -467,17 +406,34 @@ class HadithParser
         }
 
         // Split by spaces
-        $parts = preg_split('/\s+/u', $content);
-        foreach ($parts as $part) {
-            $part = $this->normalizeSourceCode(trim($part));
-            if (empty($part))
-                continue;
+        $parts = preg_split('/\s+/u', $content, -1, PREG_SPLIT_NO_EMPTY);
+        $count = count($parts);
 
-            if (isset($this->groupExpansion[$part])) {
-                $codes = array_merge($codes, $this->groupExpansion[$part]);
-            } elseif (isset($this->sourceMap[$part])) {
-                $codes[] = $part;
-            } else {
+        for ($i = 0; $i < $count; ) {
+            $matched = false;
+
+            // Try to match longest sequence of words starting from $i
+            for ($len = $count - $i; $len > 0; $len--) {
+                $phrase = implode(' ', array_slice($parts, $i, $len));
+
+                if (isset($this->groupExpansion[$phrase])) {
+                    $codes = array_merge($codes, $this->groupExpansion[$phrase]);
+                    $i += $len;
+                    $matched = true;
+                    break;
+                } elseif (isset($this->sourceMap[$phrase])) {
+                    $codes[] = $phrase;
+                    $i += $len;
+                    $matched = true;
+                    break;
+                }
+            }
+
+            if (!$matched) {
+                // No multi-word or single-word match found for parts[$i]
+                $part = $parts[$i];
+
+                // Fallback: split short unknown parts into letters
                 if (mb_strlen($part, 'UTF-8') <= 3) {
                     preg_match_all('/./u', $part, $chars);
                     foreach ($chars[0] as $char) {
@@ -488,6 +444,8 @@ class HadithParser
                         }
                     }
                 }
+
+                $i++;
             }
         }
 
