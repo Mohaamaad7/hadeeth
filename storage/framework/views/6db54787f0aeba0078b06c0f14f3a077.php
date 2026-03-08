@@ -118,7 +118,7 @@
                                 </td>
                                 <td>
                                     <span class="badge badge-secondary">
-                                        <?php echo e($hadith->narrator?->name ?? 'غير محدد'); ?>
+                                        <?php echo e($hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد'); ?>
 
                                     </span>
                                 </td>

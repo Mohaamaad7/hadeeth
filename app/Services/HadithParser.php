@@ -324,8 +324,14 @@ class HadithParser
     {
         $codes = [];
 
-        // Match parentheses containing source codes (letters/symbols, not grade words)
-        if (preg_match_all('/\(([^\)]+)\)/u', $text, $matches)) {
+        // 1. إيجاد قسم البيانات الوصفية (بعد [رقم الصفحة]) لتجنب أقواس الآيات داخل المتن
+        $metadataSection = $text;
+        if (preg_match('/\[\d+\]/u', $text, $matches, PREG_OFFSET_CAPTURE)) {
+            $metadataSection = substr($text, $matches[0][1]);
+        }
+
+        // Match parentheses containing source codes in metadata section only
+        if (preg_match_all('/\(([^\)]+)\)/u', $metadataSection, $matches)) {
             foreach ($matches[1] as $match) {
                 $match = trim($match);
 
