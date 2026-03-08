@@ -23,7 +23,9 @@ class HadithController extends Controller
         // Text search — FULLTEXT (fast) with LIKE fallback for short queries
         if ($request->filled('q')) {
             $search = $request->q;
-            $searchClean = preg_replace('/[+\-><\(\)~*\"@]+/', ' ', $search);
+            // Strip Arabic diacritics (tashkeel) to match content_searchable column
+            $searchNoDiacritics = preg_replace('/[\x{064B}-\x{0652}\x{0640}]/u', '', $search);
+            $searchClean = preg_replace('/[+\-><\(\)~*\"@]+/', ' ', $searchNoDiacritics);
             $searchClean = trim($searchClean);
 
             if (mb_strlen($searchClean) >= 2) {
@@ -44,7 +46,10 @@ class HadithController extends Controller
                     ->orderByDesc('relevance');
             } else {
                 // Fallback to LIKE for very short queries
-                $query->where('content', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search, $searchNoDiacritics) {
+                    $q->where('content', 'like', "%{$search}%")
+                        ->orWhere('content_searchable', 'like', "%{$searchNoDiacritics}%");
+                });
             }
         }
 

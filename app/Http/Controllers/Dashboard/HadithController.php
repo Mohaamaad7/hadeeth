@@ -106,7 +106,9 @@ class HadithController extends Controller
 
         // Search functionality — FULLTEXT with LIKE fallback
         if ($search = $request->get('search')) {
-            $searchClean = preg_replace('/[+\-><\(\)~*\"@]+/', ' ', $search);
+            // Strip Arabic diacritics (tashkeel) to match content_searchable column
+            $searchNoDiacritics = preg_replace('/[\x{064B}-\x{0652}\x{0640}]/u', '', $search);
+            $searchClean = preg_replace('/[+\-><\(\)~*\"@]+/', ' ', $searchNoDiacritics);
             $searchClean = trim($searchClean);
 
             if (mb_strlen($searchClean) >= 2 && !is_numeric($search)) {
@@ -121,8 +123,9 @@ class HadithController extends Controller
                     )->orWhere('number_in_book', 'LIKE', "%{$search}%");
                 });
             } else {
-                $query->where(function ($q) use ($search) {
+                $query->where(function ($q) use ($search, $searchNoDiacritics) {
                     $q->where('content', 'LIKE', "%{$search}%")
+                        ->orWhere('content_searchable', 'LIKE', "%{$searchNoDiacritics}%")
                         ->orWhere('number_in_book', 'LIKE', "%{$search}%");
                 });
             }
