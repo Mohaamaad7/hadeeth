@@ -533,7 +533,7 @@
             if (chapter) {
                 formattedText += `📑 الباب: ${chapter}\n`;
             }
-            formattedText += `🔢 رقم الحديث: ${hadithNumber}\n`;
+            formattedText += `🔢 رقم الحديث في صحيح الجامع: ${hadithNumber}\n`;
             if (sources) {
                 formattedText += `📑 التخريج: ${sources}\n`;
             }
@@ -586,7 +586,7 @@
         if (chapterShare) {
             shareTextRaw += `الباب: ${chapterShare}\n`;
         }
-        shareTextRaw += `رقم الحديث: ${hadithNumber}\n`;
+        shareTextRaw += `رقم الحديث في صحيح الجامع: ${hadithNumber}\n`;
         if (sources) {
             shareTextRaw += `التخريج: ${sources}\n`;
         }
