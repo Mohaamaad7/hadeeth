@@ -34,7 +34,7 @@
         <h3 class="card-title">بحث وفلترة</h3>
     </div>
     <div class="card-body">
-        <form method="GET" action="{{ route('dashboard.hadiths.index') }}">
+        <form method="GET" action="{{ route('dashboard.hadiths.index') }}" id="filterForm">
             <div class="row">
                 <div class="col-md-3">
                     <div class="form-group">
@@ -134,10 +134,10 @@
                                 <td>
                                     <span
                                         class="badge badge-{{ 
-                                                                                                                                    $hadith->grade === 'صحيح' ? 'success' :
+                                                                                                                                                $hadith->grade === 'صحيح' ? 'success' :
                     ($hadith->grade === 'حسن' ? 'info' :
                         ($hadith->grade === 'ضعيف' ? 'warning' : 'danger')) 
-                                                                                                                                }}">
+                                                                                                                                            }}">
                                         {{ $hadith->grade }}
                                     </span>
                                 </td>

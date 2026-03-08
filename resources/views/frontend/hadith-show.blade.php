@@ -515,7 +515,8 @@
             const hadithContent = `{{ $hadith->content }}`;
             const narrator = `{{ $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد' }}`;
             const grade = `{{ $hadith->grade }}`;
-            const book = `{{ $hadith->book?->name ?? '' }}`;
+            const mainBook = `{{ $hadith->book ? ($hadith->book->parent ? $hadith->book->parent->name : $hadith->book->name) : '' }}`;
+            const chapter = `{{ $hadith->book && $hadith->book->parent ? $hadith->book->name : '' }}`;
             const hadithNumber = `{{ $hadith->number_in_book }}`;
             const sources = `{{ $hadith->sources->pluck('name')->join('، ') }}`;
             const url = window.location.href;
@@ -526,8 +527,11 @@
             formattedText += `🔗 الرابط: ${url}\n\n`;
             formattedText += `📜 الراوي: ${narrator}\n`;
             formattedText += `✅ الدرجة: ${grade}\n`;
-            if (book) {
-                formattedText += `📖 الكتاب: ${book}\n`;
+            if (mainBook) {
+                formattedText += `📖 الكتاب: ${mainBook}\n`;
+            }
+            if (chapter) {
+                formattedText += `📑 الباب: ${chapter}\n`;
             }
             formattedText += `🔢 رقم الحديث: ${hadithNumber}\n`;
             if (sources) {
@@ -566,7 +570,8 @@
         const shareUrl = window.location.href;
         const narrator = `{{ $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد' }}`;
         const grade = `{{ $hadith->grade }}`;
-        const book = `{{ $hadith->book?->name ?? '' }}`;
+        const mainBookShare = `{{ $hadith->book ? ($hadith->book->parent ? $hadith->book->parent->name : $hadith->book->name) : '' }}`;
+        const chapterShare = `{{ $hadith->book && $hadith->book->parent ? $hadith->book->name : '' }}`;
         const hadithNumber = `{{ $hadith->number_in_book }}`;
         const sources = `{{ $hadith->sources->pluck('name')->join('، ') }}`;
 
@@ -575,8 +580,11 @@
         shareTextRaw += `الرابط: ${shareUrl}\n\n`;
         shareTextRaw += `الراوي: ${narrator}\n`;
         shareTextRaw += `الدرجة: ${grade}\n`;
-        if (book) {
-            shareTextRaw += `الكتاب: ${book}\n`;
+        if (mainBookShare) {
+            shareTextRaw += `الكتاب: ${mainBookShare}\n`;
+        }
+        if (chapterShare) {
+            shareTextRaw += `الباب: ${chapterShare}\n`;
         }
         shareTextRaw += `رقم الحديث: ${hadithNumber}\n`;
         if (sources) {
