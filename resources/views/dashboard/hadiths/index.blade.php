@@ -46,7 +46,7 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>الكتاب</label>
-                        <select name="book_id" class="form-control">
+                        <select name="book_id" id="bookFilter" class="form-control select2-filter" style="width: 100%;">
                             <option value="">جميع الكتب</option>
                             @foreach($books as $book)
                                 <option value="{{ $book->id }}" {{ request('book_id') == $book->id ? 'selected' : '' }}>
@@ -59,7 +59,7 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>الدرجة</label>
-                        <select name="grade" class="form-control">
+                        <select name="grade" id="gradeFilter" class="form-control select2-filter" style="width: 100%;">
                             <option value="">جميع الدرجات</option>
                             @foreach($grades as $grade)
                                 <option value="{{ $grade }}" {{ request('grade') == $grade ? 'selected' : '' }}>
@@ -124,10 +124,10 @@
                                 </td>
                                 <td>
                                     <span class="badge badge-{{ 
-                                                                        $hadith->grade === 'صحيح' ? 'success' :
+                                                                                    $hadith->grade === 'صحيح' ? 'success' :
                     ($hadith->grade === 'حسن' ? 'info' :
                         ($hadith->grade === 'ضعيف' ? 'warning' : 'danger')) 
-                                                                    }}">
+                                                                                }}">
                                         {{ $hadith->grade }}
                                     </span>
                                 </td>
@@ -186,10 +186,55 @@
         </div>
     @endif
 </div>
+@section('css')
+<link href="{{ asset('vendor/select2/css/select2.min.css') }}" rel="stylesheet" />
+<link href="{{ asset('vendor/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}" rel="stylesheet" />
+<style>
+    /* Select2 RTL fixes */
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+        right: auto !important;
+        left: 10px !important;
+    }
+</style>
 @stop
 
 @section('js')
+<script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
 <script>
+    $(document).ready(function () {
+        // ========== Arabic Text Normalization ==========
+        function normalizeArabic(str) {
+            if (!str) return '';
+            return str
+                .replace(/[أإآٱٲٳ]/g, 'ا')
+                .replace(/ة/g, 'ه')
+                .replace(/ى/g, 'ي')
+                .replace(/[\u064B-\u065F\u0670]/g, '')
+                .replace(/ؤ/g, 'و')
+                .replace(/ئ/g, 'ي')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function arabicMatcher(params, data) {
+            if ($.trim(params.term) === '') return data;
+            if (typeof data.text === 'undefined') return null;
+            const normalizedTerm = normalizeArabic(params.term);
+            const normalizedText = normalizeArabic(data.text);
+            if (normalizedText.indexOf(normalizedTerm) > -1) return data;
+            return null;
+        }
+
+        // تفعيل Select2 على فلاتر البحث
+        $('.select2-filter').select2({
+            theme: 'bootstrap4',
+            language: "ar",
+            dir: "rtl",
+            allowClear: true,
+            matcher: arabicMatcher
+        });
+    });
+
     function confirmDelete(id) {
         if (confirm('هل أنت متأكد من حذف هذا الحديث؟ لا يمكن التراجع عن هذا الإجراء.')) {
             document.getElementById('delete-form-' + id).submit();
