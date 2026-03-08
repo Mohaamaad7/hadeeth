@@ -33,11 +33,14 @@ class HadithController extends Controller
                 $words = preg_split('/\s+/', $searchClean, -1, PREG_SPLIT_NO_EMPTY);
                 $booleanQuery = implode(' ', array_map(fn($w) => '+' . $w, $words));
 
-                // Use FULLTEXT (MATCH AGAINST) on the indexed column
-                $query->whereRaw(
-                    'MATCH(content_searchable) AGAINST(? IN BOOLEAN MODE)',
-                    [$booleanQuery]
-                )
+                // Use FULLTEXT (MATCH AGAINST) on the indexed column, with LIKE fallback
+                $query->where(function ($q) use ($booleanQuery, $searchNoDiacritics) {
+                    $q->whereRaw(
+                        'MATCH(content_searchable) AGAINST(? IN BOOLEAN MODE)',
+                        [$booleanQuery]
+                    )
+                        ->orWhere('content_searchable', 'like', "%{$searchNoDiacritics}%");
+                })
                     ->addSelect(['*'])
                     ->selectRaw(
                         'MATCH(content_searchable) AGAINST(? IN BOOLEAN MODE) as relevance',

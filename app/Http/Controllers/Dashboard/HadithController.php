@@ -116,11 +116,13 @@ class HadithController extends Controller
                 $words = preg_split('/\s+/', $searchClean, -1, PREG_SPLIT_NO_EMPTY);
                 $booleanQuery = implode(' ', array_map(fn($w) => '+' . $w, $words));
 
-                $query->where(function ($q) use ($booleanQuery, $search) {
+                $query->where(function ($q) use ($booleanQuery, $search, $searchNoDiacritics) {
                     $q->whereRaw(
                         'MATCH(content_searchable) AGAINST(? IN BOOLEAN MODE)',
                         [$booleanQuery]
-                    )->orWhere('number_in_book', 'LIKE', "%{$search}%");
+                    )
+                        ->orWhere('content_searchable', 'LIKE', "%{$searchNoDiacritics}%")
+                        ->orWhere('number_in_book', 'LIKE', "%{$search}%");
                 });
             } else {
                 $query->where(function ($q) use ($search, $searchNoDiacritics) {
