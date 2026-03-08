@@ -124,10 +124,10 @@
                                 </td>
                                 <td>
                                     <span class="badge badge-{{ 
-                                                                                    $hadith->grade === 'صحيح' ? 'success' :
+                                                                                                $hadith->grade === 'صحيح' ? 'success' :
                     ($hadith->grade === 'حسن' ? 'info' :
                         ($hadith->grade === 'ضعيف' ? 'warning' : 'danger')) 
-                                                                                }}">
+                                                                                            }}">
                                         {{ $hadith->grade }}
                                     </span>
                                 </td>
@@ -186,6 +186,8 @@
         </div>
     @endif
 </div>
+@stop
+
 @section('css')
 <link href="{{ asset('vendor/select2/css/select2.min.css') }}" rel="stylesheet" />
 <link href="{{ asset('vendor/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}" rel="stylesheet" />
