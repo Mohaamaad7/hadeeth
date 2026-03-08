@@ -36,7 +36,7 @@
     <div class="card-body">
         <form method="GET" action="{{ route('dashboard.hadiths.index') }}">
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label>بحث في النص</label>
                         <input type="text" name="search" class="form-control" value="{{ request('search') }}"
@@ -45,10 +45,10 @@
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label>الكتاب</label>
+                        <label>الكتاب الرئيسي</label>
                         <select name="book_id" id="bookFilter" class="form-control select2-filter" style="width: 100%;">
                             <option value="">جميع الكتب</option>
-                            @foreach($books as $book)
+                            @foreach($mainBooks as $book)
                                 <option value="{{ $book->id }}" {{ request('book_id') == $book->id ? 'selected' : '' }}>
                                     {{ $book->name }}
                                 </option>
@@ -56,7 +56,16 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3" id="chapterFilterGroup" style="{{ request('book_id') ? '' : 'display: none;' }}">
+                    <div class="form-group">
+                        <label>الباب الفرعي</label>
+                        <select name="chapter_id" id="chapterFilter" class="form-control select2-filter"
+                            style="width: 100%;">
+                            <option value="">جميع الأبواب</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <div class="form-group">
                         <label>الدرجة</label>
                         <select name="grade" id="gradeFilter" class="form-control select2-filter" style="width: 100%;">
@@ -69,11 +78,11 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <label>&nbsp;</label>
                     <div>
                         <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-search"></i> بحث
+                            <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </div>
@@ -123,11 +132,12 @@
                                     <small>{{ $hadith->book?->name ?? 'غير محدد' }}</small>
                                 </td>
                                 <td>
-                                    <span class="badge badge-{{ 
-                                                                                                $hadith->grade === 'صحيح' ? 'success' :
+                                    <span
+                                        class="badge badge-{{ 
+                                                                                                                                    $hadith->grade === 'صحيح' ? 'success' :
                     ($hadith->grade === 'حسن' ? 'info' :
                         ($hadith->grade === 'ضعيف' ? 'warning' : 'danger')) 
-                                                                                            }}">
+                                                                                                                                }}">
                                         {{ $hadith->grade }}
                                     </span>
                                 </td>
@@ -189,8 +199,6 @@
 @stop
 
 @section('css')
-<link href="{{ asset('vendor/select2/css/select2.min.css') }}" rel="stylesheet" />
-<link href="{{ asset('vendor/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}" rel="stylesheet" />
 <style>
     /* Select2 RTL fixes */
     .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
@@ -201,7 +209,6 @@
 @stop
 
 @section('js')
-<script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
 <script>
     $(document).ready(function () {
         // ========== Arabic Text Normalization ==========
@@ -234,6 +241,50 @@
             dir: "rtl",
             allowClear: true,
             matcher: arabicMatcher
+        });
+
+        // ========== فلترة هرمية: الكتاب → الباب الفرعي ==========
+        const bookFilter = $('#bookFilter');
+        const chapterFilter = $('#chapterFilter');
+        const chapterGroup = $('#chapterFilterGroup');
+        const initialChapterId = '{{ request("chapter_id") }}';
+
+        function loadChapters(bookId, selectedChapterId) {
+            if (!bookId) {
+                chapterGroup.slideUp();
+                chapterFilter.empty().append('<option value="">جميع الأبواب</option>');
+                return;
+            }
+
+            $.ajax({
+                url: '/dashboard/books/' + bookId + '/chapters',
+                method: 'GET',
+                success: function (chapters) {
+                    chapterFilter.empty().append('<option value="">جميع الأبواب</option>');
+
+                    if (chapters.length > 0) {
+                        chapters.forEach(function (chapter) {
+                            const isSelected = selectedChapterId && selectedChapterId == chapter.id;
+                            chapterFilter.append(new Option(chapter.name, chapter.id, isSelected, isSelected));
+                        });
+                        // إعادة تهيئة Select2 بعد تحديث الخيارات
+                        chapterFilter.trigger('change.select2');
+                        chapterGroup.slideDown();
+                    } else {
+                        chapterGroup.slideUp();
+                    }
+                }
+            });
+        }
+
+        // التحميل الأولي (إذا كان هناك كتاب مختار مسبقاً عند تحميل الصفحة)
+        if (bookFilter.val()) {
+            loadChapters(bookFilter.val(), initialChapterId);
+        }
+
+        // عند تغيير الكتاب الرئيسي
+        bookFilter.on('change', function () {
+            loadChapters($(this).val());
         });
     });
 

@@ -133,19 +133,25 @@ class HadithController extends Controller
             $query->where('grade', $grade);
         }
 
-        // Filter by book
-        if ($bookId = $request->get('book_id')) {
-            $query->where('book_id', $bookId);
+        // Hierarchical book filtering
+        if ($chapterId = $request->get('chapter_id')) {
+            // Sub-chapter selected — filter directly
+            $query->where('book_id', $chapterId);
+        } elseif ($bookId = $request->get('book_id')) {
+            // Main book selected — include the book itself + all its children
+            $childIds = Book::where('parent_id', $bookId)->pluck('id')->toArray();
+            $allBookIds = array_merge([(int) $bookId], $childIds);
+            $query->whereIn('book_id', $allBookIds);
         }
 
         $hadiths = $query->orderBy('number_in_book', 'asc')
             ->paginate(20)
             ->withQueryString();
 
-        $books = Book::orderBy('sort_order')->get();
+        $mainBooks = Book::whereNull('parent_id')->orderBy('sort_order')->get();
         $grades = ['صحيح', 'حسن', 'ضعيف'];
 
-        return view('dashboard.hadiths.index', compact('hadiths', 'books', 'grades'));
+        return view('dashboard.hadiths.index', compact('hadiths', 'mainBooks', 'grades'));
     }
 
     /**

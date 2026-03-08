@@ -321,9 +321,6 @@
 @stop
 
 @section('css')
-{{-- Select2 --}}
-<link href="{{ asset('vendor/select2/css/select2.min.css') }}" rel="stylesheet" />
-<link href="{{ asset('vendor/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}" rel="stylesheet" />
 
 <style>
     /* Select2 RTL fixes */
@@ -335,7 +332,6 @@
 @stop
 
 @section('js')
-<script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
 {{-- Summernote is now loaded via AdminLTE plugins --}}
 <script>
     // بيانات الرواة والصحابة

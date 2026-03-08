@@ -168,8 +168,6 @@
 @stop
 
 @section('css')
-<link href="{{ asset('vendor/select2/css/select2.min.css') }}" rel="stylesheet" />
-<link href="{{ asset('vendor/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}" rel="stylesheet" />
 <style>
     /* ===== Narrator column in bulk preview ===== */
     .narrator-fix {
@@ -289,7 +287,6 @@
 @stop
 
 @section('js')
-<script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
 <script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
 <script>
     $(function () {
