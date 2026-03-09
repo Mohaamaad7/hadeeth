@@ -72,8 +72,8 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label>رقم الحديث في الكتاب <span class="text-danger">*</span></label>
-                        <input type="number" name="number_in_book" class="form-control"
-                            value="{{ old('number_in_book', $hadith->number_in_book) }}" required min="1">
+                        <input type="text" name="number_in_book" class="form-control"
+                            value="{{ old('number_in_book', $hadith->number_in_book) }}" required placeholder="مثال: 3222 أو 3222-1">
                     </div>
                 </div>
                 <div class="col-md-6">

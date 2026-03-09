@@ -170,12 +170,12 @@ class HadithParser
     }
 
     /**
-     * Extract hadith number from square brackets [123].
+     * Extract hadith number from square brackets [123] or [123-1] or [123/2].
      */
-    private function extractNumber(string $text): ?int
+    private function extractNumber(string $text): ?string
     {
-        if (preg_match('/\[(\d+)\]/u', $text, $matches)) {
-            return (int) $matches[1];
+        if (preg_match('/\[(\d+(?:[\/\-]\d+)?)\]/u', $text, $matches)) {
+            return $matches[1];
         }
         return null;
     }
