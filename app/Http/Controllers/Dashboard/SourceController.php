@@ -13,6 +13,35 @@ use Illuminate\View\View;
 class SourceController extends Controller
 {
     /**
+     * AJAX: بحث عن المصادر.
+     */
+    public function search(Request $request)
+    {
+        $q = trim($request->get('q', ''));
+        if (mb_strlen($q) < 1) {
+            return response()->json([]);
+        }
+
+        $sources = Source::where('name', 'LIKE', "%{$q}%")
+            ->orWhere('code', 'LIKE', "%{$q}%")
+            ->orWhere('type', 'LIKE', "%{$q}%")
+            ->withCount('hadiths')
+            ->limit(20)
+            ->get()
+            ->map(function ($source) {
+                return [
+                    'id' => $source->id,
+                    'name' => $source->name,
+                    'code' => $source->code,
+                    'type' => $source->type,
+                    'hadiths_count' => $source->hadiths_count,
+                ];
+            });
+
+        return response()->json($sources);
+    }
+
+    /**
      * Display a listing of sources.
      */
     public function index(Request $request): View

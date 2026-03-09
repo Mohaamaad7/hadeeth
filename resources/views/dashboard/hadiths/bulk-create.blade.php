@@ -169,16 +169,19 @@
 
 @section('css')
 <style>
-    /* ===== Narrator column in bulk preview ===== */
-    .narrator-fix {
+    /* ===== Select2 columns in bulk preview ===== */
+    .narrator-fix,
+    .source-fix {
         min-width: 170px;
     }
 
-    .narrator-fix .select2-container {
+    .narrator-fix .select2-container,
+    .source-fix .select2-container {
         width: 100% !important;
     }
 
-    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple {
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple,
+    .source-fix .select2-container--bootstrap4 .select2-selection--multiple {
         min-height: 38px;
         border: 1px solid #dee2e6;
         border-radius: 8px;
@@ -186,7 +189,7 @@
         padding: 4px 6px;
     }
 
-    /* Pill chips — vibrant gradient style */
+    /* Pill chips — vibrant gradient style (narrators) */
     .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice {
         display: inline-flex;
         align-items: center;
@@ -216,8 +219,34 @@
         color: #1a4d3a !important;
     }
 
+    /* Pill chips — green/teal gradient style (sources) */
+    .source-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(135deg, #11998e, #38ef7d);
+        border: none;
+        border-radius: 5px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 4px 10px;
+        margin: 2px 3px 2px 0;
+        line-height: 1.4;
+        gap: 0;
+    }
+
+    .source-fix .select2-selection__choice:nth-child(2) {
+        background: linear-gradient(135deg, #fc5c7d, #6a82fb) !important;
+    }
+
+    .source-fix .select2-selection__choice:nth-child(3) {
+        background: linear-gradient(135deg, #f7971e, #ffd200) !important;
+        color: #5a3e00 !important;
+    }
+
     /* × remove button — hide Bootstrap4 theme gray × and use our own clean style */
-    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove {
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove,
+    .source-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove {
         color: rgba(255, 255, 255, 0.9) !important;
         font-size: 13px !important;
         font-weight: bold;
@@ -235,22 +264,25 @@
         display: inline;
         order: 2;
         box-shadow: none !important;
-        /* أخفي أي pseudo-element من الثيم */
         text-indent: 0;
     }
 
     /* أخفي الـ × الرمادي من Bootstrap4 theme */
     .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove::before,
-    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove::after {
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove::after,
+    .source-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove::before,
+    .source-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove::after {
         display: none !important;
     }
 
-    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove:hover {
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove:hover,
+    .source-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove:hover {
         color: #fff !important;
         background: transparent !important;
     }
 
-    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__rendered {
+    .narrator-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__rendered,
+    .source-fix .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__rendered {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
@@ -258,14 +290,16 @@
         gap: 2px;
     }
 
-    .narrator-fix .select2-container--bootstrap4 .select2-search--inline .select2-search__field {
+    .narrator-fix .select2-container--bootstrap4 .select2-search--inline .select2-search__field,
+    .source-fix .select2-container--bootstrap4 .select2-search--inline .select2-search__field {
         font-size: 12px;
         color: #495057;
         margin: 2px 0;
         min-width: 80px;
     }
 
-    .narrator-fix .select2-container--bootstrap4:not(.select2-container--open) .select2-search--inline {
+    .narrator-fix .select2-container--bootstrap4:not(.select2-container--open) .select2-search--inline,
+    .source-fix .select2-container--bootstrap4:not(.select2-container--open) .select2-search--inline {
         width: 0;
         overflow: hidden;
     }
@@ -500,7 +534,6 @@
             let html = '';
             hadiths.forEach(function (item, index) {
                 const p = item.parsed;
-                const sourcesStr = (p.sources || []).join('، ');
                 const additionsCount = (p.additions || []).length;
 
                 // عمود الراوي (Select2 المتعدد)
@@ -539,6 +572,22 @@
 
                 narratorCell += `</div>`;
 
+                // عمود المصادر (Select2 المتعدد — مثل الرواة)
+                let sourceCell = `
+                    <div class="source-fix" data-index="${index}">
+                        <select class="source-select" data-index="${index}" style="width:100%;" multiple="multiple">
+                `;
+
+                if (p.sources_data && p.sources_data.length > 0) {
+                    p.sources_data.forEach(sd => {
+                        if (sd.found && sd.id) {
+                            sourceCell += `<option value="${sd.id}" selected>${sd.name} (${sd.code})</option>`;
+                        }
+                    });
+                }
+
+                sourceCell += `</select></div>`;
+
                 html += `
                 <tr>
                     <td class="text-center font-weight-bold">${index + 1}</td>
@@ -552,7 +601,7 @@
                         <span class="badge badge-${gradeColor(p.grade)}">${p.grade || '—'}</span>
                     </td>
                     <td>${narratorCell}</td>
-                    <td><small>${sourcesStr || '—'}</small></td>
+                    <td>${sourceCell}</td>
                     <td class="text-center">
                         ${additionsCount > 0 ? '<span class="badge badge-warning">' + additionsCount + '</span>' : '—'}
                     </td>
@@ -566,8 +615,9 @@
             $('#previewBody').html(html);
             window._parsedHadiths = hadiths;
 
-            // تفعيل Select2 AJAX على خلايا الراوي المفقودين
+            // تفعيل Select2 AJAX على خلايا الراوي والمصادر
             initNarratorSelects();
+            initSourceSelects();
         }
 
         // ========== Initialize inline narrator Select2 ==========
@@ -619,6 +669,37 @@
             });
         }
 
+        // ========== Initialize inline source Select2 (AJAX) ==========
+        function initSourceSelects() {
+            $('.source-select').each(function () {
+                $(this).select2({
+                    theme: 'bootstrap4',
+                    language: 'ar',
+                    dir: 'rtl',
+                    placeholder: 'ابحث عن المصادر...',
+                    allowClear: true,
+                    minimumInputLength: 1,
+                    width: '100%',
+                    ajax: {
+                        url: '{{ route("dashboard.sources.search") }}',
+                        dataType: 'json',
+                        delay: 300,
+                        data: function (params) {
+                            return { q: params.term };
+                        },
+                        processResults: function (data) {
+                            let results = data.map(function (item) {
+                                let label = item.name;
+                                if (item.code) label += ' (' + item.code + ')';
+                                return { id: item.id, text: label };
+                            });
+                            return { results: results };
+                        }
+                    }
+                });
+            });
+        }
+
         // ========== Submit form ==========
         $('#bulkForm').on('submit', function (e) {
             const container = $('#hiddenInputs');
@@ -651,7 +732,13 @@
                     });
                 }
 
-                container.append(`<input type="hidden" name="${prefix}[sources]" value="${escapeHtml(JSON.stringify(p.sources || []))}">`);
+                // إرسال IDs المصادر المحددة من Select2 المتعدد
+                const selectedSourceIds = $(`.source-select[data-index="${idx}"]`).val();
+                if (selectedSourceIds && selectedSourceIds.length > 0) {
+                    selectedSourceIds.forEach(sId => {
+                        container.append(`<input type="hidden" name="${prefix}[source_ids][]" value="${sId}">`);
+                    });
+                }
                 container.append(`<input type="hidden" name="${prefix}[additions]" value="${escapeHtml(JSON.stringify(p.additions || []))}">`);
                 checkedCount++;
             });

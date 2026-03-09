@@ -538,21 +538,30 @@ class HadithController extends Controller
             }
             $results[$index]['parsed']['narrators_data'] = $narratorsData;
 
-            if (empty($parsed['sources']) && empty($parsed['source_codes'])) {
-                $hadithErrors[] = 'لم يتم العثور على أي مصدر (خ م د ت ...)';
-            }
-            if (empty($parsed['clean_text'])) {
-                $hadithErrors[] = 'لم يتم استخراج نص الحديث';
-            }
-
-            // Check for unknown source codes
+            // ربط المصادر بـ IDs من قاعدة البيانات (مثل الرواة)
+            $sourcesData = [];
             if (!empty($parsed['source_codes'])) {
                 foreach ($parsed['source_codes'] as $code) {
                     $source = Source::where('code', $code)->first();
-                    if (!$source) {
-                        $hadithErrors[] = "رمز مصدر غير معروف: «{$code}» — أضفه من لوحة التحكم أولاً";
+                    if ($source) {
+                        $sourcesData[] = [
+                            'id' => $source->id,
+                            'name' => $source->name,
+                            'code' => $source->code,
+                            'found' => true,
+                        ];
+                    } else {
+                        $hadithWarnings[] = "رمز مصدر غير معروف: «{$code}» — يمكنك تصحيحه أدناه";
                     }
                 }
+            }
+            if (empty($sourcesData) && empty($parsed['source_codes'])) {
+                $hadithWarnings[] = 'لم يتم العثور على أي مصدر — يمكنك إضافتها يدوياً';
+            }
+            $results[$index]['parsed']['sources_data'] = $sourcesData;
+
+            if (empty($parsed['clean_text'])) {
+                $hadithErrors[] = 'لم يتم استخراج نص الحديث';
             }
 
             if (!empty($hadithErrors)) {
@@ -606,7 +615,8 @@ class HadithController extends Controller
             'hadiths.*.narrators_data' => 'nullable|string', // JSON encoded array
             'hadiths.*.narrator_ids' => 'nullable|array',
             'hadiths.*.narrator_ids.*' => 'nullable|exists:narrators,id',
-            'hadiths.*.sources' => 'nullable|string', // JSON encoded
+            'hadiths.*.source_ids' => 'nullable|array',
+            'hadiths.*.source_ids.*' => 'nullable|exists:sources,id',
             'hadiths.*.additions' => 'nullable|string', // JSON encoded
         ]);
 
@@ -638,7 +648,6 @@ class HadithController extends Controller
 
         $bookId = $request->book_id;
         $savedCount = 0;
-        $allSources = Source::all(); // تحميل مسبق — مطابقة آمنة في الذاكرة
 
         foreach ($request->hadiths as $hadithData) {
 
@@ -687,25 +696,11 @@ class HadithController extends Controller
                 $hadith->narrators()->attach(array_unique($narratorIdsToAttach));
             }
 
-            // Attach sources — مطابقة آمنة بدون LIKE خام
-            if (!empty($hadithData['sources'])) {
-                $sourceNames = json_decode($hadithData['sources'], true);
-                if (is_array($sourceNames)) {
-                    $sourceIds = [];
-                    foreach ($sourceNames as $sourceName) {
-                        // 1️⃣ مطابقة تامة أولاً
-                        $source = $allSources->firstWhere('name', $sourceName);
-                        // 2️⃣ Fallback — بحث جزئي آمن في الذاكرة
-                        if (!$source) {
-                            $source = $allSources->first(fn(Source $s) => str_contains($s->name, $sourceName));
-                        }
-                        if ($source && !in_array($source->id, $sourceIds)) {
-                            $sourceIds[] = $source->id;
-                        }
-                    }
-                    if (!empty($sourceIds)) {
-                        $hadith->sources()->attach($sourceIds);
-                    }
+            // Attach sources — IDs مباشرة من Select2
+            if (!empty($hadithData['source_ids'])) {
+                $sourceIds = array_unique(array_filter(array_map('intval', $hadithData['source_ids'])));
+                if (!empty($sourceIds)) {
+                    $hadith->sources()->attach($sourceIds);
                 }
             }
 

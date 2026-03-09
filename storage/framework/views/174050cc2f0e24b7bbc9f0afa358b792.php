@@ -169,7 +169,7 @@
             <?php endif; ?>
     </div>
     <div class="card-footer">
-        <?php echo e($hadiths->appends(request()->query())->links()); ?>
+        <?php echo e($hadiths->appends(request()->query())->links('pagination::bootstrap-5')); ?>
 
     </div>
 </div>

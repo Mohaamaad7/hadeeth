@@ -130,18 +130,20 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>الصحابي</label>
-                                <select name="narrator_id" id="narratorId" class="form-control" style="width: 100%;">
-                                    <option value="">-- ابحث عن الصحابي --</option>
-                                    <?php if(old('narrator_id')): ?>
-                                        <?php $oldNarrator = \App\Models\Narrator::find(old('narrator_id')); ?>
-                                        <?php if($oldNarrator): ?>
-                                            <option value="<?php echo e($oldNarrator->id); ?>" selected><?php echo e($oldNarrator->name); ?></option>
-                                        <?php endif; ?>
+                                <label>الصحابي (أو الرواة)</label>
+                                <select name="narrator_ids[]" id="narratorId" class="form-control" style="width: 100%;"
+                                    multiple="multiple">
+                                    <?php if(old('narrator_ids')): ?>
+                                        <?php $__currentLoopData = old('narrator_ids'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $nId): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php $oldNarrator = \App\Models\Narrator::find($nId); ?>
+                                            <?php if($oldNarrator): ?>
+                                                <option value="<?php echo e($oldNarrator->id); ?>" selected><?php echo e($oldNarrator->name); ?></option>
+                                            <?php endif; ?>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     <?php endif; ?>
                                 </select>
                                 <small class="form-text text-muted">
-                                    ابدأ بكتابة الاسم للبحث — يدعم أسماء الشهرة والأخطاء الإملائية
+                                    ابدأ بكتابة الاسم للبحث — يمكن ادخال اكثر من راوي للحديث الواحد
                                 </small>
                             </div>
                         </div>
@@ -238,9 +240,6 @@
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('css'); ?>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap4-theme@1.0.0/dist/select2-bootstrap4.min.css"
-    rel="stylesheet" />
 <style>
     .custom-control-label {
         cursor: pointer;
@@ -260,7 +259,6 @@
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('js'); ?>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function () {
         // ========== Arabic Text Normalization ==========
@@ -461,23 +459,40 @@
                             $('#grade').val(data.grade);
                         }
 
-                        // بحث عن الراوي عبر AJAX بدلاً من البحث المحلي
-                        if (data.narrator) {
-                            $.ajax({
-                                url: '<?php echo e(route("dashboard.narrators.search")); ?>',
-                                data: { q: data.narrator },
-                                success: function (narrators) {
+                        // بحث عن الرواة عبر AJAX بدلاً من البحث المحلي
+                        if (data.narrators && data.narrators.length > 0) {
+                            $('#narratorId').val(null).trigger('change'); // مسح الاختيارات السابقة
+                            let notFound = [];
+
+                            const promises = data.narrators.map(narratorName => {
+                                return $.ajax({
+                                    url: '<?php echo e(route("dashboard.narrators.search")); ?>',
+                                    data: { q: narratorName }
+                                }).then(narrators => {
                                     if (narrators.length > 0) {
                                         const best = narrators[0];
-                                        const option = new Option(best.name, best.id, true, true);
-                                        $('#narratorId').append(option).trigger('change');
+                                        // تحقق إذا الخيار غير موجود مسبقاً لمنع التكرار
+                                        if (!$('#narratorId').find("option[value='" + best.id + "']").length) {
+                                            const option = new Option(best.name, best.id, true, true);
+                                            $('#narratorId').append(option);
+                                        } else {
+                                            // الخيار موجود، نجعله selected فقط
+                                            $('#narratorId').find("option[value='" + best.id + "']").prop('selected', true);
+                                        }
 
                                         if (best.match_type === 'alternative') {
-                                            alert('⚠️ تم ربط "' + data.narrator + '" بـ "' + best.name + '" (اسم بديل)');
+                                            alert('⚠️ تم ربط "' + narratorName + '" بـ "' + best.name + '" (اسم بديل)');
                                         }
                                     } else {
-                                        alert('تنبيه: لم يتم العثور على الراوي "' + data.narrator + '". يمكنك البحث عنه أو إضافته من حقل الصحابي.');
+                                        notFound.push(narratorName);
                                     }
+                                });
+                            });
+
+                            Promise.all(promises).then(() => {
+                                $('#narratorId').trigger('change');
+                                if (notFound.length > 0) {
+                                    alert('تنبيه: لم يتم العثور على الرواة: ' + notFound.join('، ') + '. يمكنك البحث عنهم أو إضافتهم من حقل الصحابي.');
                                 }
                             });
                         }

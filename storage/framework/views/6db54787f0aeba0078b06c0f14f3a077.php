@@ -33,9 +33,9 @@
         <h3 class="card-title">بحث وفلترة</h3>
     </div>
     <div class="card-body">
-        <form method="GET" action="<?php echo e(route('dashboard.hadiths.index')); ?>">
+        <form method="GET" action="<?php echo e(route('dashboard.hadiths.index')); ?>" id="filterForm">
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label>بحث في النص</label>
                         <input type="text" name="search" class="form-control" value="<?php echo e(request('search')); ?>"
@@ -44,10 +44,10 @@
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label>الكتاب</label>
-                        <select name="book_id" class="form-control">
+                        <label>الكتاب الرئيسي</label>
+                        <select name="book_id" id="bookFilter" class="form-control select2-filter" style="width: 100%;">
                             <option value="">جميع الكتب</option>
-                            <?php $__currentLoopData = $books; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $book): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php $__currentLoopData = $mainBooks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $book): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <option value="<?php echo e($book->id); ?>" <?php echo e(request('book_id') == $book->id ? 'selected' : ''); ?>>
                                     <?php echo e($book->name); ?>
 
@@ -56,10 +56,19 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3" id="chapterFilterGroup" style="<?php echo e(request('book_id') ? '' : 'display: none;'); ?>">
+                    <div class="form-group">
+                        <label>الباب الفرعي</label>
+                        <select name="chapter_id" id="chapterFilter" class="form-control select2-filter"
+                            style="width: 100%;">
+                            <option value="">جميع الأبواب</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <div class="form-group">
                         <label>الدرجة</label>
-                        <select name="grade" class="form-control">
+                        <select name="grade" id="gradeFilter" class="form-control select2-filter" style="width: 100%;">
                             <option value="">جميع الدرجات</option>
                             <?php $__currentLoopData = $grades; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $grade): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <option value="<?php echo e($grade); ?>" <?php echo e(request('grade') == $grade ? 'selected' : ''); ?>>
@@ -70,11 +79,11 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <label>&nbsp;</label>
                     <div>
                         <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-search"></i> بحث
+                            <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </div>
@@ -126,7 +135,8 @@
                                     <small><?php echo e($hadith->book?->name ?? 'غير محدد'); ?></small>
                                 </td>
                                 <td>
-                                    <span class="badge badge-<?php echo e($hadith->grade === 'صحيح' ? 'success' :
+                                    <span
+                                        class="badge badge-<?php echo e($hadith->grade === 'صحيح' ? 'success' :
                     ($hadith->grade === 'حسن' ? 'info' :
                         ($hadith->grade === 'ضعيف' ? 'warning' : 'danger'))); ?>">
                                         <?php echo e($hadith->grade); ?>
@@ -192,8 +202,96 @@
 </div>
 <?php $__env->stopSection(); ?>
 
+<?php $__env->startSection('css'); ?>
+<style>
+    /* Select2 RTL fixes */
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+        right: auto !important;
+        left: 10px !important;
+    }
+</style>
+<?php $__env->stopSection(); ?>
+
 <?php $__env->startSection('js'); ?>
 <script>
+    $(document).ready(function () {
+        // ========== Arabic Text Normalization ==========
+        function normalizeArabic(str) {
+            if (!str) return '';
+            return str
+                .replace(/[أإآٱٲٳ]/g, 'ا')
+                .replace(/ة/g, 'ه')
+                .replace(/ى/g, 'ي')
+                .replace(/[\u064B-\u065F\u0670]/g, '')
+                .replace(/ؤ/g, 'و')
+                .replace(/ئ/g, 'ي')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function arabicMatcher(params, data) {
+            if ($.trim(params.term) === '') return data;
+            if (typeof data.text === 'undefined') return null;
+            const normalizedTerm = normalizeArabic(params.term);
+            const normalizedText = normalizeArabic(data.text);
+            if (normalizedText.indexOf(normalizedTerm) > -1) return data;
+            return null;
+        }
+
+        // تفعيل Select2 على فلاتر البحث
+        $('.select2-filter').select2({
+            theme: 'bootstrap4',
+            language: "ar",
+            dir: "rtl",
+            allowClear: true,
+            matcher: arabicMatcher
+        });
+
+        // ========== فلترة هرمية: الكتاب → الباب الفرعي ==========
+        const bookFilter = $('#bookFilter');
+        const chapterFilter = $('#chapterFilter');
+        const chapterGroup = $('#chapterFilterGroup');
+        const initialChapterId = '<?php echo e(request("chapter_id")); ?>';
+
+        function loadChapters(bookId, selectedChapterId) {
+            if (!bookId) {
+                chapterGroup.slideUp();
+                chapterFilter.empty().append('<option value="">جميع الأبواب</option>');
+                return;
+            }
+
+            $.ajax({
+                url: '/dashboard/books/' + bookId + '/chapters',
+                method: 'GET',
+                success: function (chapters) {
+                    chapterFilter.empty().append('<option value="">جميع الأبواب</option>');
+
+                    if (chapters.length > 0) {
+                        chapters.forEach(function (chapter) {
+                            const isSelected = selectedChapterId && selectedChapterId == chapter.id;
+                            chapterFilter.append(new Option(chapter.name, chapter.id, isSelected, isSelected));
+                        });
+                        // إعادة تهيئة Select2 بعد تحديث الخيارات
+                        chapterFilter.trigger('change.select2');
+                        chapterGroup.slideDown();
+                    } else {
+                        chapterGroup.slideUp();
+                    }
+                }
+            });
+        }
+
+        // التحميل الأولي (إذا كان هناك كتاب مختار مسبقاً عند تحميل الصفحة)
+        if (bookFilter.val()) {
+            loadChapters(bookFilter.val(), initialChapterId);
+        }
+
+        // عند تغيير الكتاب الرئيسي
+        bookFilter.on('change', function () {
+            loadChapters($(this).val());
+        });
+    });
+
     function confirmDelete(id) {
         if (confirm('هل أنت متأكد من حذف هذا الحديث؟ لا يمكن التراجع عن هذا الإجراء.')) {
             document.getElementById('delete-form-' + id).submit();

@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
 
         // Sources CRUD
         Route::resource('sources', SourceController::class);
+        Route::get('sources-search', [SourceController::class, 'search'])->name('sources.search');
 
         // Hadiths CRUD
         Route::resource('hadiths', DashboardHadithController::class);

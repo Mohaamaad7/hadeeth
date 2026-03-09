@@ -169,7 +169,7 @@
             @endif
     </div>
     <div class="card-footer">
-        {{ $hadiths->appends(request()->query())->links() }}
+        {{ $hadiths->appends(request()->query())->links('pagination::bootstrap-5') }}
     </div>
 </div>
 @stop
