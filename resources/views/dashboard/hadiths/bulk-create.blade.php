@@ -165,6 +165,50 @@
         </div>
     </div>
 </div>
+
+{{-- Modal: إضافة مصدر سريع --}}
+<div class="modal fade" id="quickSourceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white"><i class="fas fa-plus-circle"></i> إضافة مصدر سريع</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>اسم المصدر <span class="text-danger">*</span></label>
+                    <input type="text" id="quickSourceName" class="form-control" placeholder="مثال: الأفراد للدارقطني">
+                </div>
+                <div class="form-group">
+                    <label>المؤلف</label>
+                    <input type="text" id="quickSourceAuthor" class="form-control" placeholder="مثال: ابن أبي الدنيا">
+                </div>
+                <div class="form-group">
+                    <label>الرمز</label>
+                    <input type="text" id="quickSourceCode" class="form-control" placeholder="اختياري" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label>نوع المصدر</label>
+                    <select id="quickSourceType" class="form-control">
+                        <option value="">-- اختياري --</option>
+                        <option value="كتب الصحيح">كتب الصحيح</option>
+                        <option value="كتب السنن">كتب السنن</option>
+                        <option value="كتب المسانيد">كتب المسانيد</option>
+                        <option value="كتب المعاجم">كتب المعاجم</option>
+                        <option value="كتب التاريخ">كتب التاريخ</option>
+                        <option value="كتب الأجزاء">كتب الأجزاء</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" id="saveQuickSource">
+                    <i class="fas fa-save"></i> حفظ وربط
+                </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 @section('css')
@@ -670,8 +714,13 @@
         }
 
         // ========== Initialize inline source Select2 (AJAX) ==========
+        let activeSourceSelectIndex = null;
+        let lastSourceSearchTerm = '';
+
         function initSourceSelects() {
             $('.source-select').each(function () {
+                const idx = $(this).data('index');
+
                 $(this).select2({
                     theme: 'bootstrap4',
                     language: 'ar',
@@ -685,16 +734,42 @@
                         dataType: 'json',
                         delay: 300,
                         data: function (params) {
+                            lastSourceSearchTerm = params.term;
                             return { q: params.term };
                         },
                         processResults: function (data) {
                             let results = data.map(function (item) {
                                 let label = item.name;
+                                if (item.author) label += ' — ' + item.author;
                                 if (item.code) label += ' (' + item.code + ')';
                                 return { id: item.id, text: label };
                             });
+                            results.push({ id: '__new_source__', text: '➕ إضافة مصدر جديد' });
                             return { results: results };
                         }
+                    }
+                });
+
+                // عند الاختيار
+                $(this).on('select2:select', function (e) {
+                    if (e.params.data.id === '__new_source__') {
+                        activeSourceSelectIndex = idx;
+                        $(this).find('option[value="__new_source__"]').remove();
+
+                        let searchTerm = lastSourceSearchTerm;
+                        let authorName = '';
+                        let sourceName = searchTerm;
+
+                        // الذكاء الاصطناعي: التقسيم التلقائي لنمط "المؤلف في الكتاب"
+                        const match = searchTerm.match(/^(.+?)\s+في\s+(.+)$/);
+                        if (match) {
+                            authorName = match[1].trim();
+                            sourceName = match[2].trim();
+                        }
+
+                        $('#quickSourceName').val(sourceName);
+                        $('#quickSourceAuthor').val(authorName);
+                        $('#quickSourceModal').modal('show');
                     }
                 });
             });
@@ -800,6 +875,56 @@
                             const option = new Option(narrator.name, narrator.id, true, true);
                             $(`.narrator-select[data-index="${activeSelectIndex}"]`).append(option).trigger('change');
                             activeSelectIndex = null;
+                        }
+                    }
+                },
+                error: function (xhr) {
+                    let msg = 'حدث خطأ';
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        msg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                    }
+                    alert(msg);
+                },
+                complete: function () {
+                    btn.prop('disabled', false).html('<i class="fas fa-save"></i> حفظ وربط');
+                }
+            });
+        });
+
+        // ========== Quick source modal ==========
+        $('#saveQuickSource').click(function () {
+            const name = $('#quickSourceName').val().trim();
+            if (!name) { alert('اسم المصدر مطلوب'); return; }
+
+            const btn = $(this);
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...');
+
+            $.ajax({
+                url: '{{ route("dashboard.sources.quick-store") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    name: name,
+                    author: $('#quickSourceAuthor').val().trim() || null,
+                    code: $('#quickSourceCode').val().trim() || null,
+                    type: $('#quickSourceType').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        const source = response.source;
+                        $('#quickSourceModal').modal('hide');
+                        $('#quickSourceName').val('');
+                        $('#quickSourceAuthor').val('');
+                        $('#quickSourceCode').val('');
+                        $('#quickSourceType').val('');
+
+                        // إضافة المصدر الجديد لل Select2
+                        if (activeSourceSelectIndex !== null) {
+                            let label = source.name;
+                            if (source.code) label += ' (' + source.code + ')';
+                            const option = new Option(label, source.id, true, true);
+                            $(`.source-select[data-index="${activeSourceSelectIndex}"]`).append(option).trigger('change');
+                            activeSourceSelectIndex = null;
                         }
                     }
                 },

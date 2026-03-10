@@ -32,6 +32,7 @@ class SourceController extends Controller
                 return [
                     'id' => $source->id,
                     'name' => $source->name,
+                    'author' => $source->author,
                     'code' => $source->code,
                     'type' => $source->type,
                     'hadiths_count' => $source->hadiths_count,
@@ -39,6 +40,31 @@ class SourceController extends Controller
             });
 
         return response()->json($sources);
+    }
+
+    /**
+     * AJAX: إضافة مصدر سريع (من modal في صفحة إدخال الحديث).
+     */
+    public function quickStore(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:10|unique:sources,code',
+            'author' => 'nullable|string|max:255',
+            'type' => 'nullable|string|max:255',
+        ]);
+
+        $source = Source::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'source' => [
+                'id' => $source->id,
+                'name' => $source->name,
+                'author' => $source->author,
+                'code' => $source->code,
+            ],
+        ]);
     }
 
     /**
@@ -83,7 +109,8 @@ class SourceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:10|unique:sources,code',
+            'code' => 'nullable|string|max:10|unique:sources,code',
+            'author' => 'nullable|string|max:255',
             'type' => 'nullable|string|max:255',
         ]);
 
@@ -124,7 +151,8 @@ class SourceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:10|unique:sources,code,' . $source->id,
+            'code' => 'nullable|string|max:10|unique:sources,code,' . $source->id,
+            'author' => 'nullable|string|max:255',
             'type' => 'nullable|string|max:255',
         ]);
 

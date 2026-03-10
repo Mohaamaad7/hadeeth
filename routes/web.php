@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
         // Sources CRUD
         Route::resource('sources', SourceController::class);
         Route::get('sources-search', [SourceController::class, 'search'])->name('sources.search');
+        Route::post('sources-quick', [SourceController::class, 'quickStore'])->name('sources.quick-store');
 
         // Hadiths CRUD
         Route::resource('hadiths', DashboardHadithController::class);

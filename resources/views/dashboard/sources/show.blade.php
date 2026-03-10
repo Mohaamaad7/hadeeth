@@ -41,6 +41,9 @@
                 </div>
 
                 <h3 class="profile-username text-center mt-3">{{ $source->name }}</h3>
+                @if($source->author)
+                    <p class="text-muted text-center">{{ $source->author }}</p>
+                @endif
 
                 @if($source->type)
                     <p class="text-center">
@@ -54,9 +57,15 @@
                     <li class="list-group-item">
                         <b>الرمز</b>
                         <a class="float-right">
-                            <span class="badge badge-primary">{{ $source->code }}</span>
+                            <span class="badge badge-primary">{{ $source->code ?? '—' }}</span>
                         </a>
                     </li>
+                    @if($source->author)
+                        <li class="list-group-item">
+                            <b>المؤلف</b>
+                            <span class="float-right">{{ $source->author }}</span>
+                        </li>
+                    @endif
                     <li class="list-group-item">
                         <b>عدد الأحاديث</b>
                         <a class="float-right">
@@ -141,9 +150,9 @@
                                                 </td>
                                                 <td>
                                                     <span class="badge badge-{{ 
-                                                                    $hadith->grade === 'صحيح' ? 'success' :
+                                                                                        $hadith->grade === 'صحيح' ? 'success' :
                                 ($hadith->grade === 'حسن' ? 'info' : 'warning') 
-                                                                }}">
+                                                                                    }}">
                                                         {{ $hadith->grade }}
                                                     </span>
                                                 </td>

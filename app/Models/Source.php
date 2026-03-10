@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Source extends Model
 {
-    protected $fillable = ['name', 'code', 'type'];
+    protected $fillable = ['name', 'author', 'code', 'type'];
 
     public function hadiths(): BelongsToMany
     {

@@ -106,6 +106,9 @@
                             </td>
                             <td>
                                 <strong>{{ $source->name }}</strong>
+                                @if($source->author)
+                                    <div class="text-muted small">المؤلف: {{ $source->author }}</div>
+                                @endif
                             </td>
                             <td>
                                 @if($source->type)

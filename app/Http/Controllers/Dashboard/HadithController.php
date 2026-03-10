@@ -226,14 +226,20 @@ class HadithController extends Controller
                 $validated['narrator_ids'] = $narratorIds;
             }
 
-            // استخراج المصادر من الـ codes — مطابقة آمنة بدون LIKE خام
-            if (!empty($parsed['sources'])) {
+            // استخراج المصادر — بحث بالرمز أولاً ثم بالاسم
+            if (!empty($parsed['sources']) || !empty($parsed['source_codes'])) {
                 $allSources = Source::all();
                 $sourceIds = [];
-                foreach ($parsed['sources'] as $sourceName) {
-                    // 1️⃣ مطابقة تامة (الحالة الطبيعية — الـ Parser يُرجع الاسم الكامل)
-                    $source = $allSources->firstWhere('name', $sourceName);
-                    // 2️⃣ Fallback — بحث جزئي آمن في الذاكرة (بدون SQL)
+
+                // المصادر العادية (decoded names)
+                foreach (($parsed['sources'] ?? []) as $sourceName) {
+                    // 1️⃣ بحث بالرمز (code)
+                    $source = $allSources->first(fn(Source $s) => $s->code && $s->code === $sourceName);
+                    // 2️⃣ بحث بالاسم الكامل
+                    if (!$source) {
+                        $source = $allSources->firstWhere('name', $sourceName);
+                    }
+                    // 3️⃣ بحث جزئي في الاسم
                     if (!$source) {
                         $source = $allSources->first(fn(Source $s) => str_contains($s->name, $sourceName));
                     }
@@ -241,6 +247,29 @@ class HadithController extends Controller
                         $sourceIds[] = $source->id;
                     }
                 }
+
+                // المصادر الوصفية (DESC: prefix)
+                foreach (($parsed['source_codes'] ?? []) as $code) {
+                    if (!str_starts_with($code, 'DESC:'))
+                        continue;
+                    $descriptive = substr($code, 5);
+                    $source = $allSources->first(fn(Source $s) => str_contains($s->name, $descriptive));
+                    if (!$source && preg_match('/^(.+?)\s+في\s+(.+)$/u', $descriptive, $dParts)) {
+                        $author = trim($dParts[1]);
+                        $book = trim($dParts[2]);
+                        $source = $allSources->first(
+                            fn(Source $s) =>
+                            $s->author && str_contains($s->author, $author) && str_contains($s->name, $book)
+                        );
+                        if (!$source) {
+                            $source = $allSources->first(fn(Source $s) => str_contains($s->name, $book));
+                        }
+                    }
+                    if ($source && !in_array($source->id, $sourceIds)) {
+                        $sourceIds[] = $source->id;
+                    }
+                }
+
                 $validated['source_ids'] = $sourceIds;
             }
 
@@ -538,11 +567,43 @@ class HadithController extends Controller
             }
             $results[$index]['parsed']['narrators_data'] = $narratorsData;
 
-            // ربط المصادر بـ IDs من قاعدة البيانات (مثل الرواة)
+            // ربط المصادر بـ IDs من قاعدة البيانات — بحث بالرمز أولاً ثم بالاسم
             $sourcesData = [];
             if (!empty($parsed['source_codes'])) {
                 foreach ($parsed['source_codes'] as $code) {
-                    $source = Source::where('code', $code)->first();
+                    $source = null;
+
+                    // مصدر وصفي مثل "ابن أبي الدنيا في مكايد الشيطان"
+                    if (str_starts_with($code, 'DESC:')) {
+                        $descriptive = substr($code, 5); // Remove DESC: prefix
+                        // بحث بالاسم الكامل أو جزئي
+                        $source = Source::where('name', $descriptive)->first();
+                        if (!$source) {
+                            $source = Source::where('name', 'LIKE', "%{$descriptive}%")->first();
+                        }
+                        // بحث بتقسيم "المؤلف في الكتاب"
+                        if (!$source && preg_match('/^(.+?)\s+في\s+(.+)$/u', $descriptive, $dParts)) {
+                            $author = trim($dParts[1]);
+                            $book = trim($dParts[2]);
+                            $source = Source::where('author', 'LIKE', "%{$author}%")
+                                ->where('name', 'LIKE', "%{$book}%")
+                                ->first();
+                            // أو بحث بالكتاب فقط
+                            if (!$source) {
+                                $source = Source::where('name', 'LIKE', "%{$book}%")->first();
+                            }
+                        }
+                        $displayCode = $descriptive; // للعرض في التحذير
+                    } else {
+                        // 1️⃣ بحث بالرمز
+                        $source = Source::where('code', $code)->first();
+                        // 2️⃣ Fallback: بحث بالاسم
+                        if (!$source) {
+                            $source = Source::where('name', 'LIKE', "%{$code}%")->first();
+                        }
+                        $displayCode = $code;
+                    }
+
                     if ($source) {
                         $sourcesData[] = [
                             'id' => $source->id,
@@ -551,7 +612,7 @@ class HadithController extends Controller
                             'found' => true,
                         ];
                     } else {
-                        $hadithWarnings[] = "رمز مصدر غير معروف: «{$code}» — يمكنك تصحيحه أدناه";
+                        $hadithWarnings[] = "مصدر غير معروف: «{$displayCode}» — يمكنك تصحيحه أدناه";
                     }
                 }
             }

@@ -106,6 +106,9 @@
                             </td>
                             <td>
                                 <strong><?php echo e($source->name); ?></strong>
+                                <?php if($source->author): ?>
+                                    <div class="text-muted small">المؤلف: <?php echo e($source->author); ?></div>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php if($source->type): ?>

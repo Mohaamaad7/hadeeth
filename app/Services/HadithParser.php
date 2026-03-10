@@ -319,6 +319,7 @@ class HadithParser
     /**
      * Extract source codes from parentheses (حم د ت).
      * Intelligently skips explanatory parentheses like (يعني الوحي).
+     * Recognizes descriptive sources like (ابن أبي الدنيا في مكايد الشيطان).
      */
     private function extractSourceCodes(string $text): array
     {
@@ -340,6 +341,13 @@ class HadithParser
                     continue;
                 }
 
+                // Check if this is a descriptive source (contains "في" — e.g., "ابن أبي الدنيا في مكايد الشيطان")
+                if ($this->isDescriptiveSource($match)) {
+                    // Return the full text as a descriptive source (prefixed with DESC: for controller to handle)
+                    $codes[] = 'DESC:' . $match;
+                    continue;
+                }
+
                 // Skip explanatory parentheses (contain long words > 4 chars that aren't source codes)
                 if ($this->isExplanatoryParenthesis($match)) {
                     continue;
@@ -351,6 +359,20 @@ class HadithParser
         }
 
         return array_unique($codes);
+    }
+
+    /**
+     * Check if parenthesis content is a descriptive source reference.
+     * Pattern: "AUTHOR في BOOK" — e.g., "ابن أبي الدنيا في مكايد الشيطان"
+     *                                    "الدارقطني في الأفراد"
+     */
+    private function isDescriptiveSource(string $content): bool
+    {
+        // Must contain "في" as a separate word, and have content both before and after it
+        if (preg_match('/^(.{2,})\s+في\s+(.{2,})$/u', $content)) {
+            return true;
+        }
+        return false;
     }
 
     /**
