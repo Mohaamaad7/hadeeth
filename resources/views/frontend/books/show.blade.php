@@ -1,7 +1,9 @@
 @extends('layouts.frontend')
 
-@section('title'){{ $book->name }} - موسوعة الحديث الصحيح@endsection
+@section('title', $book->name . ' - موسوعة الحديث الصحيح')
 @section('meta_description', 'تصفح ' . $book->name . ' في موسوعة الحديث الصحيح')
+@section('og_title', $book->name . ' - موسوعة الحديث الصحيح')
+@section('og_description', 'تصفح أحاديث ' . $book->name . ' في موسوعة الحديث الصحيح')
 
 @section('content')
     <!-- Breadcrumb -->
