@@ -14,6 +14,7 @@ class SitemapController extends Controller
     public function index(): Response
     {
         $hadiths = Hadith::select('id', 'updated_at')
+            ->approved()
             ->orderBy('id')
             ->get();
 

@@ -1,22 +1,32 @@
 @extends('layouts.frontend')
 
 @php
-    // استخراج أول 60 حرف من الحديث للعنوان
-    $hadithSnippet = Str::limit(strip_tags($hadith->content), 60, '...');
-    $appName = config('app.name', 'موسوعة الحديث الصحيح');
-    $pageTitle = $appName . ' | ' . $hadithSnippet;
+    // === صيغة dorar.net ===
+    $narratorName = $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد';
+    $sourcesName = $hadith->sources->pluck('name')->join('، ') ?: 'صحيح الجامع';
+    $muhaddith = 'الألباني'; // ثابت — كل الأحاديث من تحقيق الألباني
 
-    // Meta Description أطول للوصف
-    $metaDescription = Str::limit(strip_tags($hadith->content), 155) . ' - حديث ' . $hadith->grade . ' من رواية ' . ($hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد') . ' في ' . ($hadith->book?->name ?? 'كتب الحديث');
+    // Title: الموسوعة - نص الحديث - رواية: X - محدث: Y - مصدر: Z
+    $hadithSnippet = Str::limit(strip_tags($hadith->content), 100, '...');
+    $pageTitle = 'موسوعة الحديث الصحيح - ' . $hadithSnippet
+        . ' - رواية: ' . $narratorName
+        . ' - محدث: ' . $muhaddith
+        . ' - مصدر: ' . $sourcesName;
 
-    $ogImage = asset('images/og-hadith.png');
+    // OG Description: نص الحديث - رواية: X - محدث: Y - مصدر: Z (بدون اسم الموقع)
+    $metaDescription = Str::limit(strip_tags($hadith->content), 150, '...')
+        . ' - رواية: ' . $narratorName
+        . ' - محدث: ' . $muhaddith
+        . ' - مصدر: ' . $sourcesName;
+
+    $ogImage = asset('og-image.png');
 @endphp
 
 @section('title', $pageTitle)
 
 @section('meta_description', $metaDescription)
 
-@section('meta_keywords', 'حديث رقم ' . $hadith->number_in_book . ', ' . ($hadith->narrators->pluck('name')->join('، ') ?? '') . ', ' . ($hadith->book?->name ?? '') . ', حديث ' . $hadith->grade . ', الأحاديث النبوية')
+@section('meta_keywords', 'حديث رقم ' . $hadith->number_in_book . ', ' . $narratorName . ', ' . ($hadith->book?->name ?? '') . ', حديث ' . $hadith->grade . ', الأحاديث النبوية, ' . $sourcesName)
 
 @section('og_type', 'article')
 @section('og_title', $pageTitle)
@@ -91,6 +101,9 @@
 @endpush
 
 @section('content')
+    {{-- H1 مخفي بصرياً لكن مهم للـ SEO --}}
+    <h1 class="sr-only">{{ $hadithSnippet }} - رواية {{ $narratorName }}</h1>
+
     <div class="container mx-auto px-4 py-8 max-w-5xl">
 
         <!-- Breadcrumb -->

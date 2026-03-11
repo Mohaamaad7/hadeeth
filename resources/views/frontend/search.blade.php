@@ -1,6 +1,7 @@
 @extends('layouts.frontend')
 
-@section('title', 'نتائج البحث - موسوعة الحديث الصحيح')
+@section('title', request('q') ? 'بحث: ' . request('q') . ' - موسوعة الحديث الصحيح' : 'البحث في الأحاديث - موسوعة الحديث الصحيح')
+@section('meta_description', request('q') ? 'نتائج البحث عن "' . request('q') . '" في موسوعة الحديث الصحيح' : 'ابحث في آلاف الأحاديث الصحيحة في موسوعة الحديث الصحيح')
 
 @section('content')
 <div class="container mx-auto px-4 py-8 max-w-5xl">

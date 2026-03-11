@@ -1,6 +1,9 @@
 @extends('layouts.frontend')
 
 @section('title', $narrator->name . ' - موسوعة الحديث الصحيح')
+@section('meta_description', 'أحاديث ' . $narrator->name . ' — ' . $narrator->hadiths_count . ' حديث في موسوعة الحديث الصحيح')
+@section('og_title', $narrator->name . ' - موسوعة الحديث الصحيح')
+@section('og_description', 'تصفح ' . $narrator->hadiths_count . ' حديث رواها ' . $narrator->name . ' في موسوعة الحديث الصحيح')
 
 @section('content')
     <div class="container mx-auto px-4 py-8 max-w-5xl">

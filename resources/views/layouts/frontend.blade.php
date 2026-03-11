@@ -30,7 +30,7 @@
     <meta property="og:title" content="@yield('og_title', 'موسوعة الحديث الصحيح')">
     <meta property="og:description"
         content="@yield('og_description', 'موسوعة شاملة للأحاديث النبوية الصحيحة مع التخريج والشرح')">
-    <meta property="og:image" content="@yield('og_image', asset('images/og-default.png'))">
+    <meta property="og:image" content="@yield('og_image', asset('og-image.png'))">
     <meta property="og:locale" content="ar_AR">
     <meta property="og:site_name" content="موسوعة الحديث الصحيح">
 
@@ -39,7 +39,7 @@
     <meta name="twitter:url" content="{{ url()->current() }}">
     <meta name="twitter:title" content="@yield('twitter_title', 'موسوعة الحديث الصحيح')">
     <meta name="twitter:description" content="@yield('twitter_description', 'موسوعة شاملة للأحاديث النبوية الصحيحة')">
-    <meta name="twitter:image" content="@yield('twitter_image', asset('images/og-default.png'))">
+    <meta name="twitter:image" content="@yield('twitter_image', asset('og-image.png'))">
 
     {{-- Favicon --}}
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
