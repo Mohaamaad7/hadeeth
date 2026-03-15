@@ -6,14 +6,14 @@
 @push('structured_data')
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
+  "@@context": "https://schema.org",
+  "@@type": "WebSite",
   "name": "موسوعة الحديث الصحيح",
   "url": "{{ config('app.url') }}/",
   "potentialAction": {
-    "@type": "SearchAction",
+    "@@type": "SearchAction",
     "target": {
-      "@type": "EntryPoint",
+      "@@type": "EntryPoint",
       "urlTemplate": "{{ config('app.url') }}/search?q={search_term_string}"
     },
     "query-input": "required name=search_term_string"
