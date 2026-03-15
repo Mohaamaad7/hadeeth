@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Str;
 use App\Traits\HasDiacriticStripper;
 
 
@@ -134,6 +136,23 @@ class Hadith extends Model
     public function isRejected(): bool
     {
         return $this->status === 'rejected';
+    }
+
+    /**
+     * Generate a URL-friendly slug for the hadith.
+     */
+    protected function slug(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $text = strip_tags($this->content);
+                // Remove diacritics
+                $text = preg_replace('/[\x{0610}-\x{061A}\x{064B}-\x{065F}\x{06D6}-\x{06DC}\x{06DF}-\x{06E8}\x{06EA}-\x{06ED}]/u', '', $text);
+                // Limit to 50 chars and replace spaces with dashes
+                $limited = Str::limit($text, 50, '');
+                return preg_replace('/\s+/u', '-', trim($limited));
+            }
+        );
     }
 
     /**

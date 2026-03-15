@@ -11,10 +11,30 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
     --font-arabic: 'Amiri', serif;
     --font-serif: 'Libre Baskerville', serif;
-    
-    --color-primary: #1a1a1a;
-    --color-accent: #c5a059;
-    --color-paper: #fdfbf7;
-    --color-charcoal: #2d2d2d;
-    --color-gold-dark: #9f7d3b;
+    --color-emerald-50: #ecfdf5;
+    --color-emerald-100: #d1fae5;
+    --color-emerald-200: #a7f3d0;
+    --color-emerald-300: #6ee7b7;
+    --color-emerald-400: #34d399;
+    --color-emerald-500: #10b981;
+    --color-emerald-600: #059669;
+    --color-emerald-700: #047857;
+    --color-emerald-800: #065f46;
+    --color-emerald-900: #064e3b;
+    --color-emerald-950: #022c22;
+
+    --color-gold-50: #FCFBF4;
+    --color-gold-100: #F9F1D8;
+    --color-gold-200: #F0E0AA;
+    --color-gold-300: #E8D49F;
+    --color-gold-400: #DEC075;
+    --color-gold-500: #D4AF37;
+    --color-gold-600: #B4942D;
+    --color-gold-700: #8C7322;
+    --color-gold-800: #5C4D1A;
+
+    --font-tajawal: 'Tajawal', sans-serif;
+    --font-scheherazade: 'Scheherazade New', serif;
+    --font-ibm: 'IBM Plex Sans Arabic', sans-serif;
+    --font-cairo: 'Cairo', sans-serif;
 }

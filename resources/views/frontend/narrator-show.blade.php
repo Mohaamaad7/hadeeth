@@ -88,7 +88,7 @@
 
                 <div class="space-y-4">
                     @foreach($narrator->hadiths->take(10) as $hadith)
-                        <a href="{{ route('hadith.show', $hadith->id) }}"
+                        <a href="{{ route('hadith.show', [$hadith->id, $hadith->slug]) }}"
                             class="block p-5 border border-gray-100 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all group">
                             <div class="flex items-center gap-2 mb-3">
                                 <span class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold">

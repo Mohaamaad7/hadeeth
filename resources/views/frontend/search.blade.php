@@ -107,7 +107,7 @@
                                 @endif
                             @endif
                         </div>
-                        <a href="{{ route('hadith.show', $hadith->id) }}" class="text-emerald-600 hover:text-emerald-700 font-bold text-sm transition-colors">
+                        <a href="{{ route('hadith.show', [$hadith->id, $hadith->slug]) }}" class="text-emerald-600 hover:text-emerald-700 font-bold text-sm transition-colors">
                             عرض التفاصيل <i class="fa-solid fa-arrow-left mr-1"></i>
                         </a>
                     </div>

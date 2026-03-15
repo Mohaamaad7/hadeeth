@@ -1,6 +1,26 @@
 @extends('layouts.frontend')
 
-@section('title', 'موسوعة الحديث الصحيح | الرئيسية')
+@section('title', 'موسوعة الحديث الصحيح | محرك بحث الأحاديث النبوية والتأكد من صحتها')
+@section('meta_description', 'ابحث الآن في أضخم موسوعة للحديث الصحيح. محرك بحث متقدم يتيح لك التأكد من صحة أي حديث شريف، مع التخريج والشرح وتراجم الرواة من مصادر موثوقة.')
+
+@push('structured_data')
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "موسوعة الحديث الصحيح",
+  "url": "{{ config('app.url') }}/",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "{{ config('app.url') }}/search?q={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+@endpush
 
 @section('content')
     <!-- Hero Section -->
@@ -170,7 +190,7 @@
             </h2>
             <div class="grid md:grid-cols-3 gap-6">
                 @foreach($latestHadiths as $hadith)
-                    <a href="{{ route('hadith.show', $hadith->id) }}"
+                    <a href="{{ route('hadith.show', [$hadith->id, $hadith->slug]) }}"
                         class="floating-card bg-white p-6 rounded-2xl border border-gray-100 shadow-sm group">
                         <div class="flex items-center gap-2 mb-4">
                             <span class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold">

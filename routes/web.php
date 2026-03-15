@@ -22,7 +22,7 @@ Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
 // Frontend Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/search', [FrontendHadithController::class, 'search'])->name('search');
-Route::get('/hadith/{id}', [FrontendHadithController::class, 'show'])->name('hadith.show');
+Route::get('/hadith/{id}/{slug?}', [App\Http\Controllers\Frontend\HadithController::class, 'show'])->name('hadith.show');
 Route::get('/random-hadith', [FrontendHadithController::class, 'random'])->name('hadith.random');
 Route::get('/narrator/{id}', [FrontendNarratorController::class, 'show'])->name('narrator.show');
 Route::get('/books', [FrontendBookController::class, 'index'])->name('books.index');

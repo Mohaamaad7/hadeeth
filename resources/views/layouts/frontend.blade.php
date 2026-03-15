@@ -16,17 +16,17 @@
         content="@yield('meta_keywords', 'حديث, أحاديث, الحديث النبوي, صحيح البخاري, صحيح مسلم, السنة النبوية, الأحاديث الصحيحة, موسوعة الحديث')">
     <meta name="author" content="موسوعة الحديث الصحيح">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="{{ url()->current() }}">
+    <link rel="canonical" href="@yield('canonical_url', url()->current())">
     <meta name="language" content="Arabic">
     <meta name="revisit-after" content="1 days">
 
     {{-- Hreflang for Arabic --}}
-    <link rel="alternate" hreflang="ar" href="{{ url()->current() }}">
-    <link rel="alternate" hreflang="x-default" href="{{ url()->current() }}">
+    <link rel="alternate" hreflang="ar" href="@yield('canonical_url', url()->current())">
+    <link rel="alternate" hreflang="x-default" href="@yield('canonical_url', url()->current())">
 
     {{-- Open Graph / Facebook --}}
     <meta property="og:type" content="@yield('og_type', 'website')">
-    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:url" content="@yield('canonical_url', url()->current())">
     <meta property="og:title" content="@yield('og_title', 'موسوعة الحديث الصحيح')">
     <meta property="og:description"
         content="@yield('og_description', 'موسوعة شاملة للأحاديث النبوية الصحيحة مع التخريج والشرح')">
@@ -51,59 +51,8 @@
     {{-- Structured Data Stack --}}
     @stack('structured_data')
 
-    {{-- Tailwind CSS --}}
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    {{-- Google Fonts --}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800;900&family=Scheherazade+New:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-
-    {{-- Font Awesome --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        emerald: {
-                            50: '#ecfdf5',
-                            100: '#d1fae5',
-                            200: '#a7f3d0',
-                            300: '#6ee7b7',
-                            400: '#34d399',
-                            500: '#10b981',
-                            600: '#059669',
-                            700: '#047857',
-                            800: '#065f46',
-                            900: '#064e3b',
-                            950: '#022c22',
-                        },
-                        gold: {
-                            50: '#FCFBF4',
-                            100: '#F9F1D8',
-                            200: '#F0E0AA',
-                            300: '#E8D49F',
-                            400: '#DEC075',
-                            500: '#D4AF37',
-                            600: '#B4942D',
-                            700: '#8C7322',
-                            800: '#5C4D1A',
-                        },
-                    },
-                    fontFamily: {
-                        tajawal: ['Tajawal', 'sans-serif'],
-                        scheherazade: ['Scheherazade New', 'serif'],
-                        ibm: ['IBM Plex Sans Arabic', 'sans-serif'],
-                        cairo: ['Cairo', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
+    {{-- Tailwind CSS & Vite --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
         body {

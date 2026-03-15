@@ -23,7 +23,7 @@
 @endphp
 
 @section('title', $pageTitle)
-
+@section('canonical_url', route('hadith.show', [$hadith->id, $hadith->slug]))
 @section('meta_description', $metaDescription)
 
 @section('meta_keywords', 'حديث رقم ' . $hadith->number_in_book . ', ' . $narratorName . ', ' . ($hadith->book?->name ?? '') . ', حديث ' . $hadith->grade . ', الأحاديث النبوية, ' . $sourcesName)
@@ -363,7 +363,7 @@
                 </h3>
                 <div class="grid md:grid-cols-2 gap-4">
                     @foreach($relatedHadiths as $related)
-                        <a href="{{ route('hadith.show', $related->id) }}"
+                        <a href="{{ route('hadith.show', [$related->id, $related->slug]) }}"
                             class="block p-5 border border-gray-100 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all group">
                             <div class="flex items-center gap-2 mb-3">
                                 <span class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold">#{{ $related->number_in_book }}</span>
