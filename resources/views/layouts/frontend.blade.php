@@ -45,14 +45,8 @@
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
 
-    {{-- Google Analytics 4 --}}
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8PD0HL5BVE"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-8PD0HL5BVE');
-    </script>
+    {{-- Tracking & Analytics --}}
+    @include('frontend.partials.analytics')
 
     {{-- Structured Data Stack --}}
     @stack('structured_data')
