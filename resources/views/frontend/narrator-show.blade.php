@@ -23,8 +23,8 @@
                 <!-- Header -->
                 <div class="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8">
                     <!-- Avatar -->
-                    <div
-                        class="flex-shrink-0 w-24 h-24 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white shadow-xl shadow-emerald-100">
+                    <div class="flex-shrink-0 w-24 h-24 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-100"
+                         style="background: linear-gradient(135deg, {{ $narrator->rank_color }}, {{ $narrator->rank_color }}dd);">
                         <i class="fa-solid fa-user text-4xl"></i>
                     </div>
 
@@ -35,11 +35,19 @@
                         </h1>
 
                         <div class="flex flex-wrap gap-3 items-center">
-                            @if($narrator->grade_status)
+                            @if($narrator->rank)
                                 <span class="px-4 py-2 rounded-full text-sm font-bold shadow-sm"
-                                    style="background-color: {{ $narrator->color_code }}; color: white;">
-                                    <i class="fa-solid fa-star ml-1"></i>
-                                    {{ $narrator->grade_status }}
+                                    style="background-color: {{ $narrator->rank_color }}; color: white;">
+                                    <i class="fa-solid fa-layer-group ml-1"></i>
+                                    {{ $narrator->rank_label }}
+                                </span>
+                            @endif
+
+                            @if($narrator->judgment)
+                                <span class="px-4 py-2 rounded-full text-sm font-bold shadow-sm"
+                                    style="background-color: {{ $narrator->judgment_color }}; color: white;">
+                                    <i class="fa-solid fa-gavel ml-1"></i>
+                                    {{ $narrator->judgment_label }}
                                 </span>
                             @endif
 

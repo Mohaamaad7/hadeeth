@@ -4,17 +4,57 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\NarratorRank;
+use App\Enums\ScholarJudgment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Narrator extends Model
 {
-    protected $fillable = ['name', 'fame_name', 'bio', 'grade_status', 'color_code', 'is_companion'];
+    protected $fillable = ['name', 'fame_name', 'bio', 'grade_status', 'color_code', 'is_companion', 'rank', 'judgment'];
 
     protected $casts = [
         'is_companion' => 'boolean',
+        'rank' => NarratorRank::class,
+        'judgment' => ScholarJudgment::class,
     ];
+
+    // ===== Accessors =====
+
+    /**
+     * الرتبة بالعربي.
+     */
+    public function getRankLabelAttribute(): ?string
+    {
+        return $this->rank?->label();
+    }
+
+    /**
+     * حكم العلماء بالعربي.
+     */
+    public function getJudgmentLabelAttribute(): ?string
+    {
+        return $this->judgment?->label();
+    }
+
+    /**
+     * لون الرتبة (تلقائي من الـ Enum).
+     */
+    public function getRankColorAttribute(): string
+    {
+        return $this->rank?->color() ?? '#6b7280';
+    }
+
+    /**
+     * لون حكم العلماء (تلقائي).
+     */
+    public function getJudgmentColorAttribute(): string
+    {
+        return $this->judgment?->color() ?? '#6b7280';
+    }
+
+    // ===== Scopes =====
 
     /**
      * Scope: الصحابة فقط
@@ -23,6 +63,24 @@ class Narrator extends Model
     {
         return $query->where('is_companion', true);
     }
+
+    /**
+     * Scope: حسب الرتبة
+     */
+    public function scopeByRank($query, NarratorRank $rank)
+    {
+        return $query->where('rank', $rank->value);
+    }
+
+    /**
+     * Scope: حسب حكم العلماء
+     */
+    public function scopeByJudgment($query, ScholarJudgment $judgment)
+    {
+        return $query->where('judgment', $judgment->value);
+    }
+
+    // ===== Relationships =====
 
     /**
      * @deprecated Use hadithsM2M() for the M2M relationship via hadith_narrator pivot.

@@ -6,9 +6,12 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Narrator;
+use App\Enums\NarratorRank;
+use App\Enums\ScholarJudgment;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Illuminate\Validation\Rules\Enum;
 
 class NarratorController extends Controller
 {
@@ -25,19 +28,27 @@ class NarratorController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('fame_name', 'like', "%{$search}%")
-                    ->orWhere('bio', 'like', "%{$search}%")
-                    ->orWhere('grade_status', 'like', "%{$search}%");
+                    ->orWhere('bio', 'like', "%{$search}%");
             });
         }
 
-        // Filter by grade status
-        if ($request->filled('grade_status')) {
-            $query->where('grade_status', $request->grade_status);
+        // Filter by rank
+        if ($request->filled('rank')) {
+            $query->where('rank', $request->rank);
+        }
+
+        // Filter by judgment
+        if ($request->filled('judgment')) {
+            $query->where('judgment', $request->judgment);
         }
 
         $narrators = $query->orderBy('name')->paginate(20);
 
-        return view('dashboard.narrators.index', compact('narrators'));
+        return view('dashboard.narrators.index', [
+            'narrators' => $narrators,
+            'ranks' => NarratorRank::cases(),
+            'judgments' => ScholarJudgment::cases(),
+        ]);
     }
 
     /**
@@ -45,7 +56,10 @@ class NarratorController extends Controller
      */
     public function create(): View
     {
-        return view('dashboard.narrators.create');
+        return view('dashboard.narrators.create', [
+            'ranks' => NarratorRank::cases(),
+            'judgments' => ScholarJudgment::cases(),
+        ]);
     }
 
     /**
@@ -57,14 +71,11 @@ class NarratorController extends Controller
             'name' => 'required|string|max:255',
             'fame_name' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
-            'grade_status' => 'nullable|string|max:255',
-            'color_code' => 'nullable|string|max:7',
+            'rank' => ['nullable', new Enum(NarratorRank::class)],
+            'judgment' => ['nullable', new Enum(ScholarJudgment::class)],
         ]);
 
-        // Set default color if not provided
-        $validated['color_code'] = $validated['color_code'] ?? '#22c55e';
-
-        // is_companion will be automatically set by NarratorObserver based on grade_status
+        // is_companion & color_code will be set by NarratorObserver
         $narrator = Narrator::create($validated);
 
         return redirect()
@@ -93,7 +104,11 @@ class NarratorController extends Controller
     public function edit(Narrator $narrator): View
     {
         $narrator->load('alternatives');
-        return view('dashboard.narrators.edit', compact('narrator'));
+        return view('dashboard.narrators.edit', [
+            'narrator' => $narrator,
+            'ranks' => NarratorRank::cases(),
+            'judgments' => ScholarJudgment::cases(),
+        ]);
     }
 
     /**
@@ -105,15 +120,14 @@ class NarratorController extends Controller
             'name' => 'required|string|max:255',
             'fame_name' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
-            'grade_status' => 'nullable|string|max:255',
-            'color_code' => 'nullable|string|max:7',
+            'rank' => ['nullable', new Enum(NarratorRank::class)],
+            'judgment' => ['nullable', new Enum(ScholarJudgment::class)],
             'alternatives' => 'nullable|array',
             'alternatives.*.alternative_name' => 'required_with:alternatives|string|max:255',
             'alternatives.*.type' => 'required_with:alternatives|string|in:misspelling,variation,title,kunya',
             'alternatives.*.notes' => 'nullable|string|max:255',
         ]);
 
-        // is_companion will be automatically set by NarratorObserver based on grade_status
         $narrator->update(collect($validated)->except('alternatives')->toArray());
 
         // مزامنة الأسماء البديلة
@@ -187,7 +201,10 @@ class NarratorController extends Controller
                     'id' => $narrator->id,
                     'name' => $narrator->name,
                     'fame_name' => $narrator->fame_name,
-                    'grade_status' => $narrator->grade_status,
+                    'rank' => $narrator->rank?->value,
+                    'rank_label' => $narrator->rank_label,
+                    'judgment' => $narrator->judgment?->value,
+                    'judgment_label' => $narrator->judgment_label,
                     'hadiths_count' => $narrator->hadiths_count,
                     'match_type' => $matchType,
                 ];
@@ -204,10 +221,8 @@ class NarratorController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'fame_name' => 'nullable|string|max:255',
-            'grade_status' => 'nullable|string|max:255',
+            'rank' => ['nullable', new Enum(NarratorRank::class)],
         ]);
-
-        $validated['color_code'] = '#22c55e';
 
         $narrator = Narrator::create($validated);
 

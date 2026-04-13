@@ -41,32 +41,46 @@
     <div class="card-body">
         <form method="GET" action="{{ route('dashboard.narrators.index') }}">
             <div class="row">
-                <div class="col-md-5">
-                    <div class="form-group">
-                        <input type="text" name="search" class="form-control"
-                            placeholder="ابحث في الاسم، السيرة، أو الدرجة..." value="{{ request('search') }}">
-                    </div>
-                </div>
                 <div class="col-md-4">
                     <div class="form-group">
-                        <select name="grade_status" class="form-control">
-                            <option value="">-- جميع الدرجات --</option>
-                            <option value="صحابي" {{ request('grade_status') === 'صحابي' ? 'selected' : '' }}>صحابي
-                            </option>
-                            <option value="ثقة" {{ request('grade_status') === 'ثقة' ? 'selected' : '' }}>ثقة</option>
-                            <option value="صدوق" {{ request('grade_status') === 'صدوق' ? 'selected' : '' }}>صدوق</option>
-                            <option value="ضعيف" {{ request('grade_status') === 'ضعيف' ? 'selected' : '' }}>ضعيف</option>
-                            <option value="متروك" {{ request('grade_status') === 'متروك' ? 'selected' : '' }}>متروك
-                            </option>
-                        </select>
+                        <input type="text" name="search" class="form-control"
+                            placeholder="ابحث في الاسم أو السيرة..." value="{{ request('search') }}">
                     </div>
                 </div>
                 <div class="col-md-3">
+                    <div class="form-group">
+                        <select name="rank" class="form-control" id="filterRank">
+                            <option value="">-- جميع الرتب --</option>
+                            @foreach($ranks as $rank)
+                                <option value="{{ $rank->value }}"
+                                    {{ request('rank') === $rank->value ? 'selected' : '' }}
+                                    data-needs-judgment="{{ $rank->needsJudgment() ? '1' : '0' }}">
+                                    {{ $rank->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3" id="filterJudgmentGroup"
+                    style="{{ request('rank') && !in_array(request('rank'), ['sahabi', 'sahabiyyah']) ? '' : 'display:none;' }}">
+                    <div class="form-group">
+                        <select name="judgment" class="form-control" id="filterJudgment">
+                            <option value="">-- جميع الأحكام --</option>
+                            @foreach($judgments as $judgment)
+                                <option value="{{ $judgment->value }}"
+                                    {{ request('judgment') === $judgment->value ? 'selected' : '' }}>
+                                    {{ $judgment->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> بحث
                     </button>
-                    <a href="{{ route('dashboard.narrators.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-redo"></i> إعادة تعيين
+                    <a href="{{ route('dashboard.narrators.index') }}" class="btn btn-secondary" title="إعادة تعيين">
+                        <i class="fas fa-redo"></i>
                     </a>
                 </div>
             </div>
@@ -88,7 +102,8 @@
                     <tr>
                         <th style="width: 50px">#</th>
                         <th>الاسم</th>
-                        <th style="width: 150px">الدرجة</th>
+                        <th style="width: 120px">الرتبة</th>
+                        <th style="width: 120px">حكم العلماء</th>
                         <th style="width: 100px" class="text-center">الأحاديث</th>
                         <th style="width: 150px" class="text-center">الإجراءات</th>
                     </tr>
@@ -111,9 +126,18 @@
                                 @endif
                             </td>
                             <td>
-                                @if($narrator->grade_status)
-                                    <span class="badge" style="background-color: {{ $narrator->color_code }}; color: white;">
-                                        {{ $narrator->grade_status }}
+                                @if($narrator->rank)
+                                    <span class="badge" style="background-color: {{ $narrator->rank_color }}; color: white;">
+                                        {{ $narrator->rank_label }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($narrator->judgment)
+                                    <span class="badge" style="background-color: {{ $narrator->judgment_color }}; color: white;">
+                                        {{ $narrator->judgment_label }}
                                     </span>
                                 @else
                                     <span class="text-muted">-</span>
@@ -182,5 +206,18 @@
             document.getElementById('delete-form-' + id).submit();
         }
     }
+
+    $(function () {
+        $('#filterRank').on('change', function () {
+            const selected = $(this).find('option:selected');
+            const needsJudgment = selected.data('needs-judgment');
+            if (needsJudgment == 1) {
+                $('#filterJudgmentGroup').slideDown(200);
+            } else {
+                $('#filterJudgmentGroup').slideUp(200);
+                $('#filterJudgment').val('');
+            }
+        });
+    });
 </script>
 @stop

@@ -49,22 +49,34 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label>الدرجة</label>
-                        <select name="grade_status" class="form-control" id="gradeStatus">
-                            <option value="">-- اختر الدرجة --</option>
-                            <option value="صحابي" {{ old('grade_status', $narrator->grade_status) === 'صحابي' ? 'selected' : '' }}>صحابي</option>
-                            <option value="ثقة" {{ old('grade_status', $narrator->grade_status) === 'ثقة' ? 'selected' : '' }}>ثقة</option>
-                            <option value="صدوق" {{ old('grade_status', $narrator->grade_status) === 'صدوق' ? 'selected' : '' }}>صدوق</option>
-                            <option value="ضعيف" {{ old('grade_status', $narrator->grade_status) === 'ضعيف' ? 'selected' : '' }}>ضعيف</option>
-                            <option value="متروك" {{ old('grade_status', $narrator->grade_status) === 'متروك' ? 'selected' : '' }}>متروك</option>
+                        <label>الرتبة <span class="text-danger">*</span></label>
+                        <select name="rank" class="form-control" id="rankSelect">
+                            <option value="">-- اختر الرتبة --</option>
+                            @foreach($ranks as $rank)
+                                <option value="{{ $rank->value }}"
+                                    {{ old('rank', $narrator->rank?->value) === $rank->value ? 'selected' : '' }}
+                                    data-needs-judgment="{{ $rank->needsJudgment() ? '1' : '0' }}">
+                                    {{ $rank->label() }}
+                                </option>
+                            @endforeach
                         </select>
+                        <small class="form-text text-muted">صحابي، صحابية، تابعي، أو راوي</small>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" id="judgmentGroup" style="display: none;">
                     <div class="form-group">
-                        <label>لون الدرجة</label>
-                        <input type="color" name="color_code" class="form-control"
-                            value="{{ old('color_code', $narrator->color_code) }}" style="height: 38px;">
+                        <label>حكم العلماء</label>
+                        <select name="judgment" class="form-control" id="judgmentSelect">
+                            <option value="">-- اختر حكم العلماء --</option>
+                            @foreach($judgments as $judgment)
+                                <option value="{{ $judgment->value }}"
+                                    {{ old('judgment', $narrator->judgment?->value) === $judgment->value ? 'selected' : '' }}
+                                    data-color="{{ $judgment->color() }}">
+                                    {{ $judgment->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">حكم علماء الجرح والتعديل على هذا الراوي</small>
                     </div>
                 </div>
             </div>
@@ -132,41 +144,59 @@
 
 @section('js')
 <script>
-    let altIndex = {{ $narrator->alternatives->count() }};
-
-    $('#addAltBtn').click(function () {
-        $('#noAltsMsg').hide();
-        const row = `
-    <div class="row alternative-row mb-2 align-items-center">
-        <div class="col-md-4">
-            <input type="text" name="alternatives[${altIndex}][alternative_name]" class="form-control form-control-sm" placeholder="الاسم البديل" required>
-        </div>
-        <div class="col-md-3">
-            <select name="alternatives[${altIndex}][type]" class="form-control form-control-sm">
-                <option value="misspelling">خطأ نساخ</option>
-                <option value="variation">تهجئة بديلة</option>
-                <option value="title">لقب</option>
-                <option value="kunya">كنية</option>
-            </select>
-        </div>
-        <div class="col-md-4">
-            <input type="text" name="alternatives[${altIndex}][notes]" class="form-control form-control-sm" placeholder="ملاحظة (اختياري)">
-        </div>
-        <div class="col-md-1">
-            <button type="button" class="btn btn-sm btn-danger remove-alt" title="حذف">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    </div>`;
-        $('#alternativesContainer').append(row);
-        altIndex++;
-    });
-
-    $(document).on('click', '.remove-alt', function () {
-        $(this).closest('.alternative-row').remove();
-        if ($('.alternative-row').length === 0) {
-            $('#noAltsMsg').show();
+    $(function () {
+        // ===== الرتبة / حكم العلماء =====
+        function toggleJudgment() {
+            const selected = $('#rankSelect option:selected');
+            const needsJudgment = selected.data('needs-judgment');
+            if (needsJudgment == 1) {
+                $('#judgmentGroup').slideDown(200);
+            } else {
+                $('#judgmentGroup').slideUp(200);
+                $('#judgmentSelect').val('');
+            }
         }
+
+        $('#rankSelect').on('change', toggleJudgment);
+        toggleJudgment(); // تطبيق الحالة الأولية
+
+        // ===== الأسماء البديلة =====
+        let altIndex = {{ $narrator->alternatives->count() }};
+
+        $('#addAltBtn').click(function () {
+            $('#noAltsMsg').hide();
+            const row = `
+        <div class="row alternative-row mb-2 align-items-center">
+            <div class="col-md-4">
+                <input type="text" name="alternatives[${altIndex}][alternative_name]" class="form-control form-control-sm" placeholder="الاسم البديل" required>
+            </div>
+            <div class="col-md-3">
+                <select name="alternatives[${altIndex}][type]" class="form-control form-control-sm">
+                    <option value="misspelling">خطأ نساخ</option>
+                    <option value="variation">تهجئة بديلة</option>
+                    <option value="title">لقب</option>
+                    <option value="kunya">كنية</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="alternatives[${altIndex}][notes]" class="form-control form-control-sm" placeholder="ملاحظة (اختياري)">
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-sm btn-danger remove-alt" title="حذف">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>`;
+            $('#alternativesContainer').append(row);
+            altIndex++;
+        });
+
+        $(document).on('click', '.remove-alt', function () {
+            $(this).closest('.alternative-row').remove();
+            if ($('.alternative-row').length === 0) {
+                $('#noAltsMsg').show();
+            }
+        });
     });
 </script>
 @stop

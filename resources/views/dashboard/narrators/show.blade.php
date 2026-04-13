@@ -34,19 +34,36 @@
             <div class="card card-primary card-outline">
                 <div class="card-body box-profile">
                     <div class="text-center">
-                        <div class="rounded-circle bg-primary d-inline-flex justify-content-center align-items-center"
-                             style="width: 100px; height: 100px; font-size: 48px; color: white;">
+                        <div class="rounded-circle d-inline-flex justify-content-center align-items-center"
+                             style="width: 100px; height: 100px; font-size: 48px; color: white; background-color: {{ $narrator->rank_color }};">
                             <i class="fas fa-user"></i>
                         </div>
                     </div>
 
                     <h3 class="profile-username text-center">{{ $narrator->name }}</h3>
 
-                    @if($narrator->grade_status)
+                    @if($narrator->fame_name)
+                        <p class="text-muted text-center">{{ $narrator->fame_name }}</p>
+                    @endif
+
+                    <!-- الرتبة -->
+                    @if($narrator->rank)
+                        <p class="text-center mb-1">
+                            <span class="badge badge-lg"
+                                  style="background-color: {{ $narrator->rank_color }}; color: white; font-size: 14px; padding: 8px 12px;">
+                                <i class="fas fa-layer-group ml-1"></i>
+                                {{ $narrator->rank_label }}
+                            </span>
+                        </p>
+                    @endif
+
+                    <!-- حكم العلماء -->
+                    @if($narrator->judgment)
                         <p class="text-center">
-                            <span class="badge badge-lg" 
-                                  style="background-color: {{ $narrator->color_code }}; color: white; font-size: 14px; padding: 8px 12px;">
-                                {{ $narrator->grade_status }}
+                            <span class="badge badge-lg"
+                                  style="background-color: {{ $narrator->judgment_color }}; color: white; font-size: 13px; padding: 6px 10px;">
+                                <i class="fas fa-gavel ml-1"></i>
+                                {{ $narrator->judgment_label }}
                             </span>
                         </p>
                     @endif
@@ -88,7 +105,7 @@
                 </div>
             </div>
 
-            <form id="delete-form" action="{{ route('dashboard.narrators.destroy', $narrator) }}" 
+            <form id="delete-form" action="{{ route('dashboard.narrators.destroy', $narrator) }}"
                   method="POST" style="display: none;">
                 @csrf
                 @method('DELETE')
@@ -118,7 +135,7 @@
                         <span class="badge badge-light">{{ $narrator->hadiths_count }}</span>
                     </h3>
                     <div class="card-tools">
-                        <a href="{{ route('dashboard.hadiths.create') }}?narrator_id={{ $narrator->id }}" 
+                        <a href="{{ route('dashboard.hadiths.create') }}?narrator_id={{ $narrator->id }}"
                            class="btn btn-sm btn-success">
                             <i class="fas fa-plus"></i> إضافة حديث
                         </a>
@@ -149,15 +166,15 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge badge-{{ 
-                                                $hadith->grade === 'صحيح' ? 'success' : 
-                                                ($hadith->grade === 'حسن' ? 'info' : 'warning') 
+                                            <span class="badge badge-{{
+                                                $hadith->grade === 'صحيح' ? 'success' :
+                                                ($hadith->grade === 'حسن' ? 'info' : 'warning')
                                             }}">
                                                 {{ $hadith->grade }}
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="{{ route('dashboard.hadiths.show', $hadith) }}" 
+                                            <a href="{{ route('dashboard.hadiths.show', $hadith) }}"
                                                class="btn btn-xs btn-info">
                                                 <i class="fas fa-eye"></i>
                                             </a>
@@ -168,7 +185,7 @@
                         </table>
                         @if($narrator->hadiths_count > 10)
                             <div class="card-footer text-center">
-                                <a href="{{ route('dashboard.hadiths.index') }}?narrator_id={{ $narrator->id }}" 
+                                <a href="{{ route('dashboard.hadiths.index') }}?narrator_id={{ $narrator->id }}"
                                    class="btn btn-sm btn-primary">
                                     عرض جميع الأحاديث ({{ $narrator->hadiths_count }})
                                 </a>
@@ -178,7 +195,7 @@
                         <div class="p-4 text-center text-muted">
                             <i class="fas fa-inbox fa-3x mb-3"></i>
                             <p>لا توجد أحاديث لهذا الراوي بعد</p>
-                            <a href="{{ route('dashboard.hadiths.create') }}?narrator_id={{ $narrator->id }}" 
+                            <a href="{{ route('dashboard.hadiths.create') }}?narrator_id={{ $narrator->id }}"
                                class="btn btn-success">
                                 <i class="fas fa-plus"></i> إضافة أول حديث
                             </a>

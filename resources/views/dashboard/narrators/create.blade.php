@@ -51,24 +51,34 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label>الدرجة</label>
-                        <select name="grade_status" class="form-control" id="gradeStatus">
-                            <option value="">-- اختر الدرجة --</option>
-                            <option value="صحابي" {{ old('grade_status') === 'صحابي' ? 'selected' : '' }}>صحابي</option>
-                            <option value="ثقة" {{ old('grade_status') === 'ثقة' ? 'selected' : '' }}>ثقة</option>
-                            <option value="صدوق" {{ old('grade_status') === 'صدوق' ? 'selected' : '' }}>صدوق</option>
-                            <option value="ضعيف" {{ old('grade_status') === 'ضعيف' ? 'selected' : '' }}>ضعيف</option>
-                            <option value="متروك" {{ old('grade_status') === 'متروك' ? 'selected' : '' }}>متروك</option>
+                        <label>الرتبة <span class="text-danger">*</span></label>
+                        <select name="rank" class="form-control" id="rankSelect">
+                            <option value="">-- اختر الرتبة --</option>
+                            @foreach($ranks as $rank)
+                                <option value="{{ $rank->value }}"
+                                    {{ old('rank') === $rank->value ? 'selected' : '' }}
+                                    data-needs-judgment="{{ $rank->needsJudgment() ? '1' : '0' }}">
+                                    {{ $rank->label() }}
+                                </option>
+                            @endforeach
                         </select>
-                        <small class="form-text text-muted">حكم العلماء على الراوي</small>
+                        <small class="form-text text-muted">صحابي، صحابية، تابعي، أو راوي</small>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" id="judgmentGroup" style="display: none;">
                     <div class="form-group">
-                        <label>لون الدرجة</label>
-                        <input type="color" name="color_code" class="form-control"
-                            value="{{ old('color_code', '#22c55e') }}" style="height: 38px;">
-                        <small class="form-text text-muted">اللون المستخدم لعرض الدرجة</small>
+                        <label>حكم العلماء</label>
+                        <select name="judgment" class="form-control" id="judgmentSelect">
+                            <option value="">-- اختر حكم العلماء --</option>
+                            @foreach($judgments as $judgment)
+                                <option value="{{ $judgment->value }}"
+                                    {{ old('judgment') === $judgment->value ? 'selected' : '' }}
+                                    data-color="{{ $judgment->color() }}">
+                                    {{ $judgment->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">حكم علماء الجرح والتعديل على هذا الراوي</small>
                     </div>
                 </div>
             </div>
@@ -83,4 +93,26 @@
         </div>
     </div>
 </form>
+@stop
+
+@section('js')
+<script>
+    $(function () {
+        function toggleJudgment() {
+            const selected = $('#rankSelect option:selected');
+            const needsJudgment = selected.data('needs-judgment');
+            if (needsJudgment == 1) {
+                $('#judgmentGroup').slideDown(200);
+            } else {
+                $('#judgmentGroup').slideUp(200);
+                $('#judgmentSelect').val('');
+            }
+        }
+
+        $('#rankSelect').on('change', toggleJudgment);
+
+        // تطبيق الحالة الأولية (عند old values)
+        toggleJudgment();
+    });
+</script>
 @stop
