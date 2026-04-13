@@ -222,7 +222,13 @@ class NarratorController extends Controller
             'name' => 'required|string|max:255',
             'fame_name' => 'nullable|string|max:255',
             'rank' => ['nullable', new Enum(NarratorRank::class)],
+            'judgment' => ['nullable', new Enum(ScholarJudgment::class)],
         ]);
+
+        // If rank is Sahabi/Sahabiyyah, force judgment to null
+        if (isset($validated['rank']) && in_array($validated['rank'], [NarratorRank::Sahabi->value, NarratorRank::Sahabiyyah->value])) {
+            $validated['judgment'] = null;
+        }
 
         $narrator = Narrator::create($validated);
 

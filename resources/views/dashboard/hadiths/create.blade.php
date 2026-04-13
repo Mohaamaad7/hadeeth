@@ -219,13 +219,21 @@
                     <input type="text" id="quickNarratorFame" class="form-control" placeholder="مثال: عتبان">
                 </div>
                 <div class="form-group">
-                    <label>الدرجة</label>
-                    <select id="quickNarratorGrade" class="form-control">
+                    <label>الرتبة</label>
+                    <select id="quickNarratorRank" class="form-control">
                         <option value="">-- اختياري --</option>
-                        <option value="صحابي">صحابي</option>
-                        <option value="ثقة">ثقة</option>
-                        <option value="صدوق">صدوق</option>
-                        <option value="ضعيف">ضعيف</option>
+                        @foreach (\App\Enums\NarratorRank::cases() as $rank)
+                            <option value="{{ $rank->value }}">{{ $rank->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group" id="quickJudgmentGroup" style="display: none;">
+                    <label>حكم العلماء</label>
+                    <select id="quickNarratorJudgment" class="form-control">
+                        <option value="">-- اختياري --</option>
+                        @foreach (\App\Enums\ScholarJudgment::cases() as $judg)
+                            <option value="{{ $judg->value }}">{{ $judg->label() }}</option>
+                        @endforeach
                     </select>
                 </div>
             </div>
@@ -339,6 +347,17 @@
             }
         });
 
+        // Toggle Judgment based on Rank
+        $('#quickNarratorRank').on('change', function() {
+            const val = $(this).val();
+            if (val === 'tabii' || val === 'rawi') {
+                $('#quickJudgmentGroup').slideDown();
+            } else {
+                $('#quickJudgmentGroup').slideUp();
+                $('#quickNarratorJudgment').val('');
+            }
+        });
+
         // ========== حفظ الراوي السريع ==========
         $('#saveQuickNarrator').click(function () {
             const name = $('#quickNarratorName').val().trim();
@@ -357,7 +376,8 @@
                     _token: '{{ csrf_token() }}',
                     name: name,
                     fame_name: $('#quickNarratorFame').val().trim(),
-                    grade_status: $('#quickNarratorGrade').val()
+                    rank: $('#quickNarratorRank').val(),
+                    judgment: $('#quickNarratorJudgment').val()
                 },
                 success: function (response) {
                     if (response.success) {
@@ -368,7 +388,9 @@
                         $('#quickNarratorModal').modal('hide');
                         $('#quickNarratorName').val('');
                         $('#quickNarratorFame').val('');
-                        $('#quickNarratorGrade').val('');
+                        $('#quickNarratorRank').val('');
+                        $('#quickNarratorJudgment').val('');
+                        $('#quickJudgmentGroup').hide();
                     }
                 },
                 error: function (xhr) {
