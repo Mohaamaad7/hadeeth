@@ -199,58 +199,61 @@ class HadithParser
      * المشكلة: كلمة "عن" تظهر في متن الحديث (مثل: النهي عن المنكر)
      * الحل: الراوي يأتي دائماً بعد [رقم_الصفحة] (الحكم) (المصادر) عن الراوي
      *       لذلك نبحث عن "عن" فقط في القسم الذي يلي [رقم_الصفحة]
+     *
+     * v2: دعم الرواة المتعددين لمصادر مختلفة:
+     *     (مالك حم 4 حب ك) عن أبي قتادة (د هق) عن عائشة.
+     *     ← يستخرج: [أبي قتادة, عائشة]
      */
     private function extractNarrators(string $text): array
     {
         // 1. أوجد قسم البيانات الوصفية (بعد [رقم الصفحة])
-        // هذا يفصل متن الحديث عن معلومات التخريج
         $metadataSection = $text;
         if (preg_match('/\[\d+\]/u', $text, $matches, PREG_OFFSET_CAPTURE)) {
             $metadataSection = substr($text, $matches[0][1]);
         }
 
-        $narratorsStr = null;
+        $narrators = [];
+        $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
 
-        // 2. في قسم البيانات الوصفية، ابحث عن "عن" بعد آخر قوس ) (أي بعد المصادر)
-        $lastParenPos = mb_strrpos($metadataSection, ')');
-        if ($lastParenPos !== false) {
-            $afterLastParen = mb_substr($metadataSection, $lastParenPos + 1);
+        // 2. ابحث عن كل "عن NARRATOR" التي تأتي بعد ) في الـ metadata
+        //    النمط: ) ... عن راوي1 ( ... ) ... عن راوي2.
+        //    كل segment بين ) وبداية ( التالي أو نهاية النص قد يحتوي على "عن"
+        if (preg_match_all('/\)\s*عن\s+(.+?)(?=\s*\(|\s*$)/u', $metadataSection, $matches)) {
+            foreach ($matches[1] as $narratorRaw) {
+                $narratorRaw = trim($narratorRaw);
 
-            // ابحث عن "عن NARRATOR" — توقف عند: نقطة نهائية أو قوس جديد أو كلمة زيادة
-            $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
+                // إزالة نصوص الزيادات إن وجدت (زاد، ولفظ، إلخ)
+                $narratorRaw = preg_replace('/\s+(?:' . $additionPattern . ')\s.*/u', '', $narratorRaw);
 
-            $pattern = '/عن\s+(.+?)(?:\s*\(|\s+(?:' . $additionPattern . ')\s|\s*\.\s*$|$)/u';
+                // تنظيف: إزالة النقطة من الآخر
+                $narratorRaw = rtrim($narratorRaw, '. ');
 
-            if (preg_match($pattern, $afterLastParen, $narratorMatch)) {
-                $narratorsStr = trim($narratorMatch[1]);
+                if (empty($narratorRaw)) continue;
+
+                // تقسيم إذا كان يحتوي أكثر من راوي ("عن فلان وعن فلان" أو "عن فلان وفلان")
+                $parts = preg_split('/(?:\s+وعن\s+|\s+و\s+)/u', $narratorRaw);
+                foreach ($parts as $part) {
+                    $cleaned = $this->normalizeNarrator($part);
+                    if (!empty($cleaned)) {
+                        $narrators[] = $cleaned;
+                    }
+                }
             }
         }
 
-        // 3. Fallback: ابحث عن "عن" في كل قسم البيانات الوصفية (بعد [رقم])
-        if (!$narratorsStr) {
-            $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
+        // 3. Fallback: لم نجد أي "عن" بعد ) — ابحث في كل الـ metadata
+        if (empty($narrators)) {
             $pattern = '/عن\s+([^\[\(]+?)(?:\s*\[|\s*\(|\s+(?:' . $additionPattern . ')\s|\s*\.\s*$|$)/u';
 
             if (preg_match($pattern, $metadataSection, $matches)) {
-                $narratorsStr = trim($matches[1]);
+                $cleaned = $this->normalizeNarrator(trim($matches[1]));
+                if (!empty($cleaned)) {
+                    $narrators[] = $cleaned;
+                }
             }
         }
 
-        if (!$narratorsStr)
-            return [];
-
-        // تقسيم النص إذا كان يحتوي على أكثر من راوي ("عن فلان وعن فلان" أو "عن فلان وفلان")
-        $narrators = [];
-        // تقسيم بكلمة "وعن" أولاً
-        $parts = preg_split('/(?:\s+وعن\s+|\s+و\s+)/u', $narratorsStr);
-        foreach ($parts as $part) {
-            $cleaned = $this->normalizeNarrator($part);
-            if (!empty($cleaned)) {
-                $narrators[] = $cleaned;
-            }
-        }
-
-        return $narrators;
+        return array_unique($narrators);
     }
 
     /**
