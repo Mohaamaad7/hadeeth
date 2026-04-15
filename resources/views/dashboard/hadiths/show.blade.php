@@ -62,7 +62,7 @@
                     </h3>
                 </div>
                 <div class="card-body">
-                    <p style="line-height: 1.8;">{{ $hadith->explanation }}</p>
+                    <div style="line-height: 1.8;">{!! $hadith->explanation !!}</div>
                 </div>
             </div>
         @endif

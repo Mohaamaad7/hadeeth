@@ -99,7 +99,7 @@
                 </svg>
             </button>
             <div x-show="expanded" x-collapse class="mt-3 text-gray-700 text-sm leading-relaxed">
-                {{ $hadith->explanation }}
+                {!! $hadith->explanation !!}
             </div>
         </div>
     @endif
