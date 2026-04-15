@@ -1,6 +1,4 @@
-@extends('layouts.frontend')
-
-@php
+<?php
     // === صيغة dorar.net ===
     $narratorName = $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد';
     $sourcesName = $hadith->sources->pluck('name')->join('، ') ?: 'صحيح الجامع';
@@ -20,102 +18,102 @@
         . ' - مصدر: ' . $sourcesName;
 
     $ogImage = asset('og-image.png');
-@endphp
+?>
 
-@section('title', $pageTitle)
-@section('canonical_url', route('hadith.show', [$hadith->id, $hadith->slug]))
-@section('meta_description', $metaDescription)
+<?php $__env->startSection('title', $pageTitle); ?>
+<?php $__env->startSection('canonical_url', route('hadith.show', [$hadith->id, $hadith->slug])); ?>
+<?php $__env->startSection('meta_description', $metaDescription); ?>
 
-@section('meta_keywords', 'حديث رقم ' . $hadith->number_in_book . ', ' . $narratorName . ', ' . ($hadith->book?->name ?? '') . ', حديث ' . $hadith->grade . ', الأحاديث النبوية, ' . $sourcesName)
+<?php $__env->startSection('meta_keywords', 'حديث رقم ' . $hadith->number_in_book . ', ' . $narratorName . ', ' . ($hadith->book?->name ?? '') . ', حديث ' . $hadith->grade . ', الأحاديث النبوية, ' . $sourcesName); ?>
 
-@section('og_type', 'article')
-@section('og_title', $pageTitle)
-@section('og_description', $metaDescription)
-@section('og_image', $ogImage)
+<?php $__env->startSection('og_type', 'article'); ?>
+<?php $__env->startSection('og_title', $pageTitle); ?>
+<?php $__env->startSection('og_description', $metaDescription); ?>
+<?php $__env->startSection('og_image', $ogImage); ?>
 
-@section('twitter_title', $pageTitle)
-@section('twitter_description', $metaDescription)
-@section('twitter_image', $ogImage)
+<?php $__env->startSection('twitter_title', $pageTitle); ?>
+<?php $__env->startSection('twitter_description', $metaDescription); ?>
+<?php $__env->startSection('twitter_image', $ogImage); ?>
 
-@push('structured_data')
+<?php $__env->startPush('structured_data'); ?>
 <script type="application/ld+json">
 {
-    "@@context": "https://schema.org",
-    "@@type": "Article",
-    "headline": "حديث رقم {{ $hadith->number_in_book }}",
-    "description": "{{ Str::limit($hadith->content, 200) }}",
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "حديث رقم <?php echo e($hadith->number_in_book); ?>",
+    "description": "<?php echo e(Str::limit($hadith->content, 200)); ?>",
     "author": {
-        "@@type": "Person",
-        "name": "{{ $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد' }}"
+        "@type": "Person",
+        "name": "<?php echo e($hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد'); ?>"
     },
     "publisher": {
-        "@@type": "Organization",
+        "@type": "Organization",
         "name": "موسوعة الحديث الصحيح",
-        "url": "{{ url('/') }}"
+        "url": "<?php echo e(url('/')); ?>"
     },
     "mainEntityOfPage": {
-        "@@type": "WebPage",
-        "@@id": "{{ url()->current() }}"
+        "@type": "WebPage",
+        "@id": "<?php echo e(url()->current()); ?>"
     },
-    "datePublished": "{{ $hadith->created_at?->toIso8601String() ?? now()->toIso8601String() }}",
-    "dateModified": "{{ $hadith->updated_at?->toIso8601String() ?? now()->toIso8601String() }}",
-    "articleBody": "{{ $hadith->content }}",
-    "keywords": ["حديث", "{{ $hadith->grade }}", "{{ $hadith->narrators->pluck('name')->join('، ') }}", "{{ $hadith->book?->name ?? '' }}"]
+    "datePublished": "<?php echo e($hadith->created_at?->toIso8601String() ?? now()->toIso8601String()); ?>",
+    "dateModified": "<?php echo e($hadith->updated_at?->toIso8601String() ?? now()->toIso8601String()); ?>",
+    "articleBody": "<?php echo e($hadith->content); ?>",
+    "keywords": ["حديث", "<?php echo e($hadith->grade); ?>", "<?php echo e($hadith->narrators->pluck('name')->join('، ')); ?>", "<?php echo e($hadith->book?->name ?? ''); ?>"]
 }
 </script>
 <script type="application/ld+json">
 {
-    "@@context": "https://schema.org",
-    "@@type": "BreadcrumbList",
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
     "itemListElement": [
         {
-            "@@type": "ListItem",
+            "@type": "ListItem",
             "position": 1,
             "name": "الرئيسية",
-            "item": "{{ url('/') }}"
+            "item": "<?php echo e(url('/')); ?>"
         },
-        @if($hadith->book)
+        <?php if($hadith->book): ?>
         {
-            "@@type": "ListItem",
+            "@type": "ListItem",
             "position": 2,
-            "name": "{{ $hadith->book->name }}",
-            "item": "{{ url('/') }}"
+            "name": "<?php echo e($hadith->book->name); ?>",
+            "item": "<?php echo e(url('/')); ?>"
         },
         {
-            "@@type": "ListItem",
+            "@type": "ListItem",
             "position": 3,
-            "name": "حديث رقم {{ $hadith->number_in_book }}",
-            "item": "{{ url()->current() }}"
+            "name": "حديث رقم <?php echo e($hadith->number_in_book); ?>",
+            "item": "<?php echo e(url()->current()); ?>"
         }
-        @else
+        <?php else: ?>
         {
-            "@@type": "ListItem",
+            "@type": "ListItem",
             "position": 2,
-            "name": "حديث رقم {{ $hadith->number_in_book }}",
-            "item": "{{ url()->current() }}"
+            "name": "حديث رقم <?php echo e($hadith->number_in_book); ?>",
+            "item": "<?php echo e(url()->current()); ?>"
         }
-        @endif
+        <?php endif; ?>
     ]
 }
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
-    {{-- H1 مخفي بصرياً لكن مهم للـ SEO --}}
-    <h1 class="sr-only">{{ $hadithSnippet }} - رواية {{ $narratorName }}</h1>
+<?php $__env->startSection('content'); ?>
+    
+    <h1 class="sr-only"><?php echo e($hadithSnippet); ?> - رواية <?php echo e($narratorName); ?></h1>
 
     <div class="container mx-auto px-4 py-8 max-w-5xl">
 
         <!-- Breadcrumb -->
         <div class="flex items-center gap-2 text-sm text-gray-500 mb-6 font-medium animate-up">
-            <a href="{{ route('home') }}" class="hover:text-emerald-600 transition-colors">الرئيسية</a>
+            <a href="<?php echo e(route('home')); ?>" class="hover:text-emerald-600 transition-colors">الرئيسية</a>
             <i class="fa-solid fa-chevron-left text-xs text-emerald-300"></i>
-            @if($hadith->book)
-                <a href="{{ route('search') }}?book_id={{ $hadith->book_id }}"
-                    class="hover:text-emerald-600 transition-colors">{{ $hadith->book->name }}</a>
+            <?php if($hadith->book): ?>
+                <a href="<?php echo e(route('search')); ?>?book_id=<?php echo e($hadith->book_id); ?>"
+                    class="hover:text-emerald-600 transition-colors"><?php echo e($hadith->book->name); ?></a>
                 <i class="fa-solid fa-chevron-left text-xs text-emerald-300"></i>
-            @endif
-            <span class="text-emerald-700 font-bold">حديث رقم {{ $hadith->number_in_book }}</span>
+            <?php endif; ?>
+            <span class="text-emerald-700 font-bold">حديث رقم <?php echo e($hadith->number_in_book); ?></span>
         </div>
 
         <!-- Main Hadith Card -->
@@ -132,30 +130,34 @@
                 <!-- Metadata Badges -->
                 <div class="flex flex-wrap gap-3 mb-6 relative z-10">
                     <span class="bg-emerald-50 text-emerald-800 px-4 py-1.5 rounded-full text-sm font-bold border border-emerald-200">
-                        <i class="fa-solid fa-hashtag ml-1 text-emerald-500"></i> حديث رقم: {{ $hadith->number_in_book }}
+                        <i class="fa-solid fa-hashtag ml-1 text-emerald-500"></i> حديث رقم: <?php echo e($hadith->number_in_book); ?>
+
                     </span>
-                    @php
+                    <?php
                         $gradeColor = match($hadith->grade) {
                             'صحيح' => 'green',
                             'حسن' => 'blue',
                             default => 'yellow'
                         };
-                    @endphp
-                    <span class="bg-{{ $gradeColor }}-50 text-{{ $gradeColor }}-700 px-4 py-1.5 rounded-full text-sm font-bold border border-{{ $gradeColor }}-200">
-                        <i class="fa-solid fa-check-circle ml-1"></i> {{ $hadith->grade }}
+                    ?>
+                    <span class="bg-<?php echo e($gradeColor); ?>-50 text-<?php echo e($gradeColor); ?>-700 px-4 py-1.5 rounded-full text-sm font-bold border border-<?php echo e($gradeColor); ?>-200">
+                        <i class="fa-solid fa-check-circle ml-1"></i> <?php echo e($hadith->grade); ?>
+
                     </span>
-                    @if($hadith->narrators->count() > 0)
-                        @foreach($hadith->narrators as $nar)
+                    <?php if($hadith->narrators->count() > 0): ?>
+                        <?php $__currentLoopData = $hadith->narrators; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $nar): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <span class="bg-gray-50 text-gray-600 px-4 py-1.5 rounded-full text-sm font-bold border border-gray-200">
-                                <i class="fa-solid fa-user ml-1 text-gray-400"></i> الصحابي: {{ $nar->name }}
+                                <i class="fa-solid fa-user ml-1 text-gray-400"></i> الصحابي: <?php echo e($nar->name); ?>
+
                             </span>
-                        @endforeach
-                    @endif
-                    @if($hadith->book)
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    <?php endif; ?>
+                    <?php if($hadith->book): ?>
                         <span class="bg-purple-50 text-purple-600 px-4 py-1.5 rounded-full text-sm font-bold border border-purple-200">
-                            <i class="fa-solid fa-book ml-1"></i> {{ $hadith->book->name }}
+                            <i class="fa-solid fa-book ml-1"></i> <?php echo e($hadith->book->name); ?>
+
                         </span>
-                    @endif
+                    <?php endif; ?>
                 </div>
 
                 <!-- The Hadith Text -->
@@ -166,34 +168,35 @@
                     <div class="ornament-corner bottom-right"></div>
 
                     <p class="font-scheherazade text-2xl md:text-3xl leading-[3.5] text-gray-800 text-justify md:text-center relative z-10">
-                        « {{ $hadith->content }} »
+                        « <?php echo e($hadith->content); ?> »
                     </p>
                 </div>
 
                 <!-- Additional Texts (الزيادات) -->
-                @if(!empty($hadith->additions) && is_array($hadith->additions))
+                <?php if(!empty($hadith->additions) && is_array($hadith->additions)): ?>
                     <div class="mt-4 mb-6 space-y-3 px-2 md:px-6">
-                        @foreach($hadith->additions as $addition)
+                        <?php $__currentLoopData = $hadith->additions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $addition): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="bg-gray-50/80 rounded-xl p-4 md:p-5 border border-gray-100 relative overflow-hidden group hover:border-emerald-200 transition-colors">
                                 <div class="absolute right-0 top-0 bottom-0 w-1.5 bg-emerald-400/70 group-hover:bg-emerald-500 transition-colors"></div>
                                 <div class="flex flex-col gap-3 pr-3">
                                     <div class="flex items-center gap-2">
                                         <span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5">
                                             <i class="fa-solid fa-plus-circle"></i>
-                                            زيادة من: {{ $addition['source_name'] }}
+                                            زيادة من: <?php echo e($addition['source_name']); ?>
+
                                         </span>
                                     </div>
                                     <p class="font-scheherazade text-xl md:text-2xl leading-[2.5] text-gray-700 text-justify">
-                                        « {{ $addition['text'] }} »
+                                        « <?php echo e($addition['text']); ?> »
                                     </p>
                                 </div>
                             </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
-                @endif
+                <?php endif; ?>
 
                 <!-- النص الأصلي كما ورد في المصدر (الأمانة العلمية) -->
-                @if($hadith->raw_text)
+                <?php if($hadith->raw_text): ?>
                     <div class="mt-8 mb-4">
                         <button onclick="toggleRawText()" id="rawTextToggle"
                             class="w-full flex items-center justify-between bg-amber-50/30 hover:bg-amber-50 border border-amber-200/60 rounded-xl px-4 py-3 text-right transition-all duration-300 group shadow-sm hover:shadow-md">
@@ -211,22 +214,23 @@
 
                         <div id="rawTextContent" class="overflow-hidden transition-all duration-500 ease-in-out" style="opacity: 1;">
                             <div class="mt-1 rounded-b-xl border border-t-0 border-amber-200/60 overflow-hidden shadow-inner">
-                                {{-- الشريط العلوي الزخرفي --}}
+                                
                                 <div class="h-0.5 bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300"></div>
 
                                 <div class="p-4 md:p-6 relative" style="background: linear-gradient(135deg, #fffdf5 0%, #fef9e7 50%, #fffdf5 100%);">
-                                    {{-- زخارف الأركان --}}
+                                    
                                     <div class="absolute top-2 right-2 w-4 h-4 border-t border-r border-amber-400/50 rounded-tr-sm"></div>
                                     <div class="absolute top-2 left-2 w-4 h-4 border-t border-l border-amber-400/50 rounded-tl-sm"></div>
                                     <div class="absolute bottom-2 right-2 w-4 h-4 border-b border-r border-amber-400/50 rounded-br-sm"></div>
                                     <div class="absolute bottom-2 left-2 w-4 h-4 border-b border-l border-amber-400/50 rounded-bl-sm"></div>
 
-                                    {{-- النص الأصلي --}}
+                                    
                                     <p class="font-scheherazade text-lg md:text-xl leading-[2.5] text-amber-950 text-center relative z-10 px-2 md:px-6" dir="rtl">
-                                        {{ $hadith->raw_text }}
+                                        <?php echo e($hadith->raw_text); ?>
+
                                     </p>
 
-                                    {{-- ملاحظة أسفل النص --}}
+                                    
                                     <div class="mt-4 pt-3 border-t border-dashed border-amber-300/50 text-center">
                                         <p class="text-[10px] text-amber-600/80 font-medium flex items-center justify-center gap-1.5">
                                             <i class="fa-solid fa-book-open text-amber-400"></i>
@@ -237,17 +241,17 @@
                             </div>
                         </div>
                     </div>
-                @endif
+                <?php endif; ?>
 
                 <!-- Takhrij / Sources -->
-                @if($hadith->sources->count() > 0)
+                <?php if($hadith->sources->count() > 0): ?>
                     <div class="mt-8 pt-6 border-t border-dashed border-gray-200 text-sm text-gray-600 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                         <div class="flex items-center gap-2 flex-wrap">
                             <i class="fa-solid fa-book-bookmark text-emerald-500 text-lg"></i>
                             <span class="font-bold">التخريج:</span>
-                            @foreach($hadith->sources as $source)
-                                <span class="bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold">{{ $source->name }} ({{ $source->code }})</span>
-                            @endforeach
+                            <?php $__currentLoopData = $hadith->sources; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $source): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <span class="bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold"><?php echo e($source->name); ?> (<?php echo e($source->code); ?>)</span>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
                         <div class="flex gap-3">
                             <button onclick="copyHadith()" class="text-gray-400 hover:text-emerald-600 transition-colors" title="نسخ الحديث">
@@ -258,53 +262,55 @@
                             </button>
                         </div>
                     </div>
-                @endif
+                <?php endif; ?>
 
                 <!-- Topics / Tags -->
-                @if($hadith->tags->count() > 0)
+                <?php if($hadith->tags->count() > 0): ?>
                     <div class="mt-6 pt-6 border-t border-dashed border-gray-200">
                         <div class="flex items-center gap-3 mb-3">
                             <i class="fa-solid fa-tags text-emerald-500 text-lg"></i>
                             <span class="font-bold text-gray-700">مواضيع ذات صلة:</span>
                         </div>
                         <div class="flex flex-wrap gap-2">
-                            @foreach($hadith->tags as $tag)
-                                <a href="{{ route('topics.show', $tag->slug) }}" 
+                            <?php $__currentLoopData = $hadith->tags; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tag): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <a href="<?php echo e(route('topics.show', $tag->slug)); ?>" 
                                    class="inline-flex items-center px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors text-sm font-bold border border-emerald-100 hover:border-emerald-600">
-                                    <i class="fa-solid fa-hashtag ml-1 opacity-70"></i> {{ $tag->name }}
+                                    <i class="fa-solid fa-hashtag ml-1 opacity-70"></i> <?php echo e($tag->name); ?>
+
                                 </a>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
         </section>
 
         <!-- Sanad Chains (سلاسل الإسناد) - Dynamic -->
-        @if($hadith->chains->count() > 0)
+        <?php if($hadith->chains->count() > 0): ?>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-up" style="animation-delay: 0.1s;">
-                @foreach($hadith->chains as $index => $chain)
+                <?php $__currentLoopData = $hadith->chains; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $chain): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-200 transition-colors">
                         <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-                            <span class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-sm">{{ $index + 1 }}</span>
-                            <h3 class="font-tajawal font-bold text-lg text-gray-800">طريق {{ $chain->source->name }}</h3>
+                            <span class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-sm"><?php echo e($index + 1); ?></span>
+                            <h3 class="font-tajawal font-bold text-lg text-gray-800">طريق <?php echo e($chain->source->name); ?></h3>
                         </div>
                         <div class="pr-2">
-                            @foreach($chain->narrators as $narrator)
-                                <div class="timeline-node {{ $loop->last ? '' : 'pb-4' }}">
-                                    @if($narrator->pivot->role)
-                                        <span class="text-sm text-gray-500 block mb-1">{{ $narrator->pivot->role }}</span>
-                                    @endif
-                                    @if($loop->last)
-                                        <span class="font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg">{{ $narrator->name }}</span>
-                                    @else
-                                        <a href="{{ route('narrator.show', $narrator->id) }}" target="_blank"
+                            <?php $__currentLoopData = $chain->narrators; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $narrator): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="timeline-node <?php echo e($loop->last ? '' : 'pb-4'); ?>">
+                                    <?php if($narrator->pivot->role): ?>
+                                        <span class="text-sm text-gray-500 block mb-1"><?php echo e($narrator->pivot->role); ?></span>
+                                    <?php endif; ?>
+                                    <?php if($loop->last): ?>
+                                        <span class="font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg"><?php echo e($narrator->name); ?></span>
+                                    <?php else: ?>
+                                        <a href="<?php echo e(route('narrator.show', $narrator->id)); ?>" target="_blank"
                                             class="font-scheherazade text-lg text-emerald-700 hover:text-emerald-500 hover:underline transition-colors">
-                                            {{ $narrator->name }}
+                                            <?php echo e($narrator->name); ?>
+
                                         </a>
-                                    @endif
-                                    @if(!$loop->first && !$loop->last)
-                                        @php
+                                    <?php endif; ?>
+                                    <?php if(!$loop->first && !$loop->last): ?>
+                                        <?php
                                             $appearsInOtherChains = false;
                                             foreach ($hadith->chains as $otherChain) {
                                                 if ($otherChain->id !== $chain->id) {
@@ -314,21 +320,21 @@
                                                     }
                                                 }
                                             }
-                                        @endphp
-                                        @if($appearsInOtherChains)
+                                        ?>
+                                        <?php if($appearsInOtherChains): ?>
                                             <span class="text-xs text-gray-400 mr-2 bg-gray-50 px-2 py-0.5 rounded">(ملتقى الطريقين)</span>
-                                        @endif
-                                    @endif
+                                        <?php endif; ?>
+                                    <?php endif; ?>
                                 </div>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
                     </section>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
-        @endif
+        <?php endif; ?>
 
         <!-- Simple Explanation (الشرح البسيط) -->
-        @if($hadith->explanation)
+        <?php if($hadith->explanation): ?>
             <section class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden animate-up mb-8"
                 style="animation-delay: 0.15s;">
                 <div class="bg-emerald-50/50 p-5 border-b border-emerald-100 flex items-center gap-3">
@@ -337,15 +343,16 @@
                 </div>
                 <div class="p-6 md:p-8">
                     <div class="text-gray-700 leading-loose text-justify prose prose-lg max-w-none explanation-content">
-                        {!! $hadith->explanation !!}
+                        <?php echo $hadith->explanation; ?>
+
                     </div>
                 </div>
             </section>
-        @endif
+        <?php endif; ?>
 
         <!-- Narrator Bio (if available) -->
-        @if($hadith->narrators->filter(fn($n) => $n->bio)->count() > 0)
-            @foreach($hadith->narrators->filter(fn($n) => $n->bio) as $nar)
+        <?php if($hadith->narrators->filter(fn($n) => $n->bio)->count() > 0): ?>
+            <?php $__currentLoopData = $hadith->narrators->filter(fn($n) => $n->bio); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $nar): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <section class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 mb-8 animate-up"
                 style="animation-delay: 0.1s;">
                 <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
@@ -357,22 +364,23 @@
                         <i class="fa-solid fa-user"></i>
                     </div>
                     <div class="flex-grow">
-                        <h4 class="font-bold text-lg text-gray-800 mb-2">{{ $nar->name }}</h4>
-                        @if($nar->grade_status)
+                        <h4 class="font-bold text-lg text-gray-800 mb-2"><?php echo e($nar->name); ?></h4>
+                        <?php if($nar->grade_status): ?>
                             <span class="inline-block px-3 py-1 rounded-full text-xs font-bold mb-3"
-                                style="background-color: {{ $nar->color_code }}20; color: {{ $nar->color_code }}; border: 1px solid {{ $nar->color_code }};">
-                                {{ $nar->grade_status }}
+                                style="background-color: <?php echo e($nar->color_code); ?>20; color: <?php echo e($nar->color_code); ?>; border: 1px solid <?php echo e($nar->color_code); ?>;">
+                                <?php echo e($nar->grade_status); ?>
+
                             </span>
-                        @endif
-                        <p class="text-gray-600 leading-relaxed whitespace-pre-wrap">{{ $nar->bio }}</p>
+                        <?php endif; ?>
+                        <p class="text-gray-600 leading-relaxed whitespace-pre-wrap"><?php echo e($nar->bio); ?></p>
                     </div>
                 </div>
             </section>
-            @endforeach
-        @endif
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        <?php endif; ?>
 
         <!-- Related Hadiths -->
-        @if($relatedHadiths->count() > 0)
+        <?php if($relatedHadiths->count() > 0): ?>
             <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 animate-up"
                 style="animation-delay: 0.2s;">
                 <h3 class="font-tajawal font-bold text-xl text-gray-800 mb-6 flex items-center gap-2">
@@ -380,21 +388,22 @@
                     أحاديث ذات صلة
                 </h3>
                 <div class="grid md:grid-cols-2 gap-4">
-                    @foreach($relatedHadiths as $related)
-                        <a href="{{ route('hadith.show', [$related->id, $related->slug]) }}"
+                    <?php $__currentLoopData = $relatedHadiths; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $related): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <a href="<?php echo e(route('hadith.show', [$related->id, $related->slug])); ?>"
                             class="block p-5 border border-gray-100 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all group">
                             <div class="flex items-center gap-2 mb-3">
-                                <span class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold">#{{ $related->number_in_book }}</span>
-                                <span class="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full font-bold">{{ $related->grade }}</span>
+                                <span class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold">#<?php echo e($related->number_in_book); ?></span>
+                                <span class="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full font-bold"><?php echo e($related->grade); ?></span>
                             </div>
                             <p class="font-scheherazade text-sm text-gray-700 line-clamp-2 group-hover:text-gray-900">
-                                {{ Str::limit($related->content, 100) }}
+                                <?php echo e(Str::limit($related->content, 100)); ?>
+
                             </p>
                         </a>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
             </section>
-        @endif
+        <?php endif; ?>
 
     </div>
 
@@ -457,9 +466,9 @@
             </button>
         </div>
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
     <script>
         // Toggle النص الأصلي (الأمانة العلمية)
         function toggleRawText() {
@@ -543,13 +552,13 @@
 
         function copyHadith() {
             // Build formatted hadith text
-            const hadithContent = `{{ $hadith->content }}`;
-            const narrator = `{{ $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد' }}`;
-            const grade = `{{ $hadith->grade }}`;
-            const mainBook = `{{ $hadith->book ? ($hadith->book->parent ? $hadith->book->parent->name : $hadith->book->name) : '' }}`;
-            const chapter = `{{ $hadith->book && $hadith->book->parent ? $hadith->book->name : '' }}`;
-            const hadithNumber = `{{ $hadith->number_in_book }}`;
-            const sources = `{{ $hadith->sources->pluck('name')->join('، ') }}`;
+            const hadithContent = `<?php echo e($hadith->content); ?>`;
+            const narrator = `<?php echo e($hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد'); ?>`;
+            const grade = `<?php echo e($hadith->grade); ?>`;
+            const mainBook = `<?php echo e($hadith->book ? ($hadith->book->parent ? $hadith->book->parent->name : $hadith->book->name) : ''); ?>`;
+            const chapter = `<?php echo e($hadith->book && $hadith->book->parent ? $hadith->book->name : ''); ?>`;
+            const hadithNumber = `<?php echo e($hadith->number_in_book); ?>`;
+            const sources = `<?php echo e($hadith->sources->pluck('name')->join('، ')); ?>`;
             const url = window.location.href;
 
             // Format: Hadith first, then source, link, then metadata
@@ -599,14 +608,14 @@
 
         // Share Text - Same format as copy but without emojis (URL encoding issues)
         const shareUrl = window.location.href;
-        const narrator = `{{ $hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد' }}`;
-        const grade = `{{ $hadith->grade }}`;
-        const mainBookShare = `{{ $hadith->book ? ($hadith->book->parent ? $hadith->book->parent->name : $hadith->book->name) : '' }}`;
-        const chapterShare = `{{ $hadith->book && $hadith->book->parent ? $hadith->book->name : '' }}`;
-        const hadithNumber = `{{ $hadith->number_in_book }}`;
-        const sources = `{{ $hadith->sources->pluck('name')->join('، ') }}`;
+        const narrator = `<?php echo e($hadith->narrators->pluck('name')->join('، ') ?: 'غير محدد'); ?>`;
+        const grade = `<?php echo e($hadith->grade); ?>`;
+        const mainBookShare = `<?php echo e($hadith->book ? ($hadith->book->parent ? $hadith->book->parent->name : $hadith->book->name) : ''); ?>`;
+        const chapterShare = `<?php echo e($hadith->book && $hadith->book->parent ? $hadith->book->name : ''); ?>`;
+        const hadithNumber = `<?php echo e($hadith->number_in_book); ?>`;
+        const sources = `<?php echo e($hadith->sources->pluck('name')->join('، ')); ?>`;
 
-        let shareTextRaw = `« {{ $hadith->content }} »\n\n`;
+        let shareTextRaw = `« <?php echo e($hadith->content); ?> »\n\n`;
         shareTextRaw += `المصدر: موسوعة الحديث الصحيح\n`;
         shareTextRaw += `الرابط: ${shareUrl}\n\n`;
         shareTextRaw += `الراوي: ${narrator}\n`;
@@ -631,7 +640,7 @@
 
         function shareToTwitter() {
             // Twitter has character limit, so use shorter version
-            const twitterText = encodeURIComponent(`« {{ Str::limit($hadith->content, 200) }} »\n\n• {{ $hadith->narrators->pluck('name')->join('، ') ?: '' }} | {{ $hadith->grade }}\n\nموسوعة الحديث الصحيح`);
+            const twitterText = encodeURIComponent(`« <?php echo e(Str::limit($hadith->content, 200)); ?> »\n\n• <?php echo e($hadith->narrators->pluck('name')->join('، ') ?: ''); ?> | <?php echo e($hadith->grade); ?>\n\nموسوعة الحديث الصحيح`);
             window.open(`https://twitter.com/intent/tweet?text=${twitterText}&url=${encodeURIComponent(shareUrl)}`, '_blank');
             closeShareModal();
         }
@@ -655,4 +664,6 @@
                 .catch(() => showToast('فشل النسخ', true));
         }
     </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.frontend', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\hadeeth\resources\views/frontend/hadith-show.blade.php ENDPATH**/ ?>

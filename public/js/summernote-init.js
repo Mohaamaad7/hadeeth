@@ -86,6 +86,8 @@ $(document).ready(function() {
             styleTags: styleTags,
             tabDisable: true,
             dialogsInBody: true,
+            codeviewFilter: false,
+            codeviewIframeFilter: false,
             callbacks: {
                 onInit: function() {
                     // تطبيق الخط الافتراضي

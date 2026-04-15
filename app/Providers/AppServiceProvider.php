@@ -24,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Forcing the Arabic locale globally so Spatie Tags and Carbon use Arabic by default
+        \Illuminate\Support\Facades\App::setLocale('ar');
+        
         Hadith::observe(HadithObserver::class);
         Narrator::observe(NarratorObserver::class);
     }

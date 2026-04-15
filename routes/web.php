@@ -11,6 +11,7 @@ use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\HadithController as FrontendHadithController;
 use App\Http\Controllers\Frontend\NarratorController as FrontendNarratorController;
 use App\Http\Controllers\Frontend\BookController as FrontendBookController;
+use App\Http\Controllers\Frontend\TopicController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Dashboard\CleanupController;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,8 @@ Route::get('/narrator/{id}', [FrontendNarratorController::class, 'show'])->name(
 Route::get('/books', [FrontendBookController::class, 'index'])->name('books.index');
 Route::get('/books/{book}', [FrontendBookController::class, 'show'])->name('books.show');
 Route::get('/books/{book}/pdf', [FrontendBookController::class, 'exportPdf'])->name('books.pdf')->middleware('throttle:5,1');
+Route::get('/topics', [TopicController::class, 'index'])->name('topics.index');
+Route::get('/topics/{slug}', [TopicController::class, 'show'])->name('topics.show');
 Route::get('/about', function () {
     return view('frontend.about');
 })->name('about');

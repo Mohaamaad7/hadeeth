@@ -12,11 +12,20 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Str;
 use App\Traits\HasDiacriticStripper;
+use Spatie\Tags\HasTags;
 
 
 class Hadith extends Model
 {
-    use HasDiacriticStripper;
+    use HasDiacriticStripper, HasTags;
+
+    protected static function booted()
+    {
+        static::saved(function ($hadith) {
+            // Auto tag on create/update logic using the service
+            (new \App\Services\AutoTaggerService())->tagHadith($hadith);
+        });
+    }
 
     protected $fillable = [
         'content',
