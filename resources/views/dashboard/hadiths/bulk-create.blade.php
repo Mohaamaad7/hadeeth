@@ -76,9 +76,18 @@
             </small>
         </div>
 
-        <button type="button" id="btnParse" class="btn btn-primary btn-lg btn-block">
-            <i class="fas fa-magic"></i> تحليل الأحاديث
-        </button>
+        <div class="row">
+            <div class="col-md-6">
+                <button type="button" id="btnParse" class="btn btn-primary btn-lg btn-block">
+                    <i class="fas fa-magic"></i> تحليل سريع
+                </button>
+            </div>
+            <div class="col-md-6">
+                <button type="button" id="btnParseAi" class="btn btn-info btn-lg btn-block" title="أبطأ قليلاً لكن يستعين בـِGemini لتصحيح النواقص">
+                    <i class="fas fa-brain"></i> استخراج ذكي (مع Gemini)
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -477,8 +486,9 @@
             $('.hadith-check').prop('checked', $(this).is(':checked'));
         });
 
-        // ========== Parse button ==========
-        $('#btnParse').on('click', function () {
+        // ========== Parse buttons ==========
+        $('#btnParse, #btnParseAi').on('click', function () {
+            const isAi = $(this).attr('id') === 'btnParseAi';
             const bulkText = $('#bulkText').val().trim();
             const bookId = bookIdInput.val();
 
@@ -493,6 +503,7 @@
             }
 
             const btn = $(this);
+            const originalHtml = btn.html();
             btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> جاري التحليل...');
 
             $.ajax({
@@ -501,6 +512,7 @@
                 data: {
                     _token: '{{ csrf_token() }}',
                     bulk_text: bulkText,
+                    use_ai: isAi ? 1 : 0
                 },
                 success: function (response) {
                     if (response.success && response.count > 0) {
@@ -537,14 +549,26 @@
 
                         errorHtml += `</div>`;
 
-                        Swal.fire({
+                        let swalOptions = {
                             icon: 'error',
                             title: '<span style="font-size:20px;">⛔ مشاكل في التحليل</span>',
                             html: errorHtml,
                             width: '650px',
-                            confirmButtonText: '✏️ فهمت، سأصلح النصوص',
-                            confirmButtonColor: '#0d6efd',
+                            confirmButtonText: '✏️ سأصلح النصوص يدوياً',
+                            confirmButtonColor: '#6c757d',
                             customClass: { popup: 'text-right' },
+                        };
+
+                        if (!isAi) {
+                            swalOptions.showCancelButton = true;
+                            swalOptions.cancelButtonText = '🧠 جرب الإصلاح الذكي (Gemini)';
+                            swalOptions.cancelButtonColor = '#17a2b8';
+                        }
+
+                        Swal.fire(swalOptions).then((result) => {
+                            if (result.dismiss === Swal.DismissReason.cancel) {
+                                $('#btnParseAi').click();
+                            }
                         });
                     } else {
                         Swal.fire({
@@ -556,7 +580,7 @@
                     }
                 },
                 complete: function () {
-                    btn.prop('disabled', false).html('<i class="fas fa-magic"></i> تحليل الأحاديث');
+                    btn.prop('disabled', false).html(originalHtml);
                 }
             });
         });
@@ -596,11 +620,16 @@
 
                 let hasMissing = false;
                 let missingNames = [];
+                let aiReasons = [];
 
                 if (p.narrators_data && p.narrators_data.length > 0) {
                     p.narrators_data.forEach(nd => {
                         if (nd.found && nd.id) {
                             narratorCell += `<option value="${nd.id}" selected>${nd.name}</option>`;
+                            // إذا تم حلّ الراوي بالذكاء الاصطناعي، نحفظ السبب
+                            if (nd.ai_resolved && nd.ai_reason) {
+                                aiReasons.push(`${nd.ai_reason}`);
+                            }
                         } else {
                             hasMissing = true;
                             missingNames.push(nd.original);
@@ -622,6 +651,14 @@
                     narratorCell += `<small class="text-muted d-block" style="font-size:11px;">لم يتم العثور على أي راوي</small>`;
                 }
 
+                if (p.ai_fixed_narrators && aiReasons.length > 0) {
+                    const reasonsText = aiReasons.join(' | ');
+                    narratorCell += `<small class="text-success d-block mt-1" style="font-size:11px; font-weight:bold;" title="${reasonsText}"><i class="fas fa-brain"></i> 🧠 تم المطابقة بالذكاء الاصطناعي</small>`;
+                    narratorCell += `<small class="text-muted d-block" style="font-size:10px; font-style:italic;">${reasonsText}</small>`;
+                } else if (p.ai_fixed_narrators) {
+                    narratorCell += `<small class="text-info d-block mt-1" style="font-size:11px; font-weight:bold;"><i class="fas fa-brain"></i> مصحح بالذكاء الاصطناعي</small>`;
+                }
+
                 narratorCell += `</div>`;
 
                 // عمود المصادر (Select2 المتعدد — مثل الرواة)
@@ -630,27 +667,53 @@
                         <select class="source-select" data-index="${index}" style="width:100%;" multiple="multiple">
                 `;
 
+                let hasMissingSources = false;
+                let missingSourceNames = [];
+                let aiSourceReasons = [];
+
                 if (p.sources_data && p.sources_data.length > 0) {
                     p.sources_data.forEach(sd => {
                         if (sd.found && sd.id) {
-                            sourceCell += `<option value="${sd.id}" selected>${sd.name} (${sd.code})</option>`;
+                            sourceCell += `<option value="${sd.id}" selected>${sd.name}${sd.code ? ' (' + sd.code + ')' : ''}</option>`;
+                            if (sd.ai_resolved && sd.ai_reason) {
+                                aiSourceReasons.push(`${sd.ai_reason}`);
+                            }
+                        } else {
+                            hasMissingSources = true;
+                            missingSourceNames.push(sd.name || sd.code || 'غير معروف');
                         }
                     });
                 }
 
-                sourceCell += `</select></div>`;
+                sourceCell += `</select>`;
+
+                if (hasMissingSources && missingSourceNames.length > 0) {
+                    sourceCell += `<small class="narrator-missing"><i class="fas fa-exclamation-circle"></i> غير معروف: ${missingSourceNames.join('، ')}</small>`;
+                }
+
+                if (p.ai_fixed_sources && aiSourceReasons.length > 0) {
+                    const srcReasonsText = aiSourceReasons.join(' | ');
+                    sourceCell += `<small class="text-success d-block mt-1" style="font-size:11px; font-weight:bold;" title="${srcReasonsText}"><i class="fas fa-brain"></i> 🧠 تم المطابقة بالذكاء الاصطناعي</small>`;
+                    sourceCell += `<small class="text-muted d-block" style="font-size:10px; font-style:italic;">${srcReasonsText}</small>`;
+                } else if (p.ai_fixed_sources) {
+                    sourceCell += `<small class="text-info d-block mt-1" style="font-size:11px; font-weight:bold;"><i class="fas fa-brain"></i> مصحح بالذكاء الاصطناعي</small>`;
+                }
+
+                sourceCell += `</div>`;
 
                 html += `
                 <tr>
                     <td class="text-center font-weight-bold">${index + 1}</td>
                     <td class="text-center">
                         <span class="badge badge-info">${p.number || '—'}</span>
+                        ${p.ai_fixed_number ? '<small class="text-info d-block mt-1" style="font-size:10px;"><i class="fas fa-brain"></i></small>' : ''}
                     </td>
                     <td style="font-family: 'Scheherazade New', serif; font-size: 1rem; line-height: 2; max-width: 400px;">
                         ${truncate(p.clean_text, 120)}
                     </td>
                     <td class="text-center">
                         <span class="badge badge-${gradeColor(p.grade)}">${p.grade || '—'}</span>
+                        ${p.ai_fixed_grade ? '<small class="text-info d-block mt-1" style="font-size:10px;"><i class="fas fa-brain"></i></small>' : ''}
                     </td>
                     <td>${narratorCell}</td>
                     <td>${sourceCell}</td>

@@ -518,12 +518,64 @@ class HadithController extends Controller
     {
         $request->validate([
             'bulk_text' => 'required|string',
+            'use_ai' => 'nullable|boolean',
         ]);
 
         $results = $this->parser->parseMultiple($request->bulk_text);
 
+        // التدخل بالذكاء الاصطناعي لتصحيح النواقص قبل البحث في قاعدة البيانات
+        if ($request->boolean('use_ai')) {
+            $hadithsFixQueue = [];
+            foreach ($results as $index => $item) {
+                $parsed = $item['parsed'];
+                // نحدد الأحاديث التي تحتاج تصحيح (نقص في الدرجة، الرواة، أو اشتباه في تلاصق الرواة)
+                $needsFix = empty($parsed['number']) || empty($parsed['grade']) || empty($parsed['narrators']);
+                
+                if ($needsFix) {
+                    $hadithsFixQueue[] = [
+                        'index' => $index,
+                        'raw' => $item['raw'],
+                        'parsed' => $parsed,
+                    ];
+                }
+            }
+
+            if (!empty($hadithsFixQueue)) {
+                try {
+                    $aiService = app(\App\Services\GeminiExtractionService::class);
+                    $corrections = $aiService->fixIncompleteParses($hadithsFixQueue);
+
+                    foreach ($corrections as $idx => $correction) {
+                        if (isset($results[$idx])) {
+                            if (!empty($correction['number']) && empty($results[$idx]['parsed']['number'])) {
+                                $results[$idx]['parsed']['number'] = $correction['number'];
+                                $results[$idx]['parsed']['ai_fixed_number'] = true;
+                            }
+                            if (!empty($correction['grade']) && empty($results[$idx]['parsed']['grade'])) {
+                                $results[$idx]['parsed']['grade'] = $correction['grade'];
+                                $results[$idx]['parsed']['ai_fixed_grade'] = true;
+                            }
+                            if (!empty($correction['narrators']) && is_array($correction['narrators'])) {
+                                $results[$idx]['parsed']['narrators'] = $correction['narrators'];
+                                $results[$idx]['parsed']['ai_fixed_narrators'] = true;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'تعذر الاتصال بـ Gemini: ' . $e->getMessage(),
+                        'errors' => [],
+                    ], 422);
+                }
+            }
+        }
+
+        // ===== المرحلة الأولى: البحث العادي في قاعدة البيانات =====
         $errors = [];
         $warnings = [];
+        $useAi = $request->boolean('use_ai');
+
         foreach ($results as $index => $item) {
             $parsed = $item['parsed'];
             $hadithErrors = [];
@@ -532,7 +584,7 @@ class HadithController extends Controller
             $snippet = mb_substr($raw, 0, 60, 'UTF-8') . '...';
 
             if (empty($parsed['number'])) {
-                $hadithErrors[] = 'لم يتم العثور على رقم الحديث [xxx]';
+                $hadithWarnings[] = 'لم يتم العثور على رقم للحديث';
             }
             if (empty($parsed['grade'])) {
                 $hadithErrors[] = 'لم يتم العثور على الحكم (صحيح/حسن/ضعيف)';
@@ -540,7 +592,6 @@ class HadithController extends Controller
 
             $narratorsData = [];
             if (empty($parsed['narrators'])) {
-                // تحذير فقط — ليس خطأ حرج
                 $hadithWarnings[] = 'لم يتم العثور على الراوي (عن ...)';
             } else {
                 // التحقق من وجود الرواة في قاعدة البيانات
@@ -554,8 +605,7 @@ class HadithController extends Controller
                             'original' => $narratorName
                         ];
                     } else {
-                        // تحذير — ليس خطأ حرج (يمكن التصحيح inline)
-                        $hadithWarnings[] = "راوي غير معروف: «{$narratorName}» — يمكنك تصحيحه أدناه";
+                        // مبدئياً: غير موجود (سيتم محاولة حلّه بالذكاء الاصطناعي لاحقاً)
                         $narratorsData[] = [
                             'id' => null,
                             'name' => $narratorName,
@@ -612,7 +662,14 @@ class HadithController extends Controller
                             'found' => true,
                         ];
                     } else {
-                        $hadithWarnings[] = "مصدر غير معروف: «{$displayCode}» — يمكنك تصحيحه أدناه";
+                        // مبدئياً: غير موجود (سيتم محاولة حلّه بالذكاء الاصطناعي لاحقاً)
+                        $sourcesData[] = [
+                            'id' => null,
+                            'name' => $displayCode,
+                            'code' => $code,
+                            'found' => false,
+                            'original_code' => $code,
+                        ];
                     }
                 }
             }
@@ -632,12 +689,268 @@ class HadithController extends Controller
                     'errors' => $hadithErrors,
                 ];
             }
+            // نخزن التحذيرات المبدئية لكن بدون تحذيرات الرواة (ستُحَلّ بالذكاء الاصطناعي)
             if (!empty($hadithWarnings)) {
                 $warnings[] = [
                     'index' => $index + 1,
                     'snippet' => $snippet,
                     'warnings' => $hadithWarnings,
                 ];
+            }
+        }
+
+        // ===== المرحلة الثانية: مطابقة الرواة بالذكاء الاصطناعي (Gemini) =====
+        if ($useAi) {
+            // جمع كل الرواة غير المطابقين من جميع الأحاديث
+            $unresolvedNarrators = [];
+            $unresolvedMap = []; // لتتبع أي حديث ينتمي إليه كل راوي
+
+            foreach ($results as $index => $item) {
+                $narratorsData = $item['parsed']['narrators_data'] ?? [];
+                foreach ($narratorsData as $ndIdx => $nd) {
+                    if (!$nd['found'] && !empty($nd['original'])) {
+                        $originalName = $nd['original'];
+                        // لا نكرر نفس الاسم في الإرسال لـ Gemini
+                        if (!isset($unresolvedNarrators[$originalName])) {
+                            $unresolvedNarrators[$originalName] = $originalName;
+                        }
+                        $unresolvedMap[] = [
+                            'hadith_index' => $index,
+                            'nd_index' => $ndIdx,
+                            'original_name' => $originalName,
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($unresolvedNarrators)) {
+                try {
+                    $aiService = app(\App\Services\GeminiExtractionService::class);
+
+                    // تحضير قائمة الرواة من DB لإرسالها لـ Gemini
+                    $dbNarrators = Narrator::with('alternatives')->get()->map(function ($n) {
+                        return [
+                            'id' => $n->id,
+                            'name' => $n->name,
+                            'fame_name' => $n->fame_name,
+                            'alternatives' => $n->alternatives->pluck('alternative_name')->toArray(),
+                        ];
+                    })->toArray();
+
+                    $aiResolutions = $aiService->resolveNarrators(
+                        array_values($unresolvedNarrators),
+                        $dbNarrators
+                    );
+
+                    // تطبيق النتائج على كل حديث
+                    foreach ($unresolvedMap as $mapping) {
+                        $originalName = $mapping['original_name'];
+                        $hIdx = $mapping['hadith_index'];
+                        $ndIdx = $mapping['nd_index'];
+
+                        if (isset($aiResolutions[$originalName]) && $aiResolutions[$originalName]['matched']) {
+                            $resolved = $aiResolutions[$originalName]['resolved_narrators'] ?? [];
+
+                            if (!empty($resolved)) {
+                                // استبدال الراوي غير المعروف بالرواة المطابقين من Gemini
+                                $newNarratorsData = [];
+                                foreach ($resolved as $rNarrator) {
+                                    // التحقق من وجود الراوي فعلاً في DB قبل الاعتماد
+                                    $verifiedNarrator = Narrator::find($rNarrator['db_id'] ?? null);
+                                    if ($verifiedNarrator) {
+                                        $newNarratorsData[] = [
+                                            'id' => $verifiedNarrator->id,
+                                            'name' => $verifiedNarrator->name,
+                                            'found' => true,
+                                            'original' => $originalName,
+                                            'ai_resolved' => true,
+                                            'ai_reason' => $rNarrator['reason'] ?? '',
+                                        ];
+                                    }
+                                }
+
+                                if (!empty($newNarratorsData)) {
+                                    // استبدال العنصر غير المطابق بالعناصر المطابقة
+                                    $currentData = $results[$hIdx]['parsed']['narrators_data'];
+                                    array_splice($currentData, $ndIdx, 1, $newNarratorsData);
+                                    $results[$hIdx]['parsed']['narrators_data'] = $currentData;
+                                    $results[$hIdx]['parsed']['ai_fixed_narrators'] = true;
+                                }
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // في حالة فشل Gemini، نستمر بالنتائج العادية ونضيف تحذيراً
+                    Log::warning('Gemini narrator resolution failed: ' . $e->getMessage());
+                }
+            }
+
+            // ===== مطابقة المصادر بالذكاء الاصطناعي =====
+            $unresolvedSources = [];
+            $unresolvedSourceMap = [];
+
+            foreach ($results as $index => $item) {
+                $sourcesData = $item['parsed']['sources_data'] ?? [];
+                foreach ($sourcesData as $sdIdx => $sd) {
+                    if (!$sd['found'] && !empty($sd['original_code'])) {
+                        $codeKey = $sd['original_code'];
+                        if (!isset($unresolvedSources[$codeKey])) {
+                            $unresolvedSources[$codeKey] = [
+                                'code' => $codeKey,
+                                'display_name' => $sd['name'],
+                                'hadith_snippet' => mb_substr($item['raw'], 0, 100, 'UTF-8'),
+                            ];
+                        }
+                        $unresolvedSourceMap[] = [
+                            'hadith_index' => $index,
+                            'sd_index' => $sdIdx,
+                            'original_code' => $codeKey,
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($unresolvedSources)) {
+                try {
+                    $aiService = $aiService ?? app(\App\Services\GeminiExtractionService::class);
+
+                    // تحضير قائمة المصادر من DB
+                    $dbSources = Source::all()->map(function ($s) {
+                        return [
+                            'id' => $s->id,
+                            'name' => $s->name,
+                            'code' => $s->code,
+                            'author' => $s->author,
+                            'type' => $s->type,
+                        ];
+                    })->toArray();
+
+                    $aiSourceResolutions = $aiService->resolveSources(
+                        array_values($unresolvedSources),
+                        $dbSources
+                    );
+
+                    // تطبيق النتائج
+                    foreach ($unresolvedSourceMap as $mapping) {
+                        $codeKey = $mapping['original_code'];
+                        $hIdx = $mapping['hadith_index'];
+                        $sdIdx = $mapping['sd_index'];
+
+                        if (isset($aiSourceResolutions[$codeKey]) && $aiSourceResolutions[$codeKey]['matched']) {
+                            $resolved = $aiSourceResolutions[$codeKey]['resolved_sources'] ?? [];
+
+                            if (!empty($resolved)) {
+                                $newSourcesData = [];
+                                foreach ($resolved as $rSource) {
+                                    $verifiedSource = Source::find($rSource['db_id'] ?? null);
+                                    if ($verifiedSource) {
+                                        $newSourcesData[] = [
+                                            'id' => $verifiedSource->id,
+                                            'name' => $verifiedSource->name,
+                                            'code' => $verifiedSource->code,
+                                            'found' => true,
+                                            'ai_resolved' => true,
+                                            'ai_reason' => $rSource['reason'] ?? '',
+                                        ];
+                                    }
+                                }
+
+                                if (!empty($newSourcesData)) {
+                                    $currentData = $results[$hIdx]['parsed']['sources_data'];
+                                    array_splice($currentData, $sdIdx, 1, $newSourcesData);
+                                    $results[$hIdx]['parsed']['sources_data'] = $currentData;
+                                    $results[$hIdx]['parsed']['ai_fixed_sources'] = true;
+                                }
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Gemini source resolution failed: ' . $e->getMessage());
+                }
+            }
+
+            // إعادة حساب التحذيرات بعد تطبيق نتائج Gemini (الرواة + المصادر)
+            $warnings = [];
+            foreach ($results as $index => $item) {
+                $hadithWarnings = [];
+                $raw = $item['raw'];
+                $snippet = mb_substr($raw, 0, 60, 'UTF-8') . '...';
+
+                if (empty($item['parsed']['number'])) {
+                    $hadithWarnings[] = 'لم يتم العثور على رقم للحديث';
+                }
+
+                // تحذيرات الرواة: فقط الرواة الذين لم يتم حلّهم نهائياً
+                $narratorsData = $item['parsed']['narrators_data'] ?? [];
+                foreach ($narratorsData as $nd) {
+                    if (!$nd['found']) {
+                        $hadithWarnings[] = "راوي غير معروف: «{$nd['original']}» — يمكنك تصحيحه أدناه";
+                    }
+                }
+                if (empty($narratorsData)) {
+                    $hadithWarnings[] = 'لم يتم العثور على الراوي (عن ...)';
+                }
+
+                // تحذيرات المصادر: فقط المصادر التي لم يتم حلّها نهائياً
+                $sourcesData = $item['parsed']['sources_data'] ?? [];
+                $hasUnresolvedSources = false;
+                foreach ($sourcesData as $sd) {
+                    if (!$sd['found']) {
+                        $hadithWarnings[] = "مصدر غير معروف: «{$sd['name']}» — يمكنك تصحيحه أدناه";
+                        $hasUnresolvedSources = true;
+                    }
+                }
+                if (empty($sourcesData) && empty($item['parsed']['source_codes'])) {
+                    $hadithWarnings[] = 'لم يتم العثور على أي مصدر — يمكنك إضافتها يدوياً';
+                }
+
+                if (!empty($hadithWarnings)) {
+                    $warnings[] = [
+                        'index' => $index + 1,
+                        'snippet' => $snippet,
+                        'warnings' => $hadithWarnings,
+                    ];
+                }
+            }
+        } else {
+            // في الوضع العادي (بدون AI)، نضيف تحذيرات الرواة والمصادر غير المعروفين
+            $warnings = [];
+            foreach ($results as $index => $item) {
+                $hadithWarnings = [];
+                $raw = $item['raw'];
+                $snippet = mb_substr($raw, 0, 60, 'UTF-8') . '...';
+
+                if (empty($item['parsed']['number'])) {
+                    $hadithWarnings[] = 'لم يتم العثور على رقم للحديث';
+                }
+
+                $narratorsData = $item['parsed']['narrators_data'] ?? [];
+                foreach ($narratorsData as $nd) {
+                    if (!$nd['found']) {
+                        $hadithWarnings[] = "راوي غير معروف: «{$nd['original']}» — يمكنك تصحيحه أدناه";
+                    }
+                }
+                if (empty($narratorsData) && empty($item['parsed']['narrators'])) {
+                    $hadithWarnings[] = 'لم يتم العثور على الراوي (عن ...)';
+                }
+
+                $sourcesData = $item['parsed']['sources_data'] ?? [];
+                foreach ($sourcesData as $sd) {
+                    if (!$sd['found']) {
+                        $hadithWarnings[] = "مصدر غير معروف: «{$sd['name']}» — يمكنك تصحيحه أدناه";
+                    }
+                }
+                if (empty($sourcesData) && empty($item['parsed']['source_codes'])) {
+                    $hadithWarnings[] = 'لم يتم العثور على أي مصدر — يمكنك إضافتها يدوياً';
+                }
+
+                if (!empty($hadithWarnings)) {
+                    $warnings[] = [
+                        'index' => $index + 1,
+                        'snippet' => $snippet,
+                        'warnings' => $hadithWarnings,
+                    ];
+                }
             }
         }
 
