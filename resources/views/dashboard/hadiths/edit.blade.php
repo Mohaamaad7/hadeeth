@@ -783,7 +783,7 @@
             $(this).find('input[name], textarea[name]').each(function() {
                 const name = $(this).attr('name');
                 if (name) {
-                    const newName = name.replace(/additions\[\d+\]/, \`additions[${index}]\`);
+                    const newName = name.replace(/additions\[\d+\]/, 'additions[' + index + ']');
                     $(this).attr('name', newName);
                 }
             });

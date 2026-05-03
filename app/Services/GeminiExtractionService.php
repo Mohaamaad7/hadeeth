@@ -166,25 +166,37 @@ class GeminiExtractionService
         }
 
         // Prepare the payload
-        $systemInstruction = "أنت مساعد متخصص في فحص وتخريج الأحاديث النبوية ومعرفة درجاتها ورواتها. 
+        $systemInstruction = "أنت مساعد متخصص في فحص وتخريج الأحاديث النبوية ومعرفة درجاتها ورواتها وزياداتها. 
 التزم بالقواعد التالية بصرامة:
 1. أنت متصل بمحرك بحث جوجل. يجب عليك البحث عن الحديث للتحقق من درجته (صحيح، حسن، ضعيف، موضوع) إذا كانت غير مذكورة.
 2. لا تخمن درجة الحديث أبدًا. يجب أن تعتمد على المصادر في بحثك.
 3. إذا وجدت أسماء رواة ملتصقة ببعضها (مثل: عن مالكعننافع)، قم بفصلها إلى مصفوفة نظيفة (مثل: ['مالك', 'نافع']).
-4. التنسيق المطلوب للرد هو JSON array فقط يحتوي على الكائنات بالصيغة المحددة لك، بدون أي نصوص إضافية أو علامات Markdown.";
+4. إذا رأيت عبارة 'وما بين القوسين زيادة من [مصدر]' أو ما شابهها، فالنص الذي بين القوسين ( ) قبل هذه العبارة هو الزيادة. استخرجه وضعه في مصفوفة additions.
+5. مثال: إذا كان النص 'فعل كذا (وفعل كذا أيضاً) وما بين القوسين زيادة من الآحاد والمثاني لابن أبي عاصم' — فالزيادة هي 'وفعل كذا أيضاً' من مصدر 'الآحاد والمثاني لابن أبي عاصم'.
+6. التنسيق المطلوب للرد هو JSON array فقط يحتوي على الكائنات بالصيغة المحددة لك، بدون أي نصوص إضافية أو علامات Markdown.";
 
         // Format the input batch
         $batchToProcess = [];
         foreach ($failedHadiths as $item) {
-            $batchToProcess[] = [
+            // كشف وجود أقواس زيادة في النص الخام
+            $hasComplexAddition = preg_match('/\((?:[^()]*?)زيادة(?:[^()]*?)\)/u', $item['raw'] ?? '');
+            
+            $entry = [
                 'index' => $item['index'],
                 'raw_text' => $item['raw'],
                 'extracted' => [
                     'grade' => $item['parsed']['grade'] ?? null,
                     'narrators' => $item['parsed']['narrators'] ?? [],
+                    'additions' => $item['parsed']['additions'] ?? [],
                 ],
-                'issues' => array_merge($item['errors'] ?? [], $item['warnings'] ?? []),
             ];
+            
+            if ($hasComplexAddition) {
+                $entry['has_complex_addition'] = true;
+                $entry['addition_hint'] = 'يوجد في النص أقواس تحتوي على كلمة زيادة — يرجى استخراج نص الزيادة ومصدرها وتعبئة مصفوفة additions';
+            }
+            
+            $batchToProcess[] = $entry;
         }
 
         $promptText = "يرجى تصحيح الأحاديث التالية وإرجاع JSON Array يحتوي على التصحيحات فقط.\n";
@@ -193,7 +205,9 @@ class GeminiExtractionService
         $promptText .= "- number: الرقم المتسلسل للحديث (إن وجد نصاً). اتركه فارغاً إن لم تجده.\n";
         $promptText .= "- grade: درجة الحديث الصحيحة. إذا لم تكن متأكدا، اجعلها فارغة.\n";
         $promptText .= "- narrators: مصفوفة بأسماء الرواة مفصولة ونظيفة.\n";
-        $promptText .= "- additions: مصفوفة بأي زيادات في الحديث (خاصة الزيادات المعقدة مثل 'وما بين القوسين زيادة من...'). كل زيادة يجب أن تكون كائن يحتوي على 'source_name' (المصدر) و 'text' (نص الزيادة المستخرج من المتن بناءً على السياق).\n\n";
+        $promptText .= "- additions: مصفوفة بأي زيادات في الحديث. انتبه جيداً لحقل has_complex_addition=true — هذا يعني أن هناك نصاً بين قوسين قبل جملة 'زيادة من...'، استخرجه ولا تتجاهله. كل زيادة يجب أن تكون كائن يحتوي على:\n";
+        $promptText .= "  - source_name: اسم المصدر المذكور في جملة الزيادة (مثل 'الآحاد والمثاني لابن أبي عاصم')\n";
+        $promptText .= "  - text: النص الذي كان بين القوسين ( ) والذي أشارت إليه جملة الزيادة\n\n";
         $promptText .= "البيانات:\n" . json_encode($batchToProcess, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
         return $this->callGemini($systemInstruction, $promptText, function ($decoded) {

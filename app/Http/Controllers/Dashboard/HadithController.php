@@ -541,7 +541,11 @@ class HadithController extends Controller
                 $parsed = $item['parsed'];
                 // نحدد الأحاديث التي تحتاج تصحيح (نقص في الدرجة، الرواة، أو اشتباه في تلاصق الرواة)
                 $needsFix = empty($parsed['number']) || empty($parsed['grade']) || empty($parsed['narrators']);
-                $hasComplexAddition = preg_match('/\((?:.*?)زيادة(?:.*?)\)/u', $item['raw']) && empty($parsed['additions']);
+                // نمط الزيادة: إما (زيادة داخل القوسين) أو (نص) ثم خارجها جملة "زيادة من ..."
+                $hasComplexAddition = (
+                    mb_strpos($item['raw'], 'زيادة') !== false
+                    && preg_match('/\([^()]+\)/u', $item['raw'])
+                ) && empty($parsed['additions']);
                 
                 if ($needsFix || $hasComplexAddition) {
                     $hadithsFixQueue[] = [
