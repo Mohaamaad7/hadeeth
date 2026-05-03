@@ -9,6 +9,9 @@
     </div>
     <div class="col-sm-6">
         <div class="float-left">
+            <a href="{{ route('hadith.show', ['id' => $hadith->id]) }}" class="btn btn-success" target="_blank">
+                <i class="fas fa-external-link-alt"></i> مشاهدة في الموقع
+            </a>
             <a href="{{ route('dashboard.hadiths.edit', $hadith) }}" class="btn btn-warning">
                 <i class="fas fa-edit"></i> تعديل
             </a>

@@ -304,6 +304,12 @@ return [
             'type' => 'fullscreen-widget',
             'topnav_right' => true,
         ],
+        [
+            'text' => 'انتقال للموقع',
+            'icon' => 'fas fa-external-link-alt',
+            'url' => '/',
+            'topnav_right' => true,
+        ],
 
         // Sidebar items:
         [

@@ -9,6 +9,9 @@
     </div>
     <div class="col-sm-6">
         <div class="float-left">
+            <a href="{{ route('hadith.show', ['id' => $hadith->id]) }}" class="btn btn-success" target="_blank">
+                <i class="fas fa-external-link-alt"></i> مشاهدة في الموقع
+            </a>
             <a href="{{ route('dashboard.hadiths.show', $hadith) }}" class="btn btn-info">
                 <i class="fas fa-eye"></i> عرض
             </a>
@@ -383,6 +386,23 @@
             matcher: arabicMatcher
         });
 
+        // دالة تفعيل Select2 للرواة في السلاسل
+        function initNarratorSelect2(element) {
+            $(element).select2({
+                theme: 'bootstrap4',
+                language: "ar",
+                dir: "rtl",
+                matcher: arabicMatcher,
+                placeholder: '-- اختر --',
+                width: '100%'
+            });
+        }
+
+        // تفعيل Select2 للرواة الموجودين مسبقاً
+        $('.narrator-select:not(:disabled)').each(function() {
+            initNarratorSelect2(this);
+        });
+
         // تفعيل Select2 مع AJAX للرواة
         let lastSearchTerm = '';
         $('#narratorId').select2({
@@ -498,6 +518,13 @@
                 narratorSelect.append('<option value="">-- اختر النوع أولاً --</option>');
                 hiddenRole.val('');
             }
+
+            // تفعيل Select2 بعد تعبئة الخيارات
+            if (!narratorSelect.prop('disabled')) {
+                initNarratorSelect2(narratorSelect);
+            } else if (narratorSelect.data('select2')) {
+                narratorSelect.select2('destroy');
+            }
         });
 
         // إضافة راوي جديد
@@ -537,6 +564,9 @@
         `;
 
             narratorsList.append(narratorRow);
+            
+            // تفعيل Select2 للسطر الجديد إذا تم تفعيله لاحقاً عبر الـ role-selector
+            // (السطر الجديد يكون disabled في البداية)
         });
 
         // حذف راوي
@@ -551,7 +581,11 @@
                 // Reset the row instead of deleting
                 const row = $(this).closest('.narrator-row');
                 row.find('.role-selector').val('');
-                row.find('.narrator-select').prop('disabled', true).empty().append('<option value="">-- اختر النوع أولاً --</option>');
+                const narratorSelect = row.find('.narrator-select');
+                if (narratorSelect.data('select2')) {
+                    narratorSelect.select2('destroy');
+                }
+                narratorSelect.prop('disabled', true).empty().append('<option value="">-- اختر النوع أولاً --</option>');
                 row.find('input[type="hidden"]').val('');
             }
         });
