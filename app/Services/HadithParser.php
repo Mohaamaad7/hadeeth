@@ -726,6 +726,9 @@ class HadithParser
 
             // Remove narrator prefix "عن ..." from the end
             $cleanedText = preg_replace('/\s*عن\s+[^\[\(]+$/u', '', $cleanedText);
+            
+            // Remove complex addition description like "(وما بين القوسين زيادة من...)"
+            $cleanedText = preg_replace('/\s*\((?:.*?)زيادة(?:.*?)\)\.?$/u', '', $cleanedText);
         }
 
         // Remove leading hadith number: "4934-" or "10-"

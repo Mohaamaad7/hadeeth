@@ -192,7 +192,8 @@ class GeminiExtractionService
         $promptText .= "- index: رقم الحديث الذي نرسله لك.\n";
         $promptText .= "- number: الرقم المتسلسل للحديث (إن وجد نصاً). اتركه فارغاً إن لم تجده.\n";
         $promptText .= "- grade: درجة الحديث الصحيحة. إذا لم تكن متأكدا، اجعلها فارغة.\n";
-        $promptText .= "- narrators: مصفوفة بأسماء الرواة مفصولة ونظيفة.\n\n";
+        $promptText .= "- narrators: مصفوفة بأسماء الرواة مفصولة ونظيفة.\n";
+        $promptText .= "- additions: مصفوفة بأي زيادات في الحديث (خاصة الزيادات المعقدة مثل 'وما بين القوسين زيادة من...'). كل زيادة يجب أن تكون كائن يحتوي على 'source_name' (المصدر) و 'text' (نص الزيادة المستخرج من المتن بناءً على السياق).\n\n";
         $promptText .= "البيانات:\n" . json_encode($batchToProcess, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
         return $this->callGemini($systemInstruction, $promptText, function ($decoded) {

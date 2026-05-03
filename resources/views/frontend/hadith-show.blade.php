@@ -171,27 +171,7 @@
                     </p>
                 </div>
 
-                <!-- Additional Texts (الزيادات) -->
-                @if(!empty($hadith->additions) && is_array($hadith->additions))
-                    <div class="mt-4 mb-6 space-y-3 px-2 md:px-6">
-                        @foreach($hadith->additions as $addition)
-                            <div class="bg-gray-50/80 rounded-xl p-4 md:p-5 border border-gray-100 relative overflow-hidden group hover:border-emerald-200 transition-colors">
-                                <div class="absolute right-0 top-0 bottom-0 w-1.5 bg-emerald-400/70 group-hover:bg-emerald-500 transition-colors"></div>
-                                <div class="flex flex-col gap-3 pr-3">
-                                    <div class="flex items-center gap-2">
-                                        <span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5">
-                                            <i class="fa-solid fa-plus-circle"></i>
-                                            زيادة من: {{ $addition['source_name'] }}
-                                        </span>
-                                    </div>
-                                    <p class="font-scheherazade text-xl md:text-2xl leading-[2.5] text-gray-700 text-justify">
-                                        « {{ $addition['text'] }} »
-                                    </p>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
+
 
                 <!-- النص الأصلي كما ورد في المصدر (الأمانة العلمية) -->
                 @if($hadith->raw_text)
@@ -257,6 +237,31 @@
                             <button onclick="openShareModal()" class="text-gray-400 hover:text-emerald-600 transition-colors" title="مشاركة">
                                 <i class="fa-solid fa-share-nodes text-xl"></i>
                             </button>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Additional Texts (الزيادات) -->
+                @if(!empty($hadith->additions) && is_array($hadith->additions))
+                    <div class="mt-6 pt-6 border-t border-dashed border-gray-200">
+                        <div class="flex items-center gap-3 mb-4">
+                            <i class="fa-solid fa-plus-circle text-emerald-500 text-lg"></i>
+                            <span class="font-bold text-gray-700">زيادات الروايات:</span>
+                        </div>
+                        <div class="space-y-3">
+                            @foreach($hadith->additions as $addition)
+                                <div class="bg-gray-50/80 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-emerald-200 transition-colors">
+                                    <div class="absolute right-0 top-0 bottom-0 w-1 bg-emerald-400/70 group-hover:bg-emerald-500 transition-colors"></div>
+                                    <div class="flex flex-col gap-2 pr-2">
+                                        <span class="text-emerald-700 text-xs font-bold">
+                                            من: {{ $addition['source_name'] }}
+                                        </span>
+                                        <p class="font-scheherazade text-lg leading-[2] text-gray-700 text-justify">
+                                            « {{ $addition['text'] }} »
+                                        </p>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 @endif

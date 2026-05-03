@@ -144,14 +144,15 @@
                         <i class="fa-solid fa-check-circle ml-1"></i> <?php echo e($hadith->grade); ?>
 
                     </span>
-                    <?php if($hadith->narrators->count() > 0): ?>
-                        <?php $__currentLoopData = $hadith->narrators; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $nar): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <span class="bg-gray-50 text-gray-600 px-4 py-1.5 rounded-full text-sm font-bold border border-gray-200">
-                                <i class="fa-solid fa-user ml-1 text-gray-400"></i> الصحابي: <?php echo e($nar->name); ?>
+                    <?php $__currentLoopData = $hadith->narrators; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $nar): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <span class="bg-gray-50 text-gray-600 px-4 py-1.5 rounded-full text-sm font-bold border border-gray-200">
+                            <i class="fa-solid fa-user ml-1 text-gray-400"></i> <?php echo e($nar->rank_label ?? 'الراوي'); ?>: <?php echo e($nar->name); ?>
 
-                            </span>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                    <?php endif; ?>
+                            <?php if($nar->pivot && $nar->pivot->transmission_note): ?>
+                                <span class="text-xs text-red-500 font-bold mr-1">(<?php echo e($nar->pivot->transmission_note); ?>)</span>
+                            <?php endif; ?>
+                        </span>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     <?php if($hadith->book): ?>
                         <span class="bg-purple-50 text-purple-600 px-4 py-1.5 rounded-full text-sm font-bold border border-purple-200">
                             <i class="fa-solid fa-book ml-1"></i> <?php echo e($hadith->book->name); ?>
@@ -286,13 +287,20 @@
         </section>
 
         <!-- Sanad Chains (سلاسل الإسناد) - Dynamic -->
-        <?php if($hadith->chains->count() > 0): ?>
+        <?php
+            // نحدد السلاسل التي تحتوي على رواة فعلاً
+            $chainsWithNarrators = $hadith->chains->filter(fn($c) => $c->narrators->count() > 0);
+            $hasAnyChainWithNarrators = $chainsWithNarrators->count() > 0;
+        ?>
+
+        <?php if($hasAnyChainWithNarrators): ?>
+            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-up" style="animation-delay: 0.1s;">
-                <?php $__currentLoopData = $hadith->chains; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $chain): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php $__currentLoopData = $chainsWithNarrators; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $chain): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-200 transition-colors">
                         <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-                            <span class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-sm"><?php echo e($index + 1); ?></span>
-                            <h3 class="font-tajawal font-bold text-lg text-gray-800">طريق <?php echo e($chain->source->name); ?></h3>
+                            <span class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-sm"><?php echo e($loop->iteration); ?></span>
+                            <h3 class="font-tajawal font-bold text-lg text-gray-800">طريق <?php echo e($chain->source?->name ?? 'مصدر غير محدد'); ?></h3>
                         </div>
                         <div class="pr-2">
                             <?php $__currentLoopData = $chain->narrators; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $narrator): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -301,18 +309,27 @@
                                         <span class="text-sm text-gray-500 block mb-1"><?php echo e($narrator->pivot->role); ?></span>
                                     <?php endif; ?>
                                     <?php if($loop->last): ?>
-                                        <span class="font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg"><?php echo e($narrator->name); ?></span>
+                                        <span class="font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg">
+                                            <?php echo e($narrator->name); ?>
+
+                                            <?php if($narrator->pivot && $narrator->pivot->transmission_note): ?>
+                                                <span class="text-xs text-red-500 mr-1">(<?php echo e($narrator->pivot->transmission_note); ?>)</span>
+                                            <?php endif; ?>
+                                        </span>
                                     <?php else: ?>
                                         <a href="<?php echo e(route('narrator.show', $narrator->id)); ?>" target="_blank"
                                             class="font-scheherazade text-lg text-emerald-700 hover:text-emerald-500 hover:underline transition-colors">
                                             <?php echo e($narrator->name); ?>
 
                                         </a>
+                                        <?php if($narrator->pivot && $narrator->pivot->transmission_note): ?>
+                                            <span class="text-xs text-red-500 font-bold mr-1">(<?php echo e($narrator->pivot->transmission_note); ?>)</span>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                     <?php if(!$loop->first && !$loop->last): ?>
                                         <?php
                                             $appearsInOtherChains = false;
-                                            foreach ($hadith->chains as $otherChain) {
+                                            foreach ($chainsWithNarrators as $otherChain) {
                                                 if ($otherChain->id !== $chain->id) {
                                                     if ($otherChain->narrators->contains('id', $narrator->id)) {
                                                         $appearsInOtherChains = true;
@@ -357,7 +374,7 @@
                 style="animation-delay: 0.1s;">
                 <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
                     <i class="fa-solid fa-user-tie text-emerald-500 text-xl"></i>
-                    <h3 class="font-tajawal font-bold text-xl text-gray-800">نبذة عن الصحابي</h3>
+                    <h3 class="font-tajawal font-bold text-xl text-gray-800">نبذة عن الراوي</h3>
                 </div>
                 <div class="flex items-start gap-4">
                     <div class="flex-shrink-0 w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 text-2xl">

@@ -365,6 +365,11 @@ class HadithController extends Controller
             'chains.*.narrators.*.id' => 'nullable|exists:narrators,id',
             'chains.*.narrators.*.role' => 'nullable|string',
             'chains.*.narrators.*.transmission_note' => 'nullable|string|max:100',
+            // الزيادات
+            'additions' => 'nullable|array',
+            'additions.*.source_code' => 'nullable|string',
+            'additions.*.source_name' => 'nullable|string',
+            'additions.*.text' => 'nullable|string',
         ]);
 
         // تجهيز بيانات الشرح المنظم
@@ -406,6 +411,10 @@ class HadithController extends Controller
             'grade' => $validated['grade'],
             'book_id' => $validated['book_id'],
             'narrator_id' => !empty($validated['narrator_ids']) ? $validated['narrator_ids'][0] : null,
+            'additions' => collect($validated['additions'] ?? [])
+                ->filter(fn($a) => !empty($a['source_name']) && !empty($a['text']))
+                ->values()
+                ->toArray() ?: null,
         ], $sharhData));
 
         // Sync narrators
@@ -532,8 +541,9 @@ class HadithController extends Controller
                 $parsed = $item['parsed'];
                 // نحدد الأحاديث التي تحتاج تصحيح (نقص في الدرجة، الرواة، أو اشتباه في تلاصق الرواة)
                 $needsFix = empty($parsed['number']) || empty($parsed['grade']) || empty($parsed['narrators']);
+                $hasComplexAddition = preg_match('/\((?:.*?)زيادة(?:.*?)\)/u', $item['raw']) && empty($parsed['additions']);
                 
-                if ($needsFix) {
+                if ($needsFix || $hasComplexAddition) {
                     $hadithsFixQueue[] = [
                         'index' => $index,
                         'raw' => $item['raw'],
@@ -560,6 +570,10 @@ class HadithController extends Controller
                             if (!empty($correction['narrators']) && is_array($correction['narrators'])) {
                                 $results[$idx]['parsed']['narrators'] = $correction['narrators'];
                                 $results[$idx]['parsed']['ai_fixed_narrators'] = true;
+                            }
+                            if (!empty($correction['additions']) && is_array($correction['additions'])) {
+                                $results[$idx]['parsed']['additions'] = $correction['additions'];
+                                $results[$idx]['parsed']['ai_fixed_additions'] = true;
                             }
                         }
                     }

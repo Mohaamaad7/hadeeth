@@ -1,44 +1,39 @@
-@extends('adminlte::page')
+<?php $__env->startSection('title', 'تعديل الحديث'); ?>
 
-@section('title', 'تعديل الحديث')
-
-@section('content_header')
+<?php $__env->startSection('content_header'); ?>
 <div class="row">
     <div class="col-sm-6">
-        <h1>تعديل الحديث #{{ $hadith->number_in_book }}</h1>
+        <h1>تعديل الحديث #<?php echo e($hadith->number_in_book); ?></h1>
     </div>
     <div class="col-sm-6">
         <div class="float-left">
-            <a href="{{ route('hadith.show', ['id' => $hadith->id]) }}" class="btn btn-success" target="_blank">
-                <i class="fas fa-external-link-alt"></i> مشاهدة في الموقع
-            </a>
-            <a href="{{ route('dashboard.hadiths.show', $hadith) }}" class="btn btn-info">
+            <a href="<?php echo e(route('dashboard.hadiths.show', $hadith)); ?>" class="btn btn-info">
                 <i class="fas fa-eye"></i> عرض
             </a>
-            <a href="{{ route('dashboard.hadiths.index') }}" class="btn btn-secondary">
+            <a href="<?php echo e(route('dashboard.hadiths.index')); ?>" class="btn btn-secondary">
                 <i class="fas fa-arrow-right"></i> رجوع
             </a>
         </div>
     </div>
 </div>
-@stop
+<?php $__env->stopSection(); ?>
 
-@section('content')
-@if ($errors->any())
+<?php $__env->startSection('content'); ?>
+<?php if($errors->any()): ?>
     <div class="alert alert-danger alert-dismissible">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
         <h5><i class="icon fas fa-ban"></i> يوجد أخطاء في النموذج!</h5>
         <ul class="mb-0">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
+            <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <li><?php echo e($error); ?></li>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </ul>
     </div>
-@endif
+<?php endif; ?>
 
-<form action="{{ route('dashboard.hadiths.update', $hadith) }}" method="POST">
-    @csrf
-    @method('PUT')
+<form action="<?php echo e(route('dashboard.hadiths.update', $hadith)); ?>" method="POST">
+    <?php echo csrf_field(); ?>
+    <?php echo method_field('PUT'); ?>
 
     <div class="card card-warning">
         <div class="card-header">
@@ -48,26 +43,26 @@
             <div class="form-group">
                 <label>نص الحديث <span class="text-danger">*</span></label>
                 <textarea name="content" class="form-control" rows="6"
-                    required>{{ old('content', $hadith->content) }}</textarea>
+                    required><?php echo e(old('content', $hadith->content)); ?></textarea>
             </div>
 
-            {{-- النص الأصلي كما ورد في المصدر --}}
-            @if($hadith->raw_text)
+            
+            <?php if($hadith->raw_text): ?>
             <div class="form-group">
                 <label><i class="fas fa-scroll text-warning"></i> النص الأصلي كما ورد في المصدر</label>
                 <textarea name="raw_text" class="form-control" rows="3" 
                     style="background-color: #fffdf5; font-family: 'Scheherazade New', serif; font-size: 1.1rem; line-height: 2;"
-                >{{ old('raw_text', $hadith->raw_text) }}</textarea>
+                ><?php echo e(old('raw_text', $hadith->raw_text)); ?></textarea>
                 <small class="text-muted"><i class="fas fa-info-circle"></i> هذا النص الأصلي كما أُدخل أول مرة. يمكنك تعديله إذا لزم الأمر.</small>
             </div>
-            @else
+            <?php else: ?>
             <input type="hidden" name="raw_text" value="">
-            @endif
+            <?php endif; ?>
 
             <div class="form-group">
                 <label><i class="fas fa-book-open text-info"></i> الشرح والتفسير</label>
                 <textarea name="explanation" id="explanation-editor" class="form-control summernote"
-                    rows="6">{{ old('explanation', $hadith->explanation) }}</textarea>
+                    rows="6"><?php echo e(old('explanation', $hadith->explanation)); ?></textarea>
             </div>
 
 
@@ -76,19 +71,19 @@
                     <div class="form-group">
                         <label>رقم الحديث في الكتاب <span class="text-danger">*</span></label>
                         <input type="text" name="number_in_book" class="form-control"
-                            value="{{ old('number_in_book', $hadith->number_in_book) }}" required placeholder="مثال: 3222 أو 3222-1">
+                            value="<?php echo e(old('number_in_book', $hadith->number_in_book)); ?>" required placeholder="مثال: 3222 أو 3222-1">
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <label>درجة الحديث <span class="text-danger">*</span></label>
                         <select name="grade" class="form-control" required>
-                            <option value="صحيح" {{ old('grade', $hadith->grade) == 'صحيح' ? 'selected' : '' }}>صحيح
+                            <option value="صحيح" <?php echo e(old('grade', $hadith->grade) == 'صحيح' ? 'selected' : ''); ?>>صحيح
                             </option>
-                            <option value="حسن" {{ old('grade', $hadith->grade) == 'حسن' ? 'selected' : '' }}>حسن</option>
-                            <option value="ضعيف" {{ old('grade', $hadith->grade) == 'ضعيف' ? 'selected' : '' }}>ضعيف
+                            <option value="حسن" <?php echo e(old('grade', $hadith->grade) == 'حسن' ? 'selected' : ''); ?>>حسن</option>
+                            <option value="ضعيف" <?php echo e(old('grade', $hadith->grade) == 'ضعيف' ? 'selected' : ''); ?>>ضعيف
                             </option>
-                            <option value="موضوع" {{ old('grade', $hadith->grade) == 'موضوع' ? 'selected' : '' }}>موضوع
+                            <option value="موضوع" <?php echo e(old('grade', $hadith->grade) == 'موضوع' ? 'selected' : ''); ?>>موضوع
                             </option>
                         </select>
                     </div>
@@ -97,61 +92,62 @@
 
             <div class="row">
                 <div class="col-md-6">
-                    @php
+                    <?php
                         $currentBookId = old('book_id', $hadith->book_id);
                         $currentBook = \App\Models\Book::find($currentBookId);
                         $isSub = $currentBook && $currentBook->parent_id;
                         $initialMainBookId = $isSub ? $currentBook->parent_id : $currentBookId;
                         $initialSubBookId = $isSub ? $currentBookId : null;
-                    @endphp
+                    ?>
 
                     <div class="form-group">
                         <label>الكتاب الرئيسي <span class="text-danger">*</span></label>
                         <select id="mainBookSelect" class="form-control select2" style="width: 100%;">
                             <option value="">-- اختر الكتاب الرئيسي --</option>
-                            @foreach($mainBooks as $book)
-                                <option value="{{ $book->id }}" {{ $book->id == $initialMainBookId ? 'selected' : '' }}>
-                                    {{ $book->name }}
+                            <?php $__currentLoopData = $mainBooks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $book): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($book->id); ?>" <?php echo e($book->id == $initialMainBookId ? 'selected' : ''); ?>>
+                                    <?php echo e($book->name); ?>
+
                                 </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
 
-                    <div class="form-group" id="chapterGroup" style="{{ $initialSubBookId ? '' : 'display: none;' }}">
+                    <div class="form-group" id="chapterGroup" style="<?php echo e($initialSubBookId ? '' : 'display: none;'); ?>">
                         <label>الباب الفرعي</label>
                         <select id="chapterSelect" class="form-control select2" style="width: 100%;">
                             <option value="">-- الحديث تابع للكتاب الرئيسي مباشرة --</option>
                             <!-- سيتم تعبئته بواسطة JS، لكن يمكننا وضع القيمة الحالية إذا وجدت -->
-                            @if($isSub)
-                                <option value="{{ $initialSubBookId }}" selected>{{ $currentBook->name }}</option>
-                            @endif
+                            <?php if($isSub): ?>
+                                <option value="<?php echo e($initialSubBookId); ?>" selected><?php echo e($currentBook->name); ?></option>
+                            <?php endif; ?>
                         </select>
                     </div>
                     <!-- الحقل الفعلي -->
-                    <input type="hidden" name="book_id" id="bookId" value="{{ $currentBookId }}" required>
+                    <input type="hidden" name="book_id" id="bookId" value="<?php echo e($currentBookId); ?>" required>
 
                     <!-- تخزين مبدأي للبيانات المشحونة -->
-                    <input type="hidden" id="initialSubBookId" value="{{ $initialSubBookId }}">
+                    <input type="hidden" id="initialSubBookId" value="<?php echo e($initialSubBookId); ?>">
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <label>الصحابي (أو الرواة)</label>
                         <select name="narrator_ids[]" id="narratorId" class="form-control" style="width: 100%;" multiple="multiple">
-                            @php
+                            <?php
                                 $narratorIds = old('narrator_ids', $hadith->narrators->pluck('id')->toArray());
                                 // Legacy support: if hadith->narrator_id exists but narrators relation is empty
                                 if (empty($narratorIds) && $hadith->narrator_id) {
                                     $narratorIds = [$hadith->narrator_id];
                                 }
-                            @endphp
-                            @if(!empty($narratorIds))
-                                @foreach($narratorIds as $nId)
-                                    @php $oldNarrator = \App\Models\Narrator::find($nId); @endphp
-                                    @if($oldNarrator)
-                                        <option value="{{ $oldNarrator->id }}" selected>{{ $oldNarrator->name }}</option>
-                                    @endif
-                                @endforeach
-                            @endif
+                            ?>
+                            <?php if(!empty($narratorIds)): ?>
+                                <?php $__currentLoopData = $narratorIds; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $nId): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <?php $oldNarrator = \App\Models\Narrator::find($nId); ?>
+                                    <?php if($oldNarrator): ?>
+                                        <option value="<?php echo e($oldNarrator->id); ?>" selected><?php echo e($oldNarrator->name); ?></option>
+                                    <?php endif; ?>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            <?php endif; ?>
                         </select>
                         <small class="form-text text-muted">
                             ابدأ بكتابة الاسم للبحث — يمكن ادخال اكثر من راوي للحديث الواحد
@@ -163,21 +159,22 @@
             <div class="form-group">
                 <label>المصادر</label>
                 <div class="row">
-                    @php
+                    <?php
                         $selectedSources = old('source_ids', $hadith->sources->pluck('id')->toArray());
-                    @endphp
-                    @foreach($sources as $source)
+                    ?>
+                    <?php $__currentLoopData = $sources; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $source): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <div class="col-md-4">
                             <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input" id="source_{{ $source->id }}"
-                                    name="source_ids[]" value="{{ $source->id }}" {{ in_array($source->id, $selectedSources) ? 'checked' : '' }}>
-                                <label class="custom-control-label" for="source_{{ $source->id }}">
-                                    {{ $source->name }}
-                                    <small class="text-muted">({{ $source->code }})</small>
+                                <input type="checkbox" class="custom-control-input" id="source_<?php echo e($source->id); ?>"
+                                    name="source_ids[]" value="<?php echo e($source->id); ?>" <?php echo e(in_array($source->id, $selectedSources) ? 'checked' : ''); ?>>
+                                <label class="custom-control-label" for="source_<?php echo e($source->id); ?>">
+                                    <?php echo e($source->name); ?>
+
+                                    <small class="text-muted">(<?php echo e($source->code); ?>)</small>
                                 </label>
                             </div>
                         </div>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
             </div>
         </div>
@@ -185,46 +182,9 @@
             <button type="submit" class="btn btn-warning">
                 <i class="fas fa-save"></i> حفظ التعديلات
             </button>
-            <a href="{{ route('dashboard.hadiths.show', $hadith) }}" class="btn btn-secondary">
+            <a href="<?php echo e(route('dashboard.hadiths.show', $hadith)); ?>" class="btn btn-secondary">
                 <i class="fas fa-times"></i> إلغاء
             </a>
-        </div>
-    </div>
-
-    <!-- قسم الزيادات -->
-    <div class="card card-info mt-3">
-        <div class="card-header">
-            <h3 class="card-title"><i class="fas fa-plus-circle"></i> الزيادات (إن وجدت)</h3>
-        </div>
-        <div class="card-body">
-            <div id="additions-container">
-                @php
-                    $oldAdditions = old('additions', $hadith->additions ?? []);
-                @endphp
-                @foreach($oldAdditions as $index => $addition)
-                    <div class="addition-row mb-3 p-3 border rounded bg-light">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <label class="small text-muted">مصدر الزيادة</label>
-                                <input type="text" name="additions[{{ $index }}][source_name]" class="form-control form-control-sm" value="{{ $addition['source_name'] ?? '' }}" placeholder="مثال: الآحاد والمثاني">
-                                <input type="hidden" name="additions[{{ $index }}][source_code]" value="{{ $addition['source_code'] ?? '' }}">
-                            </div>
-                            <div class="col-md-8">
-                                <label class="small text-muted">نص الزيادة</label>
-                                <textarea name="additions[{{ $index }}][text]" class="form-control form-control-sm" rows="2" placeholder="أدخل نص الزيادة هنا...">{{ $addition['text'] ?? '' }}</textarea>
-                            </div>
-                            <div class="col-md-1 d-flex align-items-end">
-                                <button type="button" class="btn btn-danger btn-sm btn-block remove-addition" title="حذف الزيادة">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-            <button type="button" class="btn btn-sm btn-success mt-2" id="add-addition-btn">
-                <i class="fas fa-plus"></i> إضافة زيادة
-            </button>
         </div>
     </div>
 
@@ -234,75 +194,75 @@
             <h3 class="card-title"><i class="fas fa-users"></i> رجال الحديث (سلاسل الإسناد)</h3>
         </div>
         <div class="card-body">
-            @if($hadith->sources->count() > 0)
+            <?php if($hadith->sources->count() > 0): ?>
                 <div id="chains-container">
-                    @foreach($hadith->sources as $index => $source)
-                        <div class="chain-section mb-4 p-3 border rounded bg-light" data-source-id="{{ $source->id }}">
+                    <?php $__currentLoopData = $hadith->sources; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $source): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="chain-section mb-4 p-3 border rounded bg-light" data-source-id="<?php echo e($source->id); ?>">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="mb-0">
                                     <i class="fas fa-book-open text-primary"></i>
-                                    {{ $source->name }} <span class="badge badge-info">{{ $source->code }}</span>
+                                    <?php echo e($source->name); ?> <span class="badge badge-info"><?php echo e($source->code); ?></span>
                                 </h5>
                             </div>
 
-                            @php
+                            <?php
                                 $existingChain = $hadith->chains->where('source_id', $source->id)->first();
-                            @endphp
+                            ?>
 
-                            <input type="hidden" name="chains[{{ $index }}][source_id]" value="{{ $source->id }}">
+                            <input type="hidden" name="chains[<?php echo e($index); ?>][source_id]" value="<?php echo e($source->id); ?>">
 
                             <div class="form-group">
                                 <label class="text-muted small">وصف السلسلة (اختياري)</label>
-                                <input type="text" name="chains[{{ $index }}][description]" class="form-control form-control-sm"
+                                <input type="text" name="chains[<?php echo e($index); ?>][description]" class="form-control form-control-sm"
                                     placeholder="مثال: طريق الإمام البخاري في الصحيح"
-                                    value="{{ $existingChain?->description }}">
+                                    value="<?php echo e($existingChain?->description); ?>">
                             </div>
 
-                            <div class="narrators-list" data-chain-index="{{ $index }}">
-                                @if($existingChain && $existingChain->narrators->count() > 0)
-                                 @foreach($existingChain->narrators as $narrator)
-                                        @php
+                            <div class="narrators-list" data-chain-index="<?php echo e($index); ?>">
+                                <?php if($existingChain && $existingChain->narrators->count() > 0): ?>
+                                 <?php $__currentLoopData = $existingChain->narrators; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $narrator): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
                                             $isCompanion = $narrator->is_companion;
-                                        @endphp
+                                        ?>
                                         <div class="narrator-row mb-2">
                                             <div class="row align-items-center">
                                                 <div class="col-md-2">
-                                                    <select class="form-control form-control-sm role-selector" data-chain="{{ $index }}"
-                                                        data-narrator-index="{{ $loop->index }}">
+                                                    <select class="form-control form-control-sm role-selector" data-chain="<?php echo e($index); ?>"
+                                                        data-narrator-index="<?php echo e($loop->index); ?>">
                                                         <option value="">-- النوع --</option>
-                                                        <option value="companion" {{ $isCompanion ? 'selected' : '' }}>صحابي</option>
-                                                        <option value="narrator" {{ !$isCompanion ? 'selected' : '' }}>رجل الحديث
+                                                        <option value="companion" <?php echo e($isCompanion ? 'selected' : ''); ?>>صحابي</option>
+                                                        <option value="narrator" <?php echo e(!$isCompanion ? 'selected' : ''); ?>>رجل الحديث
                                                         </option>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <select name="chains[{{ $index }}][narrators][{{ $loop->index }}][id]"
+                                                    <select name="chains[<?php echo e($index); ?>][narrators][<?php echo e($loop->index); ?>][id]"
                                                         class="form-control form-control-sm narrator-select">
                                                         <option value="">-- اختر --</option>
-                                                        @if($isCompanion)
-                                                            @foreach($companions as $c)
-                                                                <option value="{{ $c->id }}" {{ $c->id == $narrator->id ? 'selected' : '' }}>
-                                                                    {{ $c->name }}</option>
-                                                            @endforeach
-                                                        @else
-                                                            @foreach($narrators->where('is_companion', false) as $n)
-                                                                <option value="{{ $n->id }}" {{ $n->id == $narrator->id ? 'selected' : '' }}>
-                                                                    {{ $n->name }}</option>
-                                                            @endforeach
-                                                        @endif
+                                                        <?php if($isCompanion): ?>
+                                                            <?php $__currentLoopData = $companions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                                <option value="<?php echo e($c->id); ?>" <?php echo e($c->id == $narrator->id ? 'selected' : ''); ?>>
+                                                                    <?php echo e($c->name); ?></option>
+                                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                        <?php else: ?>
+                                                            <?php $__currentLoopData = $narrators->where('is_companion', false); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $n): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                                <option value="<?php echo e($n->id); ?>" <?php echo e($n->id == $narrator->id ? 'selected' : ''); ?>>
+                                                                    <?php echo e($n->name); ?></option>
+                                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                        <?php endif; ?>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <input type="text"
-                                                        name="chains[{{ $index }}][narrators][{{ $loop->index }}][transmission_note]"
+                                                        name="chains[<?php echo e($index); ?>][narrators][<?php echo e($loop->index); ?>][transmission_note]"
                                                         class="form-control form-control-sm"
                                                         placeholder="ملاحظة السند (مرسلاً، معضلاً...)"
-                                                        value="{{ $narrator->pivot->transmission_note ?? '' }}">
+                                                        value="<?php echo e($narrator->pivot->transmission_note ?? ''); ?>">
                                                 </div>
                                                 <div class="col-md-2">
                                                     <input type="hidden"
-                                                        name="chains[{{ $index }}][narrators][{{ $loop->index }}][role]"
-                                                        value="{{ $narrator->pivot->role }}">
+                                                        name="chains[<?php echo e($index); ?>][narrators][<?php echo e($loop->index); ?>][role]"
+                                                        value="<?php echo e($narrator->pivot->role); ?>">
                                                 </div>
                                                 <div class="col-md-1">
                                                     <button type="button" class="btn btn-sm btn-danger btn-block remove-narrator">
@@ -311,12 +271,12 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    @endforeach
-                                @else
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                <?php else: ?>
                                     <div class="narrator-row mb-2">
                                         <div class="row align-items-center">
                                             <div class="col-md-2">
-                                                <select class="form-control form-control-sm role-selector" data-chain="{{ $index }}"
+                                                <select class="form-control form-control-sm role-selector" data-chain="<?php echo e($index); ?>"
                                                     data-narrator-index="0">
                                                     <option value="">-- النوع --</option>
                                                     <option value="companion">صحابي</option>
@@ -324,19 +284,19 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-4">
-                                                <select name="chains[{{ $index }}][narrators][0][id]"
+                                                <select name="chains[<?php echo e($index); ?>][narrators][0][id]"
                                                     class="form-control form-control-sm narrator-select" disabled>
                                                     <option value="">-- اختر النوع أولاً --</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-3">
                                                 <input type="text"
-                                                    name="chains[{{ $index }}][narrators][0][transmission_note]"
+                                                    name="chains[<?php echo e($index); ?>][narrators][0][transmission_note]"
                                                     class="form-control form-control-sm"
                                                     placeholder="ملاحظة السند (مرسلاً...)">
                                             </div>
                                             <div class="col-md-2">
-                                                <input type="hidden" name="chains[{{ $index }}][narrators][0][role]" value="">
+                                                <input type="hidden" name="chains[<?php echo e($index); ?>][narrators][0][role]" value="">
                                             </div>
                                             <div class="col-md-1">
                                                 <button type="button" class="btn btn-sm btn-danger btn-block remove-narrator">
@@ -345,35 +305,35 @@
                                             </div>
                                         </div>
                                     </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
 
-                            <button type="button" class="btn btn-sm btn-success add-narrator" data-chain-index="{{ $index }}">
+                            <button type="button" class="btn btn-sm btn-success add-narrator" data-chain-index="<?php echo e($index); ?>">
                                 <i class="fas fa-plus"></i> إضافة راوي
                             </button>
                         </div>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
-            @else
+            <?php else: ?>
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
                     يجب اختيار المصادر أولاً من القسم أعلاه لتتمكن من إضافة سلاسل الإسناد.
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
         <div class="card-footer">
             <button type="submit" class="btn btn-primary btn-lg">
                 <i class="fas fa-save"></i> حفظ جميع التعديلات (البيانات + السلاسل)
             </button>
-            <a href="{{ route('dashboard.hadiths.index') }}" class="btn btn-secondary">
+            <a href="<?php echo e(route('dashboard.hadiths.index')); ?>" class="btn btn-secondary">
                 <i class="fas fa-arrow-right"></i> رجوع للقائمة
             </a>
         </div>
     </div>
 </form>
-@stop
+<?php $__env->stopSection(); ?>
 
-@section('css')
+<?php $__env->startSection('css'); ?>
 
 <style>
     /* Select2 RTL fixes */
@@ -382,14 +342,14 @@
         left: 10px !important;
     }
 </style>
-@stop
+<?php $__env->stopSection(); ?>
 
-@section('js')
-{{-- Summernote is now loaded via AdminLTE plugins --}}
+<?php $__env->startSection('js'); ?>
+
 <script>
     // بيانات الرواة والصحابة
-    const companions = @json($companions->map(fn($c) => ['id' => $c->id, 'name' => $c->name]));
-    const regularNarrators = @json($narrators->where('is_companion', false)->values()->map(fn($n) => ['id' => $n->id, 'name' => $n->name]));
+    const companions = <?php echo json_encode($companions->map(fn($c) => ['id' => $c->id, 'name' => $c->name]), 512) ?>;
+    const regularNarrators = <?php echo json_encode($narrators->where('is_companion', false)->values()->map(fn($n) => ['id' => $n->id, 'name' => $n->name])) ?>;
 
     $(document).ready(function () {
         // ========== Arabic Text Normalization ==========
@@ -423,23 +383,6 @@
             matcher: arabicMatcher
         });
 
-        // دالة تفعيل Select2 للرواة في السلاسل
-        function initNarratorSelect2(element) {
-            $(element).select2({
-                theme: 'bootstrap4',
-                language: "ar",
-                dir: "rtl",
-                matcher: arabicMatcher,
-                placeholder: '-- اختر --',
-                width: '100%'
-            });
-        }
-
-        // تفعيل Select2 للرواة الموجودين مسبقاً
-        $('.narrator-select:not(:disabled)').each(function() {
-            initNarratorSelect2(this);
-        });
-
         // تفعيل Select2 مع AJAX للرواة
         let lastSearchTerm = '';
         $('#narratorId').select2({
@@ -450,7 +393,7 @@
             allowClear: true,
             minimumInputLength: 2,
             ajax: {
-                url: '{{ route("dashboard.narrators.search") }}',
+                url: '<?php echo e(route("dashboard.narrators.search")); ?>',
                 dataType: 'json',
                 delay: 300,
                 data: function (params) {
@@ -555,13 +498,6 @@
                 narratorSelect.append('<option value="">-- اختر النوع أولاً --</option>');
                 hiddenRole.val('');
             }
-
-            // تفعيل Select2 بعد تعبئة الخيارات
-            if (!narratorSelect.prop('disabled')) {
-                initNarratorSelect2(narratorSelect);
-            } else if (narratorSelect.data('select2')) {
-                narratorSelect.select2('destroy');
-            }
         });
 
         // إضافة راوي جديد
@@ -601,9 +537,6 @@
         `;
 
             narratorsList.append(narratorRow);
-            
-            // تفعيل Select2 للسطر الجديد إذا تم تفعيله لاحقاً عبر الـ role-selector
-            // (السطر الجديد يكون disabled في البداية)
         });
 
         // حذف راوي
@@ -618,11 +551,7 @@
                 // Reset the row instead of deleting
                 const row = $(this).closest('.narrator-row');
                 row.find('.role-selector').val('');
-                const narratorSelect = row.find('.narrator-select');
-                if (narratorSelect.data('select2')) {
-                    narratorSelect.select2('destroy');
-                }
-                narratorSelect.prop('disabled', true).empty().append('<option value="">-- اختر النوع أولاً --</option>');
+                row.find('.narrator-select').prop('disabled', true).empty().append('<option value="">-- اختر النوع أولاً --</option>');
                 row.find('input[type="hidden"]').val('');
             }
         });
@@ -745,53 +674,10 @@
             });
         });
     }
-    // إضافة زيادة جديدة
-    $('#add-addition-btn').on('click', function() {
-        const container = $('#additions-container');
-        const currentCount = container.find('.addition-row').length;
-        const newRow = `
-            <div class="addition-row mb-3 p-3 border rounded bg-light">
-                <div class="row">
-                    <div class="col-md-3">
-                        <label class="small text-muted">مصدر الزيادة</label>
-                        <input type="text" name="additions[${currentCount}][source_name]" class="form-control form-control-sm" placeholder="مثال: الآحاد والمثاني">
-                        <input type="hidden" name="additions[${currentCount}][source_code]" value="">
-                    </div>
-                    <div class="col-md-8">
-                        <label class="small text-muted">نص الزيادة</label>
-                        <textarea name="additions[${currentCount}][text]" class="form-control form-control-sm" rows="2" placeholder="أدخل نص الزيادة هنا..."></textarea>
-                    </div>
-                    <div class="col-md-1 d-flex align-items-end">
-                        <button type="button" class="btn btn-danger btn-sm btn-block remove-addition" title="حذف الزيادة">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        container.append(newRow);
-    });
-
-    // حذف زيادة
-    $(document).on('click', '.remove-addition', function() {
-        $(this).closest('.addition-row').remove();
-        updateAdditionIndexes();
-    });
-
-    function updateAdditionIndexes() {
-        $('#additions-container .addition-row').each(function(index) {
-            $(this).find('input[name], textarea[name]').each(function() {
-                const name = $(this).attr('name');
-                if (name) {
-                    const newName = name.replace(/additions\[\d+\]/, \`additions[${index}]\`);
-                    $(this).attr('name', newName);
-                }
-            });
-        });
-    }
-
 });
 </script>
-@stop
+<?php $__env->stopSection(); ?>
 
 
+
+<?php echo $__env->make('adminlte::page', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\hadeeth\resources\views/dashboard/hadiths/edit.blade.php ENDPATH**/ ?>
