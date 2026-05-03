@@ -111,7 +111,23 @@ class HadithParser
         $number = $this->extractNumber($text);
         $grade = $this->extractGrade($text);
         $additions = $this->extractAdditions($text);
-        $narrators = $this->extractNarrators($text);
+
+        // استخراج السلاسل المهيكلة (الجديد)
+        $chains = $this->extractChains($text);
+
+        // استخراج قائمة مسطحة من الرواة للتوافقية مع الكود القديم
+        $allNarrators = [];
+        $allNotes = [];
+        foreach ($chains as $chain) {
+            foreach ($chain['narrators'] as $nar) {
+                $allNarrators[] = $nar['name'];
+                if (!empty($nar['note'])) {
+                    $allNotes[$nar['name']] = $nar['note'];
+                }
+            }
+        }
+        $allNarrators = array_values(array_unique($allNarrators));
+
         $sourceCodes = $this->extractSourceCodes($text);
         $sources = $this->decodeSources($sourceCodes);
         $cleanText = $this->cleanText($text);
@@ -119,7 +135,9 @@ class HadithParser
         return [
             'number' => $number,
             'grade' => $grade,
-            'narrators' => $narrators, // Now returns an array
+            'narrators' => $allNarrators,
+            'transmission_notes' => $allNotes,
+            'chains' => $chains,
             'source_codes' => $sourceCodes,
             'sources' => $sources,
             'additions' => $additions,
@@ -193,6 +211,172 @@ class HadithParser
     }
 
     /**
+     * استخراج سلاسل الإسناد المهيكلة (Chains).
+     * 
+     * النص يأتي بهيكل:
+     *   (مصادر1) عن راوي1 [ملاحظة] (مصادر2) عنه عن راوي2.
+     * 
+     * كل كتلة (Block) = مجموعة مصادر + سلسلة رواة خاصة بها.
+     * الضمير "عنه" يشير إلى آخر راوي من الكتلة السابقة.
+     * 
+     * @return array<array{source_codes: string[], narrators: array<array{name: string, note: ?string}>}>
+     */
+    private function extractChains(string $text): array
+    {
+        // 1. أوجد قسم البيانات الوصفية (بعد [رقم الصفحة])
+        $metadataSection = $text;
+        if (preg_match('/\[\d+\]/u', $text, $matches, PREG_OFFSET_CAPTURE)) {
+            $metadataSection = substr($text, $matches[0][1]);
+        }
+
+        // 2. إزالة الرقم والدرجة من البداية
+        $metadataSection = preg_replace('/^\[\d+(?:[\/\-]\d+)?\]\s*/u', '', $metadataSection);
+        $metadataSection = preg_replace('/\((صحيح|حسن|ضعيف|موضوع)\)\s*/u', '', $metadataSection);
+        $metadataSection = trim($metadataSection);
+
+        if (empty($metadataSection)) {
+            return [];
+        }
+
+        // 3. تقسيم النص إلى كتل بناءً على الأقواس (...)
+        //    كل كتلة = (مصادر) + نص_السند_بعدها
+        //    النمط: نبحث عن كل (...) ونأخذ النص بعده حتى القوس التالي أو نهاية النص.
+        $chains = [];
+        $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
+        $lastNarrators = []; // لتتبع آخر راوي من السلسلة السابقة
+
+        // البحث عن كتل: (محتوى_القوس) ثم النص_التالي
+        $pattern = '/\(([^\)]+)\)\s*((?:(?!\()[\s\S])*?)(?=\s*\(|$)/u';
+
+        if (preg_match_all($pattern, $metadataSection, $blockMatches, PREG_SET_ORDER)) {
+            foreach ($blockMatches as $block) {
+                $parenContent = trim($block[1]);
+                $isnadText = trim($block[2]);
+
+                // تجاهل أقواس الدرجة
+                if (preg_match('/^(صحيح|حسن|ضعيف|موضوع)$/u', $parenContent)) {
+                    continue;
+                }
+
+                // تجاهل الأقواس التفسيرية
+                if ($this->isExplanatoryParenthesis($parenContent)) {
+                    continue;
+                }
+
+                // تجاهل كتل الزيادات (زاد، ولفظ، إلخ)
+                // نتحقق: هل النص قبل هذا القوس مباشرة يحتوي على كلمة زيادة؟
+                if (preg_match('/(?:' . $additionPattern . ')\s*\(' . preg_quote($parenContent, '/') . '\)/u', $metadataSection)) {
+                    continue;
+                }
+
+                // إذا لا يوجد إسناد بعد هذا القوس، تجاهله (ليس كتلة إسناد)
+                if (empty($isnadText) || !preg_match('/عن/u', $isnadText)) {
+                    continue;
+                }
+
+                // استخراج أكواد المصادر
+                $sourceCodes = $this->decodeParenthesisContent($parenContent);
+
+                // استخراج الرواة من نص الإسناد
+                $narrators = $this->parseIsnadText($isnadText, $lastNarrators);
+
+                if (!empty($sourceCodes) && !empty($narrators)) {
+                    $chains[] = [
+                        'source_codes' => $sourceCodes,
+                        'narrators' => $narrators,
+                    ];
+
+                    // تحديث آخر سلسلة رواة (لدعم "عنه" في الكتلة التالية)
+                    $lastNarrators = $narrators;
+                }
+            }
+        }
+
+        // Fallback: إذا لم نجد أي سلسلة مهيكلة، نجرب الطريقة القديمة
+        if (empty($chains)) {
+            $oldResult = $this->extractNarrators($text);
+            if (!empty($oldResult['names'])) {
+                $sourceCodes = $this->extractSourceCodes($text);
+                $narrators = [];
+                foreach ($oldResult['names'] as $name) {
+                    $narrators[] = [
+                        'name' => $name,
+                        'note' => $oldResult['notes'][$name] ?? null,
+                    ];
+                }
+                $chains[] = [
+                    'source_codes' => $sourceCodes,
+                    'narrators' => $narrators,
+                ];
+            }
+        }
+
+        return $chains;
+    }
+
+    /**
+     * تحليل نص الإسناد واستخراج أسماء الرواة وملاحظات السند.
+     * يعالج الضمائر (عنه، به) بربطها بآخر راوي من السلسلة السابقة.
+     * 
+     * @param string $isnadText النص بعد القوس مثل: "عن عبيد بن السباق مرسلا"
+     * @param array $previousNarrators الرواة من السلسلة السابقة (لدعم "عنه")
+     * @return array<array{name: string, note: ?string}>
+     */
+    private function parseIsnadText(string $isnadText, array $previousNarrators = []): array
+    {
+        $narrators = [];
+        $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
+
+        // تنظيف النص
+        $isnadText = rtrim($isnadText, '. ');
+        // إزالة نصوص الزيادات
+        $isnadText = preg_replace('/\s+(?:' . $additionPattern . ')\s.*/u', '', $isnadText);
+
+        // التعامل مع "عنه" — الضمير يشير لآخر راوي من السلسلة السابقة
+        if (preg_match('/^عنه\s/u', $isnadText) && !empty($previousNarrators)) {
+            $lastPrevNarrator = end($previousNarrators);
+            $narrators[] = [
+                'name' => $lastPrevNarrator['name'],
+                'note' => null, // لا ملاحظة هنا لأنه مذكور بالسند المتصل
+            ];
+            // إزالة "عنه" من البداية
+            $isnadText = preg_replace('/^عنه\s*/u', '', $isnadText);
+        }
+
+        // تقسيم بقية الإسناد بـ "عن"
+        $segments = preg_split('/عن\s+/u', $isnadText, -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($segments as $segment) {
+            $segment = trim($segment);
+            if (empty($segment)) continue;
+
+            // تقسيم إذا كان يحتوي أكثر من راوي ("فلان وفلان")
+            $parts = preg_split('/(?:\s+وعن\s+|\s+و\s+)/u', $segment);
+
+            foreach ($parts as $part) {
+                $cleaned = $this->normalizeNarrator(trim($part));
+                if (empty($cleaned)) continue;
+
+                // استخراج ملاحظة الإسناد
+                $note = null;
+                if (preg_match('/(مرسلا|مرسلاً|معضلا|معضلاً|مقطوعا|مقطوعاً)/u', $cleaned, $m)) {
+                    $note = $m[1];
+                    $cleaned = trim(str_replace($m[1], '', $cleaned));
+                }
+
+                if (!empty($cleaned)) {
+                    $narrators[] = [
+                        'name' => $cleaned,
+                        'note' => $note,
+                    ];
+                }
+            }
+        }
+
+        return $narrators;
+    }
+
+    /**
      * Extract narrators - text after "عن" in the metadata section ONLY.
      * Returns an array of narrators.
      * 
@@ -206,54 +390,76 @@ class HadithParser
      */
     private function extractNarrators(string $text): array
     {
-        // 1. أوجد قسم البيانات الوصفية (بعد [رقم الصفحة])
         $metadataSection = $text;
         if (preg_match('/\[\d+\]/u', $text, $matches, PREG_OFFSET_CAPTURE)) {
             $metadataSection = substr($text, $matches[0][1]);
         }
 
-        $narrators = [];
+        $names = [];
+        $notes = [];
         $additionPattern = implode('|', array_map(fn($k) => preg_quote($k, '/'), $this->additionKeywords));
 
-        // 2. ابحث عن كل "عن NARRATOR" التي تأتي بعد ) في الـ metadata
-        //    النمط: ) ... عن راوي1 ( ... ) ... عن راوي2.
-        //    كل segment بين ) وبداية ( التالي أو نهاية النص قد يحتوي على "عن"
         if (preg_match_all('/\)\s*عن\s+(.+?)(?=\s*\(|\s*$)/u', $metadataSection, $matches)) {
             foreach ($matches[1] as $narratorRaw) {
                 $narratorRaw = trim($narratorRaw);
-
-                // إزالة نصوص الزيادات إن وجدت (زاد، ولفظ، إلخ)
                 $narratorRaw = preg_replace('/\s+(?:' . $additionPattern . ')\s.*/u', '', $narratorRaw);
-
-                // تنظيف: إزالة النقطة من الآخر
                 $narratorRaw = rtrim($narratorRaw, '. ');
 
                 if (empty($narratorRaw)) continue;
 
-                // تقسيم إذا كان يحتوي أكثر من راوي ("عن فلان وعن فلان" أو "عن فلان وفلان")
                 $parts = preg_split('/(?:\s+وعن\s+|\s+و\s+)/u', $narratorRaw);
                 foreach ($parts as $part) {
                     $cleaned = $this->normalizeNarrator($part);
                     if (!empty($cleaned)) {
-                        $narrators[] = $cleaned;
+                        // Extract transmission note
+                        $note = null;
+                        if (preg_match('/(مرسلا|مرسلاً|معضلا|معضلاً|مقطوعا|مقطوعاً)/u', $cleaned, $m)) {
+                            $note = $m[1];
+                            $cleaned = trim(str_replace($m[1], '', $cleaned));
+                        }
+                        
+                        if (!empty($cleaned)) {
+                            $names[] = $cleaned;
+                            if ($note) {
+                                $notes[$cleaned] = $note;
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // 3. Fallback: لم نجد أي "عن" بعد ) — ابحث في كل الـ metadata
-        if (empty($narrators)) {
+        if (empty($names)) {
             $pattern = '/عن\s+([^\[\(]+?)(?:\s*\[|\s*\(|\s+(?:' . $additionPattern . ')\s|\s*\.\s*$|$)/u';
 
             if (preg_match($pattern, $metadataSection, $matches)) {
                 $cleaned = $this->normalizeNarrator(trim($matches[1]));
                 if (!empty($cleaned)) {
-                    $narrators[] = $cleaned;
+                    $note = null;
+                    if (preg_match('/(مرسلا|مرسلاً|معضلا|معضلاً|مقطوعا|مقطوعاً)/u', $cleaned, $m)) {
+                        $note = $m[1];
+                        $cleaned = trim(str_replace($m[1], '', $cleaned));
+                    }
+                    if (!empty($cleaned)) {
+                        $names[] = $cleaned;
+                        if ($note) {
+                            $notes[$cleaned] = $note;
+                        }
+                    }
                 }
             }
         }
 
-        return array_unique($narrators);
+        // Return unique names to prevent duplicates
+        $uniqueNames = array_unique($names);
+        $finalNotes = [];
+        foreach ($uniqueNames as $n) {
+            if (isset($notes[$n])) {
+                $finalNotes[$n] = $notes[$n];
+            }
+        }
+
+        return ['names' => array_values($uniqueNames), 'notes' => $finalNotes];
     }
 
     /**

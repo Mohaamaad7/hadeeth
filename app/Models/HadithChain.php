@@ -38,7 +38,7 @@ class HadithChain extends Model
     public function narrators(): BelongsToMany
     {
         return $this->belongsToMany(Narrator::class, 'chain_narrators', 'chain_id', 'narrator_id')
-            ->withPivot(['position', 'role'])
+            ->withPivot(['position', 'role', 'transmission_note'])
             ->withTimestamps()
             ->orderBy('chain_narrators.position');
     }

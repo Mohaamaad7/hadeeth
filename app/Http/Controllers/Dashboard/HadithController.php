@@ -364,6 +364,7 @@ class HadithController extends Controller
             'chains.*.narrators' => 'nullable|array',
             'chains.*.narrators.*.id' => 'nullable|exists:narrators,id',
             'chains.*.narrators.*.role' => 'nullable|string',
+            'chains.*.narrators.*.transmission_note' => 'nullable|string|max:100',
         ]);
 
         // تجهيز بيانات الشرح المنظم
@@ -456,8 +457,9 @@ class HadithController extends Controller
                 $position = 1;
                 foreach ($validNarrators as $narratorData) {
                     $chain->narrators()->attach($narratorData['id'], [
-                        'position' => $position++,
-                        'role' => $narratorData['role'] ?? null,
+                        'position'          => $position++,
+                        'role'              => $narratorData['role'] ?? null,
+                        'transmission_note' => $narratorData['transmission_note'] ?? null,
                     ]);
                 }
             }
@@ -597,12 +599,15 @@ class HadithController extends Controller
                 // التحقق من وجود الرواة في قاعدة البيانات
                 foreach ($parsed['narrators'] as $narratorName) {
                     $foundNarrator = $this->findNarrator($narratorName);
+                    $note = $parsed['transmission_notes'][$narratorName] ?? null;
+                    
                     if ($foundNarrator) {
                         $narratorsData[] = [
                             'id' => $foundNarrator->id,
                             'name' => $foundNarrator->name,
                             'found' => true,
-                            'original' => $narratorName
+                            'original' => $narratorName,
+                            'transmission_note' => $note
                         ];
                     } else {
                         // مبدئياً: غير موجود (سيتم محاولة حلّه بالذكاء الاصطناعي لاحقاً)
@@ -610,7 +615,8 @@ class HadithController extends Controller
                             'id' => null,
                             'name' => $narratorName,
                             'found' => false,
-                            'original' => $narratorName
+                            'original' => $narratorName,
+                            'transmission_note' => $note
                         ];
                     }
                 }
@@ -754,6 +760,7 @@ class HadithController extends Controller
                             if (!empty($resolved)) {
                                 // استبدال الراوي غير المعروف بالرواة المطابقين من Gemini
                                 $newNarratorsData = [];
+                                $oldNote = $results[$hIdx]['parsed']['narrators_data'][$ndIdx]['transmission_note'] ?? null;
                                 foreach ($resolved as $rNarrator) {
                                     // التحقق من وجود الراوي فعلاً في DB قبل الاعتماد
                                     $verifiedNarrator = Narrator::find($rNarrator['db_id'] ?? null);
@@ -763,6 +770,7 @@ class HadithController extends Controller
                                             'name' => $verifiedNarrator->name,
                                             'found' => true,
                                             'original' => $originalName,
+                                            'transmission_note' => $oldNote,
                                             'ai_resolved' => true,
                                             'ai_reason' => $rNarrator['reason'] ?? '',
                                         ];
@@ -870,6 +878,81 @@ class HadithController extends Controller
             }
 
             // إعادة حساب التحذيرات بعد تطبيق نتائج Gemini (الرواة + المصادر)
+
+            // بناء هيكل الأسانيد النهائي (Chains Data) بعد انتهاء كل المطابقات
+            foreach ($results as $hIdx => &$item) {
+                $chainsData = [];
+                $narratorsMap = [];
+                foreach ($item['parsed']['narrators_data'] ?? [] as $nd) {
+                    if ($nd['found'] && !empty($nd['original'])) {
+                        // We map by the original string extracted by regex to link it back
+                        $narratorsMap[$nd['original']][] = $nd;
+                    }
+                }
+                
+                $sourcesMap = [];
+                foreach ($item['parsed']['sources_data'] ?? [] as $sd) {
+                    if ($sd['found'] && !empty($sd['original_code'])) {
+                        $sourcesMap[$sd['original_code']][] = $sd;
+                    } elseif ($sd['found'] && !empty($sd['code'])) {
+                        $sourcesMap[$sd['code']][] = $sd;
+                    }
+                }
+
+                if (!empty($item['parsed']['chains'])) {
+                    foreach ($item['parsed']['chains'] as $chain) {
+                        $cSources = [];
+                        foreach ($chain['source_codes'] as $sCode) {
+                            if (isset($sourcesMap[$sCode])) {
+                                foreach ($sourcesMap[$sCode] as $matchedSource) {
+                                    $cSources[] = $matchedSource;
+                                }
+                            }
+                        }
+                        
+                        $cNarrators = [];
+                        foreach ($chain['narrators'] as $cNar) {
+                            $name = $cNar['name'];
+                            if (isset($narratorsMap[$name])) {
+                                foreach ($narratorsMap[$name] as $matchedNar) {
+                                    $cNarrators[] = [
+                                        'id' => $matchedNar['id'],
+                                        'name' => $matchedNar['name'],
+                                        'note' => $cNar['note'],
+                                    ];
+                                }
+                            } else {
+                                // Missing/Unresolved narrator, add placeholder
+                                $cNarrators[] = [
+                                    'id' => null,
+                                    'name' => $name,
+                                    'note' => $cNar['note'],
+                                ];
+                            }
+                        }
+
+                        if (!empty($cSources)) {
+                            // إنشاء مسار لكل مصدر في هذه السلسلة
+                            foreach ($cSources as $cS) {
+                                $chainsData[] = [
+                                    'source' => $cS,
+                                    'narrators' => $cNarrators,
+                                ];
+                            }
+                        } else {
+                            // سلسلة بدون مصادر متعرف عليها (نادر)
+                            $chainsData[] = [
+                                'source' => null,
+                                'narrators' => $cNarrators,
+                            ];
+                        }
+                    }
+                }
+                
+                $item['parsed']['chains_data'] = $chainsData;
+            }
+            unset($item);
+
             $warnings = [];
             foreach ($results as $index => $item) {
                 $hadithWarnings = [];
@@ -1025,13 +1108,26 @@ class HadithController extends Controller
 
         foreach ($request->hadiths as $hadithData) {
 
-            $narratorIdsToAttach = [];
+            $narratorsToAttach = [];
 
             // استخدام الـ IDs المصححة/المختارة من inline fix (Select2 Multiple)
             if (!empty($hadithData['narrator_ids'])) {
+                // If submitted via UI, we might not have the note easily here unless we pass it.
+                // For now, if UI submits, it just sends IDs. Let's try to find if it exists in narrators_data.
+                $narratorsData = !empty($hadithData['narrators_data']) ? json_decode($hadithData['narrators_data'], true) : [];
+                $notesMap = [];
+                if (is_array($narratorsData)) {
+                    foreach ($narratorsData as $nd) {
+                        if (!empty($nd['id']) && !empty($nd['transmission_note'])) {
+                            $notesMap[$nd['id']] = $nd['transmission_note'];
+                        }
+                    }
+                }
+                
                 foreach ($hadithData['narrator_ids'] as $nId) {
                     if (!empty($nId)) {
-                        $narratorIdsToAttach[] = (int) $nId;
+                        $nId = (int) $nId;
+                        $narratorsToAttach[$nId] = ['transmission_note' => $notesMap[$nId] ?? null];
                     }
                 }
             } elseif (!empty($hadithData['narrators_data'])) {
@@ -1040,12 +1136,12 @@ class HadithController extends Controller
                 if (is_array($narratorsData)) {
                     foreach ($narratorsData as $nd) {
                         if (!empty($nd['id'])) {
-                            $narratorIdsToAttach[] = (int) $nd['id'];
+                            $narratorsToAttach[(int) $nd['id']] = ['transmission_note' => $nd['transmission_note'] ?? null];
                         } else if (!empty($nd['original'])) {
                             // fallback search just in case
                             $n = $this->findNarrator($nd['original']);
                             if ($n) {
-                                $narratorIdsToAttach[] = $n->id;
+                                $narratorsToAttach[$n->id] = ['transmission_note' => $nd['transmission_note'] ?? null];
                             }
                         }
                     }
@@ -1060,21 +1156,73 @@ class HadithController extends Controller
                 'grade' => $hadithData['grade'] ?? 'صحيح',
                 'status' => 'pending',
                 'book_id' => $bookId,
-                'narrator_id' => !empty($narratorIdsToAttach) ? $narratorIdsToAttach[0] : null, // Legacy support
+                'narrator_id' => !empty($narratorsToAttach) ? array_key_first($narratorsToAttach) : null, // Legacy support
                 'entered_by' => auth()->id(),
                 'additions' => !empty($hadithData['additions']) ? json_decode($hadithData['additions'], true) : null,
             ]);
 
             // Attach narrators (many-to-many)
-            if (!empty($narratorIdsToAttach)) {
-                $hadith->narrators()->attach(array_unique($narratorIdsToAttach));
+            if (!empty($narratorsToAttach)) {
+                $hadith->narrators()->attach($narratorsToAttach);
             }
 
-            // Attach sources — IDs مباشرة من Select2
+            // Attach sources — IDs مباشرة من Select2 (Legacy support)
             if (!empty($hadithData['source_ids'])) {
                 $sourceIds = array_unique(array_filter(array_map('intval', $hadithData['source_ids'])));
                 if (!empty($sourceIds)) {
                     $hadith->sources()->attach($sourceIds);
+                }
+            }
+
+            // Save chains (New Structure)
+            if (!empty($hadithData['chains_data'])) {
+                $chainsData = json_decode($hadithData['chains_data'], true);
+                if (is_array($chainsData)) {
+                    foreach ($chainsData as $cData) {
+                        $sourceId = $cData['source']['id'] ?? null;
+                        
+                        // Fallback logic in case ID wasn't perfectly passed but we have code/name
+                        if (!$sourceId && !empty($cData['source']['original_code'])) {
+                            $s = Source::where('code', $cData['source']['original_code'])->first();
+                            if ($s) $sourceId = $s->id;
+                        }
+
+                        if ($sourceId) {
+                            $chain = $hadith->chains()->create([
+                                'source_id' => $sourceId,
+                            ]);
+
+                            $cAttach = [];
+                            $pos = 1;
+                            $narratorCount = count($cData['narrators']);
+                            
+                            foreach ($cData['narrators'] as $index => $cNar) {
+                                $nId = $cNar['id'] ?? null;
+                                
+                                // Fallback lookup if no ID
+                                if (!$nId && !empty($cNar['name'])) {
+                                    $n = $this->findNarrator($cNar['name']);
+                                    if ($n) $nId = $n->id;
+                                }
+                                
+                                if ($nId) {
+                                    // Determine role (first is often المصنف, last is Sahabi, but since it's from `عن`, first is Sheikh, last is highest authority)
+                                    // But this might be too complex. Let's just leave role null for now, or just mark last as Sahabi.
+                                    $role = null;
+                                    
+                                    $cAttach[$nId] = [
+                                        'position' => $pos++,
+                                        'role' => $role,
+                                        'transmission_note' => $cNar['note'] ?? null,
+                                    ];
+                                }
+                            }
+                            
+                            if (!empty($cAttach)) {
+                                $chain->narrators()->attach($cAttach);
+                            }
+                        }
+                    }
                 }
             }
 

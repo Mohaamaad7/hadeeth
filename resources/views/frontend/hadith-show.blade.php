@@ -144,13 +144,14 @@
                     <span class="bg-{{ $gradeColor }}-50 text-{{ $gradeColor }}-700 px-4 py-1.5 rounded-full text-sm font-bold border border-{{ $gradeColor }}-200">
                         <i class="fa-solid fa-check-circle ml-1"></i> {{ $hadith->grade }}
                     </span>
-                    @if($hadith->narrators->count() > 0)
-                        @foreach($hadith->narrators as $nar)
-                            <span class="bg-gray-50 text-gray-600 px-4 py-1.5 rounded-full text-sm font-bold border border-gray-200">
-                                <i class="fa-solid fa-user ml-1 text-gray-400"></i> الصحابي: {{ $nar->name }}
-                            </span>
-                        @endforeach
-                    @endif
+                    @foreach($hadith->narrators as $nar)
+                        <span class="bg-gray-50 text-gray-600 px-4 py-1.5 rounded-full text-sm font-bold border border-gray-200">
+                            <i class="fa-solid fa-user ml-1 text-gray-400"></i> {{ $nar->rank_label ?? 'الراوي' }}: {{ $nar->name }}
+                            @if($nar->pivot && $nar->pivot->transmission_note)
+                                <span class="text-xs text-red-500 font-bold mr-1">({{ $nar->pivot->transmission_note }})</span>
+                            @endif
+                        </span>
+                    @endforeach
                     @if($hadith->book)
                         <span class="bg-purple-50 text-purple-600 px-4 py-1.5 rounded-full text-sm font-bold border border-purple-200">
                             <i class="fa-solid fa-book ml-1"></i> {{ $hadith->book->name }}
@@ -281,13 +282,20 @@
         </section>
 
         <!-- Sanad Chains (سلاسل الإسناد) - Dynamic -->
-        @if($hadith->chains->count() > 0)
+        @php
+            // نحدد السلاسل التي تحتوي على رواة فعلاً
+            $chainsWithNarrators = $hadith->chains->filter(fn($c) => $c->narrators->count() > 0);
+            $hasAnyChainWithNarrators = $chainsWithNarrators->count() > 0;
+        @endphp
+
+        @if($hasAnyChainWithNarrators)
+            {{-- قسم السلاسل الحقيقية المفصلة --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-up" style="animation-delay: 0.1s;">
-                @foreach($hadith->chains as $index => $chain)
+                @foreach($chainsWithNarrators as $index => $chain)
                     <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-200 transition-colors">
                         <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-                            <span class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-sm">{{ $index + 1 }}</span>
-                            <h3 class="font-tajawal font-bold text-lg text-gray-800">طريق {{ $chain->source->name }}</h3>
+                            <span class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-sm">{{ $loop->iteration }}</span>
+                            <h3 class="font-tajawal font-bold text-lg text-gray-800">طريق {{ $chain->source?->name ?? 'مصدر غير محدد' }}</h3>
                         </div>
                         <div class="pr-2">
                             @foreach($chain->narrators as $narrator)
@@ -296,17 +304,25 @@
                                         <span class="text-sm text-gray-500 block mb-1">{{ $narrator->pivot->role }}</span>
                                     @endif
                                     @if($loop->last)
-                                        <span class="font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg">{{ $narrator->name }}</span>
+                                        <span class="font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg">
+                                            {{ $narrator->name }}
+                                            @if($narrator->pivot && $narrator->pivot->transmission_note)
+                                                <span class="text-xs text-red-500 mr-1">({{ $narrator->pivot->transmission_note }})</span>
+                                            @endif
+                                        </span>
                                     @else
                                         <a href="{{ route('narrator.show', $narrator->id) }}" target="_blank"
                                             class="font-scheherazade text-lg text-emerald-700 hover:text-emerald-500 hover:underline transition-colors">
                                             {{ $narrator->name }}
                                         </a>
+                                        @if($narrator->pivot && $narrator->pivot->transmission_note)
+                                            <span class="text-xs text-red-500 font-bold mr-1">({{ $narrator->pivot->transmission_note }})</span>
+                                        @endif
                                     @endif
                                     @if(!$loop->first && !$loop->last)
                                         @php
                                             $appearsInOtherChains = false;
-                                            foreach ($hadith->chains as $otherChain) {
+                                            foreach ($chainsWithNarrators as $otherChain) {
                                                 if ($otherChain->id !== $chain->id) {
                                                     if ($otherChain->narrators->contains('id', $narrator->id)) {
                                                         $appearsInOtherChains = true;
@@ -350,7 +366,7 @@
                 style="animation-delay: 0.1s;">
                 <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
                     <i class="fa-solid fa-user-tie text-emerald-500 text-xl"></i>
-                    <h3 class="font-tajawal font-bold text-xl text-gray-800">نبذة عن الصحابي</h3>
+                    <h3 class="font-tajawal font-bold text-xl text-gray-800">نبذة عن الراوي</h3>
                 </div>
                 <div class="flex items-start gap-4">
                     <div class="flex-shrink-0 w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 text-2xl">

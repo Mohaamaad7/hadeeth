@@ -78,7 +78,7 @@ class Hadith extends Model
      */
     public function narrators(): BelongsToMany
     {
-        return $this->belongsToMany(Narrator::class, 'hadith_narrator');
+        return $this->belongsToMany(Narrator::class, 'hadith_narrator')->withPivot('transmission_note');
     }
 
     /**

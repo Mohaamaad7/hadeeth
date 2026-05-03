@@ -220,13 +220,13 @@
 
                             <div class="narrators-list" data-chain-index="{{ $index }}">
                                 @if($existingChain && $existingChain->narrators->count() > 0)
-                                    @foreach($existingChain->narrators as $narrator)
+                                 @foreach($existingChain->narrators as $narrator)
                                         @php
                                             $isCompanion = $narrator->is_companion;
                                         @endphp
                                         <div class="narrator-row mb-2">
-                                            <div class="row">
-                                                <div class="col-md-3">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-2">
                                                     <select class="form-control form-control-sm role-selector" data-chain="{{ $index }}"
                                                         data-narrator-index="{{ $loop->index }}">
                                                         <option value="">-- النوع --</option>
@@ -235,7 +235,7 @@
                                                         </option>
                                                     </select>
                                                 </div>
-                                                <div class="col-md-5">
+                                                <div class="col-md-4">
                                                     <select name="chains[{{ $index }}][narrators][{{ $loop->index }}][id]"
                                                         class="form-control form-control-sm narrator-select">
                                                         <option value="">-- اختر --</option>
@@ -252,12 +252,19 @@
                                                         @endif
                                                     </select>
                                                 </div>
+                                                <div class="col-md-3">
+                                                    <input type="text"
+                                                        name="chains[{{ $index }}][narrators][{{ $loop->index }}][transmission_note]"
+                                                        class="form-control form-control-sm"
+                                                        placeholder="ملاحظة السند (مرسلاً، معضلاً...)"
+                                                        value="{{ $narrator->pivot->transmission_note ?? '' }}">
+                                                </div>
                                                 <div class="col-md-2">
                                                     <input type="hidden"
                                                         name="chains[{{ $index }}][narrators][{{ $loop->index }}][role]"
                                                         value="{{ $narrator->pivot->role }}">
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-md-1">
                                                     <button type="button" class="btn btn-sm btn-danger btn-block remove-narrator">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -267,8 +274,8 @@
                                     @endforeach
                                 @else
                                     <div class="narrator-row mb-2">
-                                        <div class="row">
-                                            <div class="col-md-3">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-2">
                                                 <select class="form-control form-control-sm role-selector" data-chain="{{ $index }}"
                                                     data-narrator-index="0">
                                                     <option value="">-- النوع --</option>
@@ -276,16 +283,22 @@
                                                     <option value="narrator">رجل الحديث</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-5">
+                                            <div class="col-md-4">
                                                 <select name="chains[{{ $index }}][narrators][0][id]"
                                                     class="form-control form-control-sm narrator-select" disabled>
                                                     <option value="">-- اختر النوع أولاً --</option>
                                                 </select>
                                             </div>
+                                            <div class="col-md-3">
+                                                <input type="text"
+                                                    name="chains[{{ $index }}][narrators][0][transmission_note]"
+                                                    class="form-control form-control-sm"
+                                                    placeholder="ملاحظة السند (مرسلاً...)">
+                                            </div>
                                             <div class="col-md-2">
                                                 <input type="hidden" name="chains[{{ $index }}][narrators][0][role]" value="">
                                             </div>
-                                            <div class="col-md-2">
+                                            <div class="col-md-1">
                                                 <button type="button" class="btn btn-sm btn-danger btn-block remove-narrator">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
@@ -495,23 +508,26 @@
 
             const narratorRow = `
             <div class="narrator-row mb-2">
-                <div class="row">
-                    <div class="col-md-3">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
                         <select class="form-control form-control-sm role-selector" data-chain="${chainIndex}" data-narrator-index="${currentCount}">
                             <option value="">-- النوع --</option>
                             <option value="companion">صحابي</option>
                             <option value="narrator">رجل الحديث</option>
                         </select>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-4">
                         <select name="chains[${chainIndex}][narrators][${currentCount}][id]" class="form-control form-control-sm narrator-select" disabled>
                             <option value="">-- اختر النوع أولاً --</option>
                         </select>
                     </div>
+                    <div class="col-md-3">
+                        <input type="text" name="chains[${chainIndex}][narrators][${currentCount}][transmission_note]" class="form-control form-control-sm" placeholder="ملاحظة السند (مرسلاً...)">
+                    </div>
                     <div class="col-md-2">
                         <input type="hidden" name="chains[${chainIndex}][narrators][${currentCount}][role]" value="">
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-1">
                         <button type="button" class="btn btn-sm btn-danger btn-block remove-narrator">
                             <i class="fas fa-trash"></i>
                         </button>

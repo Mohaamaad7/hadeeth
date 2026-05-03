@@ -625,7 +625,8 @@
                 if (p.narrators_data && p.narrators_data.length > 0) {
                     p.narrators_data.forEach(nd => {
                         if (nd.found && nd.id) {
-                            narratorCell += `<option value="${nd.id}" selected>${nd.name}</option>`;
+                            let noteText = nd.transmission_note ? ` (${nd.transmission_note})` : '';
+                            narratorCell += `<option value="${nd.id}" selected>${nd.name}${noteText}</option>`;
                             // إذا تم حلّ الراوي بالذكاء الاصطناعي، نحفظ السبب
                             if (nd.ai_resolved && nd.ai_reason) {
                                 aiReasons.push(`${nd.ai_reason}`);
@@ -710,6 +711,16 @@
                     </td>
                     <td style="font-family: 'Scheherazade New', serif; font-size: 1rem; line-height: 2; max-width: 400px;">
                         ${truncate(p.clean_text, 120)}
+                        <div class="mt-3 p-2 rounded" style="font-size: 0.85rem; border-right: 3px solid #17a2b8; background-color: #f8f9fa;">
+                            <strong><i class="fas fa-link text-info"></i> الأسانيد المستخرجة:</strong>
+                            <ul class="mb-0 pl-3 mt-1" style="list-style-type: none; padding-right: 0;">
+                                ${p.chains_data && p.chains_data.length > 0 ? p.chains_data.map(chain => {
+                                    let srcName = chain.source && chain.source.name ? chain.source.name : 'مصدر مجهول';
+                                    let nars = chain.narrators.map(n => n.name + (n.note ? ` <span class="text-danger" style="font-size:10px;">(${n.note})</span>` : '')).join(' <i class="fas fa-arrow-left text-muted" style="font-size:8px;"></i> ');
+                                    return `<li class="mb-1"><span class="badge badge-secondary">${srcName}</span> <i class="fas fa-arrow-left text-muted" style="font-size:8px;"></i> ${nars}</li>`;
+                                }).join('') : '<li><span class="text-muted">لم يتم التعرف على أسانيد مهيكلة.</span></li>'}
+                            </ul>
+                        </div>
                     </td>
                     <td class="text-center">
                         <span class="badge badge-${gradeColor(p.grade)}">${p.grade || '—'}</span>
@@ -866,6 +877,11 @@
                 // إرسال معلومات الرواة كـ JSON
                 if (p.narrators_data) {
                     container.append(`<input type="hidden" name="${prefix}[narrators_data]" value="${escapeHtml(JSON.stringify(p.narrators_data))}">`);
+                }
+                
+                // إرسال السلاسل (Chains) كـ JSON
+                if (p.chains_data) {
+                    container.append(`<input type="hidden" name="${prefix}[chains_data]" value="${escapeHtml(JSON.stringify(p.chains_data))}">`);
                 }
 
                 // إرسال IDs المحددة من Select2 المتعدد
